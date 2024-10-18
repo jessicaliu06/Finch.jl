@@ -102,5 +102,5 @@ jobs:
           poetry install --with test
       - name: Run finch-tensor-python tests
         run: |
-          cd finch-tensor
+          cd finch-tensor-python
           FINCH_REPO_PATH="${GITHUB_WORKSPACE}" poetry run pytest tests/

@@ -513,7 +513,7 @@
         end
     end
 
-    #https://github.com/willow-ahrens/Finch.jl/issues/317
+    #https://github.com/finch-tensor/Finch.jl/issues/317
     let
         A = rand(5, 5)
         B = rand(5, 5)

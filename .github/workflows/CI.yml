@@ -93,7 +93,7 @@ jobs:
       - name: Checkout finch-tensor
         uses: actions/checkout@v4
         with:
-          repository: willow-ahrens/finch-tensor
+          repository: finch-tensor/finch-tensor
           ref: 'main'
           path: 'finch-tensor'
       - name: Install package

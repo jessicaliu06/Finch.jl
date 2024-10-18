@@ -95,7 +95,7 @@ jobs:
         with:
           repository: finch-tensor/finch-tensor-python
           ref: 'main'
-          path: 'finch-tensor'
+          path: 'finch-tensor-python'
       - name: Install package
         run: |
           cd finch-tensor-python

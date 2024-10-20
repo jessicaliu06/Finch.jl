@@ -4,7 +4,7 @@ using Finch: AsArray
 
     @info "Testing Finch Interface"
 
-    #https://github.com/willow-ahrens/Finch.jl/issues/383
+    #https://github.com/finch-tensor/Finch.jl/issues/383
     let
         A = [0.0 0.0 4.4; 1.1 0.0 0.0; 2.2 0.0 5.5; 3.3 0.0 0.0]
         A_fbr = Tensor(Dense(Dense(Element(0.0))), A)
@@ -62,7 +62,7 @@ using Finch: AsArray
         end
     end
 
-    #https://github.com/willow-ahrens/Finch.jl/issues/592
+    #https://github.com/finch-tensor/Finch.jl/issues/592
     let
         @test eltype(broadcast(Finch.fld_nothrow, Tensor(ones(Int16, 1)), Tensor(ones(Int8, 1)))) == Int16
         @test eltype(broadcast(Finch.fld_nothrow, Tensor(ones(Int16, 0)), Tensor(ones(Int8, 0)))) == Int16
@@ -71,7 +71,7 @@ using Finch: AsArray
         @test eltype(broadcast(Finch.fld_nothrow, Tensor(ones(Float64, 0)), Tensor(ones(Float32, 0)))) == Float64
     end
 
-    #https://github.com/willow-ahrens/Finch.jl/issues/578
+    #https://github.com/finch-tensor/Finch.jl/issues/578
     let
         @test maximum(Tensor(ones(Int8, 4,4))) === Int8(1)
         @test minimum(Tensor(ones(Int8, 4,4))) === Int8(1)
@@ -81,7 +81,7 @@ using Finch: AsArray
         @test compute(extrema(lazy(Tensor(ones(Int8, 4,4)))))[] === (Int8(1), Int8(1))
     end
 
-    #https://github.com/willow-ahrens/Finch.jl/issues/576
+    #https://github.com/finch-tensor/Finch.jl/issues/576
     let
         a = zeros(ComplexF64, 2, 1)
         a[1, 1] = 1.8 + 1.8im
@@ -97,7 +97,7 @@ using Finch: AsArray
         @test eltype(res) == ComplexF64
     end
 
-    #https://github.com/willow-ahrens/Finch.jl/issues/577
+    #https://github.com/finch-tensor/Finch.jl/issues/577
     let
         a = Tensor(ones(UInt8, 1))
         b = Tensor(ones(UInt8, 1))
@@ -108,7 +108,7 @@ using Finch: AsArray
         Finch.with_scheduler(scheduler) do
             @info "Testing $scheduler"
 
-            #https://github.com/willow-ahrens/Finch.jl/issues/474
+            #https://github.com/finch-tensor/Finch.jl/issues/474
             let
                 arr = [1 2 1 2; 2 1 2 1]
                 arr2 = arr .+ 2
@@ -122,7 +122,7 @@ using Finch: AsArray
                 broadcast(Finch.rem_nothrow, tns, tns2)
             end
 
-            #https://github.com/willow-ahrens/Finch.jl/issues/520
+            #https://github.com/finch-tensor/Finch.jl/issues/520
             let
                 A = rand(2, 2)
                 x = rand(2)
@@ -131,20 +131,20 @@ using Finch: AsArray
                 @test norm(y .- A * x) < 1e-10
             end
 
-            #https://github.com/willow-ahrens/Finch.jl/issues/554
+            #https://github.com/finch-tensor/Finch.jl/issues/554
             let
                 @test broadcast(trunc, swizzle(Tensor(ones(1)), 1)) == Tensor(ones(1))
 
                 @test broadcast(trunc, swizzle(Tensor(ones(2)), 1)) == Tensor(ones(2))
             end
 
-            #https://github.com/willow-ahrens/Finch.jl/issues/533
+            #https://github.com/finch-tensor/Finch.jl/issues/533
             let
                 A = lazy(fsprand(1, 1, 0.5))
                 compute(sum(A .+ A)) #should not error
             end
 
-            #https://github.com/willow-ahrens/Finch.jl/issues/535
+            #https://github.com/finch-tensor/Finch.jl/issues/535
             let
                 LEN = 10;
                 a_raw = rand(LEN, LEN - 5) * 10;
@@ -164,20 +164,20 @@ using Finch: AsArray
                 @test compute(plan) == ref
             end
 
-            #https://github.com/willow-ahrens/Finch.jl/issues/536
+            #https://github.com/finch-tensor/Finch.jl/issues/536
             let
                 A = [1 2; 3 4]
                 swizzle(lazy(A), 2, 1) == permutedims(A)
             end
 
-            #https://github.com/willow-ahrens/Finch.jl/issues/530
+            #https://github.com/finch-tensor/Finch.jl/issues/530
             let
                 A_tns = Tensor(Dense(Dense(Dense(Element(0.0)))), zeros(3, 3, 3))
                 A_sw = swizzle(A_tns, 2, 3, 1)
                 A_tns == A_sw #fails
             end
 
-            #https://github.com/willow-ahrens/Finch.jl/issues/524
+            #https://github.com/finch-tensor/Finch.jl/issues/524
             let
                 arr3d = rand(Int, 3, 2, 3) .% 10
                 tns = Tensor(Dense(Dense(Dense(Element(0)))), arr3d)
@@ -189,16 +189,16 @@ using Finch: AsArray
                 result = compute(plan)
             end
 
-            #https://github.com/willow-ahrens/Finch.jl/issues/527
+            #https://github.com/finch-tensor/Finch.jl/issues/527
             let
                 tns_1 = swizzle(Tensor(ones(10, 10)), 1, 2)
-                tns_1[:, :] # == tns_1 https://github.com/willow-ahrens/Finch.jl/issues/530
+                tns_1[:, :] # == tns_1 https://github.com/finch-tensor/Finch.jl/issues/530
 
                 tns_2 = swizzle(Tensor(ones(10)), 1)
-                tns_2[:]# == tns_2 https://github.com/willow-ahrens/Finch.jl/issues/530
+                tns_2[:]# == tns_2 https://github.com/finch-tensor/Finch.jl/issues/530
             end
 
-            #https://github.com/willow-ahrens/Finch.jl/issues/528
+            #https://github.com/finch-tensor/Finch.jl/issues/528
             let
                 tns = swizzle(Tensor(ones(10, 10)), 1, 2)
                 @test tns[:, :] == ones(10, 10)
@@ -207,7 +207,7 @@ using Finch: AsArray
                 @test tns[:, :, nothing] == ones(10, 10, 1)
             end
 
-            #https://github.com/willow-ahrens/Finch.jl/issues/428
+            #https://github.com/finch-tensor/Finch.jl/issues/428
             let
                 @testset "Verbose" begin
                     a = [1 2; 3 4]
@@ -550,7 +550,7 @@ using Finch: AsArray
                 @test c == c_correct
             end
 
-            #https://github.com/willow-ahrens/Finch.jl/issues/457
+            #https://github.com/finch-tensor/Finch.jl/issues/457
             let
                 A = zeros(2, 3, 3)
                 A[1, :, :] = [1 2 3; 4 5 6; 7 8 9]
@@ -568,7 +568,7 @@ using Finch: AsArray
                 @test permutedims(A_tns, perm) == A_t
             end
 
-            #https://github.com/willow-ahrens/Finch.jl/pull/477
+            #https://github.com/finch-tensor/Finch.jl/pull/477
             let
                 A = zeros(2, 3, 3)
                 A_tns = Tensor(Dense(Dense(Dense(Element(0.0)))), A)
@@ -577,14 +577,14 @@ using Finch: AsArray
                 @test compute(A_tns) == A_tns #If the scheduler improves, we can change this to ===
             end
 
-            #https://github.com/willow-ahrens/Finch.jl/issues/481
+            #https://github.com/finch-tensor/Finch.jl/issues/481
             let
                 r = fsprand(1, 10, 10, 0.01)
                 r_tns = Tensor(Dense(Dense(Dense(Element(0.0)))), r)
                 @test r_tns + r_tns == 2 * r_tns
             end
 
-            #https://github.com/willow-ahrens/Finch.jl/issues/487
+            #https://github.com/finch-tensor/Finch.jl/issues/487
             let
                 a = fsprand(10, 1, 0.8)
                 b = fsprand(10, 1, 0.8)

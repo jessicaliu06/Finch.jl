@@ -29,7 +29,7 @@ bspread
 
 ## TensorMarket (`.mtx`, `.ttx`)
 
-Finch supports the [MatrixMarket](https://math.nist.gov/MatrixMarket/formats.html#MMformat) and [TensorMarket](https://github.com/willow-ahrens/TensorMarket.jl) formats, which prioritize readability and archiveability, storing matrices and tensors in plaintext.
+Finch supports the [MatrixMarket](https://math.nist.gov/MatrixMarket/formats.html#MMformat) and [TensorMarket](https://github.com/finch-tensor/TensorMarket.jl) formats, which prioritize readability and archiveability, storing matrices and tensors in plaintext.
 
 ```@docs
 fttwrite

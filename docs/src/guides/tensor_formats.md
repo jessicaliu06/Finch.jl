@@ -87,7 +87,7 @@ some general descriptions.
 | SparsePoint          | Advanced | Single Sparse         | ✅                  | ✅            | ✅                        | ❌                  | ❌              | ✅     |
 | SparseInterval       | Advanced | Single Sparse Run     | ✅                  | ✅            | ✅                        | ❌                  | ❌              | ✅     |
 | SparseBand           | Advanced | Single Sparse Block   | ✅                  | ✅            | ✅                        | ❌                  | ❌              | ⚙️     |
-| DenseRLE             | Advanced | Dense Runs            | ✅                  | ❌            | ✅                        | ❌                  | ❌              | ⚙     |
+| DenseRLE             | Advanced | Dense Runs            | ✅                  | ❌            | ✅                        | ❌                  | ❌              | ⚙️     |
 | SparseBytemap        | Advanced | Sparse                | ✅                  | ✅            | ✅                        | ✅                  | ❌              | ✅     |
 | SparseDict           | Advanced | Sparse                | ✅                  | ✅            | ✅                        | ✅                  | ❌              | ✅️     |
 | AtomicLevel          | Modifier | No Data               | ✅                  | ✅            | ✅                        | ✅                  | ✅              | ⚙️ |

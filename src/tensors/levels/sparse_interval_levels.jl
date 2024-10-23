@@ -1,7 +1,7 @@
 """
     SparseIntervalLevel{[Ti=Int], [Ptr, Left, Right]}(lvl, [dim])
 
-The single RLE level represent runs of equivalent slices `A[:, ..., :, i]`
+The SparseIntervalLevel represent runs of equivalent slices `A[:, ..., :, i]`
 which are not entirely [`fill_value`](@ref). A main difference compared to SparseRunList
 level is that SparseInterval level only stores a 'single' non-fill run. It emits
 an error if the program tries to write multiple (>=2) runs into SparseInterval.

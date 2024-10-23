@@ -1,7 +1,7 @@
 """
     SparseRunListLevel{[Ti=Int], [Ptr, Left, Right]}(lvl, [dim]; [merge = true])
 
-The sparse RLE level represent runs of equivalent slices `A[:, ..., :, i]`
+The SparseRunListLevel represent runs of equivalent slices `A[:, ..., :, i]`
 which are not entirely [`fill_value`](@ref). A sorted list is used to record the
 left and right endpoints of each run. Optionally, `dim` is the size of the last dimension.
 

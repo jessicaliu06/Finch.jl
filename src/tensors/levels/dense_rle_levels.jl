@@ -1,7 +1,7 @@
 """
     RunListLevel{[Ti=Int], [Ptr, Right]}(lvl, [dim], [merge = true])
 
-The dense RLE level represent runs of equivalent slices `A[:, ..., :, i]`. A
+The RunListLevel represent runs of equivalent slices `A[:, ..., :, i]`. A
 sorted list is used to record the right endpoint of each run. Optionally, `dim`
 is the size of the last dimension.
 

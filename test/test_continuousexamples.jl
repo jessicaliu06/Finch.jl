@@ -5,19 +5,19 @@
         A_left = [1.1, 6.6, 9.9]
         A_right = [3.3, 7.7, 11.11]
         A_val = [1, 2, 3]
-        A = Tensor(SparseRLE{Float64}(Element(0, A_val), 12.0, [1, 4], Finch.PlusEpsVector(A_left), A_right, Element(0, Int[])))
+        A = Tensor(SparseRunList{Float64}(Element(0, A_val), 12.0, [1, 4], Finch.PlusEpsVector(A_left), A_right, Element(0, Int[])))
         B_left = [2.2, 5.5, 8.8]
         B_right = [3.3, 8.8, 9.9]
         B_val = [1, 1, 2]
-        B = Tensor(SparseRLE{Float64}(Element(0, B_val), 12.0, [1, 4], Finch.PlusEpsVector(B_left), B_right, Element(0, Int[])))
-        C = Tensor(SparseRLE{Float64}(Element(0), 12.0, [1], Finch.PlusEpsVector(Float64[]), Float64[], Element(0, Int[])))
+        B = Tensor(SparseRunList{Float64}(Element(0, B_val), 12.0, [1, 4], Finch.PlusEpsVector(B_left), B_right, Element(0, Int[])))
+        C = Tensor(SparseRunList{Float64}(Element(0), 12.0, [1], Finch.PlusEpsVector(Float64[]), Float64[], Element(0, Int[])))
         @finch begin
             C .= 0
             for i = _
                 C[i] += A[i] + B[i]
             end
         end
-        C_ref = Tensor(SparseRLE{Float64}(Element(0, [1, 2, 1, 3, 1, 2, 3]), 12.0, [1, 8], Finch.PlusEpsVector([1.1, 2.2, 5.5, 6.6, 7.7, 8.8, 9.9]), [2.2, 3.3, 6.6, 7.7, 8.8, 9.9, 11.11], Element(0, Int[])))
+        C_ref = Tensor(SparseRunList{Float64}(Element(0, [1, 2, 1, 3, 1, 2, 3]), 12.0, [1, 8], Finch.PlusEpsVector([1.1, 2.2, 5.5, 6.6, 7.7, 8.8, 9.9]), [2.2, 3.3, 6.6, 7.7, 8.8, 9.9, 11.11], Element(0, Int[])))
         @test Structure(C) == Structure(C_ref)
     end
 
@@ -142,7 +142,7 @@
 
     @testset "Trilinear Interpolation on Sampled Ray" begin
         output = Tensor(SparseList(Dense(Element(Float32(0.0)))), 16, 100)
-        grid = Tensor(SparseRLE{Float64}(SparseRLE{Float64}(SparseRLE{Float64}(Dense(Element(0))))), 16,16,16,27)
+        grid = Tensor(SparseRunList{Float64}(SparseRunList{Float64}(SparseRunList{Float64}(Dense(Element(0))))), 16,16,16,27)
         timeray = Tensor(SparseInterval{Int64}(Pattern()), 100)
         @finch begin
             grid .= 0

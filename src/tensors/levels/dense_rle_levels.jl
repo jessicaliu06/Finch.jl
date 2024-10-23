@@ -1,5 +1,5 @@
 """
-    DenseRLELevel{[Ti=Int], [Ptr, Right]}(lvl, [dim], [merge = true])
+    RunListLevel{[Ti=Int], [Ptr, Right]}(lvl, [dim], [merge = true])
 
 The dense RLE level represent runs of equivalent slices `A[:, ..., :, i]`. A
 sorted list is used to record the right endpoint of each run. Optionally, `dim`
@@ -13,22 +13,22 @@ The `merge` keyword argument is used to specify whether the level should merge
 duplicate consecutive runs.
 
 ```jldoctest
-julia> Tensor(Dense(DenseRLELevel(Element(0.0))), [10 0 20; 30 0 0; 0 0 40])
+julia> Tensor(Dense(RunListLevel(Element(0.0))), [10 0 20; 30 0 0; 0 0 40])
 3×3-Tensor
 └─ Dense [:,1:3]
-   ├─ [:, 1]: DenseRLE (0.0) [1:3]
+   ├─ [:, 1]: RunList (0.0) [1:3]
    │  ├─ [1:1]: 10.0
    │  ├─ [2:2]: 30.0
    │  └─ [3:3]: 0.0
-   ├─ [:, 2]: DenseRLE (0.0) [1:3]
+   ├─ [:, 2]: RunList (0.0) [1:3]
    │  └─ [1:3]: 0.0
-   └─ [:, 3]: DenseRLE (0.0) [1:3]
+   └─ [:, 3]: RunList (0.0) [1:3]
       ├─ [1:1]: 20.0
       ├─ [2:2]: 0.0
       └─ [3:3]: 40.0
 ```
 """
-struct DenseRLELevel{Ti, Ptr<:AbstractVector, Right<:AbstractVector, merge, Lvl} <: AbstractLevel
+struct RunListLevel{Ti, Ptr<:AbstractVector, Right<:AbstractVector, merge, Lvl} <: AbstractLevel
     lvl::Lvl
     shape::Ti
     ptr::Ptr
@@ -36,50 +36,50 @@ struct DenseRLELevel{Ti, Ptr<:AbstractVector, Right<:AbstractVector, merge, Lvl}
     buf::Lvl
 end
 
-const DenseRLE = DenseRLELevel
-DenseRLELevel(lvl::Lvl; kwargs...) where {Lvl} = DenseRLELevel{Int}(lvl; kwargs...)
-DenseRLELevel(lvl, shape, args...; kwargs...) = DenseRLELevel{typeof(shape)}(lvl, shape, args...; kwargs...)
-DenseRLELevel{Ti}(lvl; kwargs...) where {Ti} = DenseRLELevel(lvl, zero(Ti); kwargs...)
-DenseRLELevel{Ti}(lvl, shape; kwargs...) where {Ti} = DenseRLELevel{Ti}(lvl, shape, postype(lvl)[1], Ti[], deepcopy(lvl); kwargs...) #TODO if similar_level could return the same type, we could use it here
-DenseRLELevel{Ti}(lvl::Lvl, shape, ptr::Ptr, right::Right, buf::Lvl; merge=true) where {Ti, Lvl, Ptr, Right} =
-    DenseRLELevel{Ti, Ptr, Right, merge, Lvl}(lvl, Ti(shape), ptr, right, buf)
+const RunList = RunListLevel
+RunListLevel(lvl::Lvl; kwargs...) where {Lvl} = RunListLevel{Int}(lvl; kwargs...)
+RunListLevel(lvl, shape, args...; kwargs...) = RunListLevel{typeof(shape)}(lvl, shape, args...; kwargs...)
+RunListLevel{Ti}(lvl; kwargs...) where {Ti} = RunListLevel(lvl, zero(Ti); kwargs...)
+RunListLevel{Ti}(lvl, shape; kwargs...) where {Ti} = RunListLevel{Ti}(lvl, shape, postype(lvl)[1], Ti[], deepcopy(lvl); kwargs...) #TODO if similar_level could return the same type, we could use it here
+RunListLevel{Ti}(lvl::Lvl, shape, ptr::Ptr, right::Right, buf::Lvl; merge=true) where {Ti, Lvl, Ptr, Right} =
+    RunListLevel{Ti, Ptr, Right, merge, Lvl}(lvl, Ti(shape), ptr, right, buf)
 
-getmerge(lvl::DenseRLELevel{Ti, Ptr, Right, merge}) where {Ti, Ptr, Right, merge} = merge
+getmerge(lvl::RunListLevel{Ti, Ptr, Right, merge}) where {Ti, Ptr, Right, merge} = merge
 
-Base.summary(lvl::DenseRLELevel) = "DenseRLE($(summary(lvl.lvl)))"
-similar_level(lvl::DenseRLELevel, fill_value, eltype::Type, dim, tail...) =
-    DenseRLE(similar_level(lvl.lvl, fill_value, eltype, tail...), dim; merge = getmerge(lvl))
+Base.summary(lvl::RunListLevel) = "RunList($(summary(lvl.lvl)))"
+similar_level(lvl::RunListLevel, fill_value, eltype::Type, dim, tail...) =
+    RunList(similar_level(lvl.lvl, fill_value, eltype, tail...), dim; merge = getmerge(lvl))
 
-function postype(::Type{DenseRLELevel{Ti, Ptr, Right, merge, Lvl}}) where {Ti, Ptr, Right, merge, Lvl}
+function postype(::Type{RunListLevel{Ti, Ptr, Right, merge, Lvl}}) where {Ti, Ptr, Right, merge, Lvl}
     return postype(Lvl)
 end
 
-function moveto(lvl::DenseRLELevel{Ti}, device) where {Ti}
+function moveto(lvl::RunListLevel{Ti}, device) where {Ti}
     lvl_2 = moveto(lvl.lvl, device)
     ptr = moveto(lvl.ptr, device)
     right = moveto(lvl.right, device)
     buf = moveto(lvl.buf, device)
-    return DenseRLELevel{Ti}(lvl_2, lvl.shape, lvl.ptr, lvl.right, lvl.buf; merge = getmerge(lvl))
+    return RunListLevel{Ti}(lvl_2, lvl.shape, lvl.ptr, lvl.right, lvl.buf; merge = getmerge(lvl))
 end
 
-pattern!(lvl::DenseRLELevel{Ti}) where {Ti} =
-    DenseRLELevel{Ti}(pattern!(lvl.lvl), lvl.shape, lvl.ptr, lvl.right, pattern!(lvl.buf); merge = getmerge(lvl))
+pattern!(lvl::RunListLevel{Ti}) where {Ti} =
+    RunListLevel{Ti}(pattern!(lvl.lvl), lvl.shape, lvl.ptr, lvl.right, pattern!(lvl.buf); merge = getmerge(lvl))
 
-function countstored_level(lvl::DenseRLELevel, pos)
+function countstored_level(lvl::RunListLevel, pos)
     countstored_level(lvl.lvl, lvl.ptr[pos + 1] - 1)
 end
 
-set_fill_value!(lvl::DenseRLELevel{Ti}, init) where {Ti} =
-    DenseRLELevel{Ti}(set_fill_value!(lvl.lvl, init), lvl.shape, lvl.ptr, lvl.right, set_fill_value!(lvl.buf, init); merge = getmerge(lvl))
+set_fill_value!(lvl::RunListLevel{Ti}, init) where {Ti} =
+    RunListLevel{Ti}(set_fill_value!(lvl.lvl, init), lvl.shape, lvl.ptr, lvl.right, set_fill_value!(lvl.buf, init); merge = getmerge(lvl))
 
-Base.resize!(lvl::DenseRLELevel{Ti}, dims...) where {Ti} =
-    DenseRLELevel{Ti}(resize!(lvl.lvl, dims[1:end-1]...), dims[end], lvl.ptr, lvl.right, resize!(lvl.buf, dims[1:end-1]...); merge = getmerge(lvl))
+Base.resize!(lvl::RunListLevel{Ti}, dims...) where {Ti} =
+    RunListLevel{Ti}(resize!(lvl.lvl, dims[1:end-1]...), dims[end], lvl.ptr, lvl.right, resize!(lvl.buf, dims[1:end-1]...); merge = getmerge(lvl))
 
-function Base.show(io::IO, lvl::DenseRLELevel{Ti, Ptr, Right, merge, Lvl}) where {Ti, Ptr, Right, merge, Lvl}
+function Base.show(io::IO, lvl::RunListLevel{Ti, Ptr, Right, merge, Lvl}) where {Ti, Ptr, Right, merge, Lvl}
     if get(io, :compact, false)
-        print(io, "DenseRLE(")
+        print(io, "RunList(")
     else
-        print(io, "DenseRLE{$Ti}(")
+        print(io, "RunList{$Ti}(")
     end
     show(io, lvl.lvl)
     print(io, ", ")
@@ -99,10 +99,10 @@ function Base.show(io::IO, lvl::DenseRLELevel{Ti, Ptr, Right, merge, Lvl}) where
     print(io, ")")
 end
 
-labelled_show(io::IO, fbr::SubFiber{<:DenseRLELevel}) =
-    print(io, "DenseRLE (", fill_value(fbr), ") [", ":,"^(ndims(fbr) - 1), "1:", size(fbr)[end], "]")
+labelled_show(io::IO, fbr::SubFiber{<:RunListLevel}) =
+    print(io, "RunList (", fill_value(fbr), ") [", ":,"^(ndims(fbr) - 1), "1:", size(fbr)[end], "]")
 
-function labelled_children(fbr::SubFiber{<:DenseRLELevel})
+function labelled_children(fbr::SubFiber{<:RunListLevel})
     lvl = fbr.lvl
     pos = fbr.pos
     pos + 1 > length(lvl.ptr) && return []
@@ -112,15 +112,15 @@ function labelled_children(fbr::SubFiber{<:DenseRLELevel})
     end
 end
 
-@inline level_ndims(::Type{<:DenseRLELevel{Ti, Ptr, Right, merge, Lvl}}) where {Ti, Ptr, Right, merge, Lvl} = 1 + level_ndims(Lvl)
-@inline level_size(lvl::DenseRLELevel) = (level_size(lvl.lvl)..., lvl.shape)
-@inline level_axes(lvl::DenseRLELevel) = (level_axes(lvl.lvl)..., Base.OneTo(lvl.shape))
-@inline level_eltype(::Type{<:DenseRLELevel{Ti, Ptr, Right, merge, Lvl}}) where {Ti, Ptr, Right, merge, Lvl} = level_eltype(Lvl)
-@inline level_fill_value(::Type{<:DenseRLELevel{Ti, Ptr, Right, merge, Lvl}}) where {Ti, Ptr, Right, merge, Lvl}= level_fill_value(Lvl)
-data_rep_level(::Type{<:DenseRLELevel{Ti, Ptr, Right, merge, Lvl}}) where {Ti, Ptr, Right, merge, Lvl} = DenseData(data_rep_level(Lvl))
+@inline level_ndims(::Type{<:RunListLevel{Ti, Ptr, Right, merge, Lvl}}) where {Ti, Ptr, Right, merge, Lvl} = 1 + level_ndims(Lvl)
+@inline level_size(lvl::RunListLevel) = (level_size(lvl.lvl)..., lvl.shape)
+@inline level_axes(lvl::RunListLevel) = (level_axes(lvl.lvl)..., Base.OneTo(lvl.shape))
+@inline level_eltype(::Type{<:RunListLevel{Ti, Ptr, Right, merge, Lvl}}) where {Ti, Ptr, Right, merge, Lvl} = level_eltype(Lvl)
+@inline level_fill_value(::Type{<:RunListLevel{Ti, Ptr, Right, merge, Lvl}}) where {Ti, Ptr, Right, merge, Lvl}= level_fill_value(Lvl)
+data_rep_level(::Type{<:RunListLevel{Ti, Ptr, Right, merge, Lvl}}) where {Ti, Ptr, Right, merge, Lvl} = DenseData(data_rep_level(Lvl))
 
-(fbr::AbstractFiber{<:DenseRLELevel})() = fbr
-function (fbr::SubFiber{<:DenseRLELevel})(idxs...)
+(fbr::AbstractFiber{<:RunListLevel})() = fbr
+function (fbr::SubFiber{<:RunListLevel})(idxs...)
     isempty(idxs) && return fbr
     lvl = fbr.lvl
     p = fbr.pos
@@ -130,7 +130,7 @@ function (fbr::SubFiber{<:DenseRLELevel})(idxs...)
     fbr_2(idxs[1:end-1]...)
 end
 
-mutable struct VirtualDenseRLELevel <: AbstractVirtualLevel
+mutable struct VirtualRunListLevel <: AbstractVirtualLevel
     lvl
     ex
     Ti
@@ -145,19 +145,19 @@ mutable struct VirtualDenseRLELevel <: AbstractVirtualLevel
     merge
 end
 
-is_level_injective(ctx, lvl::VirtualDenseRLELevel) = [false, is_level_injective(ctx, lvl.lvl)...]
-function is_level_atomic(ctx, lvl::VirtualDenseRLELevel)
+is_level_injective(ctx, lvl::VirtualRunListLevel) = [false, is_level_injective(ctx, lvl.lvl)...]
+function is_level_atomic(ctx, lvl::VirtualRunListLevel)
     (below, atomic) = is_level_atomic(ctx, lvl.lvl)
     return ([below; [atomic]], atomic)
 end
-function is_level_concurrent(ctx, lvl::VirtualDenseRLELevel)
+function is_level_concurrent(ctx, lvl::VirtualRunListLevel)
     (data, _) = is_level_concurrent(ctx, lvl.lvl)
     return ([data; [false]], false)
 end
 
-postype(lvl::VirtualDenseRLELevel) = postype(lvl.lvl)
+postype(lvl::VirtualRunListLevel) = postype(lvl.lvl)
 
-function virtualize(ctx, ex, ::Type{DenseRLELevel{Ti, Ptr, Right, merge, Lvl}}, tag=:lvl) where {Ti, Ptr, Right, merge, Lvl}
+function virtualize(ctx, ex, ::Type{RunListLevel{Ti, Ptr, Right, merge, Lvl}}, tag=:lvl) where {Ti, Ptr, Right, merge, Lvl}
     #Invariants of the level (Read Mode):
     # 1. right[ptr[p]:ptr[p + 1] - 1] is the sorted list of right endpoints of the runs
     #
@@ -185,12 +185,12 @@ function virtualize(ctx, ex, ::Type{DenseRLELevel{Ti, Ptr, Right, merge, Lvl}}, 
     prev_pos = freshen(ctx, sym, :_prev_pos)
     lvl_2 = virtualize(ctx, :($sym.lvl), Lvl, sym)
     buf = virtualize(ctx, :($sym.buf), Lvl, sym)
-    VirtualDenseRLELevel(lvl_2, sym, Ti, shape, qos_fill, qos_stop, ptr, right, buf, prev_pos, i_prev, merge)
+    VirtualRunListLevel(lvl_2, sym, Ti, shape, qos_fill, qos_stop, ptr, right, buf, prev_pos, i_prev, merge)
 end
 
-function lower(ctx::AbstractCompiler, lvl::VirtualDenseRLELevel, ::DefaultStyle)
+function lower(ctx::AbstractCompiler, lvl::VirtualRunListLevel, ::DefaultStyle)
     quote
-        $DenseRLELevel{$(lvl.Ti)}(
+        $RunListLevel{$(lvl.Ti)}(
             $(ctx(lvl.lvl)),
             $(ctx(lvl.shape)),
             $(lvl.ptr),
@@ -201,21 +201,21 @@ function lower(ctx::AbstractCompiler, lvl::VirtualDenseRLELevel, ::DefaultStyle)
     end
 end
 
-Base.summary(lvl::VirtualDenseRLELevel) = "DenseRLE($(summary(lvl.lvl)))"
+Base.summary(lvl::VirtualRunListLevel) = "RunList($(summary(lvl.lvl)))"
 
-function virtual_level_size(ctx, lvl::VirtualDenseRLELevel)
+function virtual_level_size(ctx, lvl::VirtualRunListLevel)
     ext = make_extent(lvl.Ti, literal(lvl.Ti(1.0)), lvl.shape)
     (virtual_level_size(ctx, lvl.lvl)..., ext)
 end
 
-function virtual_level_resize!(ctx, lvl::VirtualDenseRLELevel, dims...)
+function virtual_level_resize!(ctx, lvl::VirtualRunListLevel, dims...)
     lvl.shape = getstop(dims[end])
     lvl.lvl = virtual_level_resize!(ctx, lvl.lvl, dims[1:end-1]...)
     lvl.buf = virtual_level_resize!(ctx, lvl.buf, dims[1:end-1]...)
     lvl
 end
 
-function virtual_moveto_level(ctx::AbstractCompiler, lvl::VirtualDenseRLELevel, arch)
+function virtual_moveto_level(ctx::AbstractCompiler, lvl::VirtualRunListLevel, arch)
     ptr_2 = freshen(ctx, lvl.ptr)
     right_2 = freshen(ctx, lvl.right)
     push_preamble!(ctx, quote
@@ -232,10 +232,10 @@ function virtual_moveto_level(ctx::AbstractCompiler, lvl::VirtualDenseRLELevel, 
     virtual_moveto_level(ctx, lvl.buf, arch)
 end
 
-virtual_level_eltype(lvl::VirtualDenseRLELevel) = virtual_level_eltype(lvl.lvl)
-virtual_level_fill_value(lvl::VirtualDenseRLELevel) = virtual_level_fill_value(lvl.lvl)
+virtual_level_eltype(lvl::VirtualRunListLevel) = virtual_level_eltype(lvl.lvl)
+virtual_level_fill_value(lvl::VirtualRunListLevel) = virtual_level_fill_value(lvl.lvl)
 
-function declare_level!(ctx::AbstractCompiler, lvl::VirtualDenseRLELevel, pos, init)
+function declare_level!(ctx::AbstractCompiler, lvl::VirtualRunListLevel, pos, init)
     Tp = postype(lvl)
     Ti = lvl.Ti
     qos = call(-, call(getindex, :($(lvl.ptr)), call(+, pos, 1)), 1)
@@ -250,7 +250,7 @@ function declare_level!(ctx::AbstractCompiler, lvl::VirtualDenseRLELevel, pos, i
     return lvl
 end
 
-function assemble_level!(ctx, lvl::VirtualDenseRLELevel, pos_start, pos_stop)
+function assemble_level!(ctx, lvl::VirtualRunListLevel, pos_start, pos_stop)
     pos_start = ctx(cache!(ctx, :p_start, pos_start))
     pos_stop = ctx(cache!(ctx, :p_start, pos_stop))
     return quote
@@ -260,7 +260,7 @@ function assemble_level!(ctx, lvl::VirtualDenseRLELevel, pos_start, pos_stop)
 end
 
 #=
-function freeze_level!(ctx::AbstractCompiler, lvl::VirtualDenseRLELevel, pos_stop)
+function freeze_level!(ctx::AbstractCompiler, lvl::VirtualRunListLevel, pos_stop)
     (lvl.buf, lvl.lvl) = (lvl.lvl, lvl.buf)
     p = freshen(ctx, :p)
     pos_stop = ctx(cache!(ctx, :pos_stop, simplify(ctx, pos_stop)))
@@ -278,7 +278,7 @@ function freeze_level!(ctx::AbstractCompiler, lvl::VirtualDenseRLELevel, pos_sto
 end
 =#
 
-function freeze_level!(ctx::AbstractCompiler, lvl::VirtualDenseRLELevel, pos_stop)
+function freeze_level!(ctx::AbstractCompiler, lvl::VirtualRunListLevel, pos_stop)
     Tp = postype(lvl)
     p = freshen(ctx, :p)
     pos_stop = ctx(cache!(ctx, :pos_stop, simplify(ctx, pos_stop)))
@@ -383,8 +383,8 @@ function freeze_level!(ctx::AbstractCompiler, lvl::VirtualDenseRLELevel, pos_sto
     end
 end
 
-function thaw_level!(ctx::AbstractCompiler, lvl::VirtualDenseRLELevel, pos_stop)
-    error("Thaw is not yet implemented for DenseRLE level. To implement, we need to cache the last written qos as a Ref{Int}, then reconstruct prev_pos and i_prev from the ptr and right arrays")
+function thaw_level!(ctx::AbstractCompiler, lvl::VirtualRunListLevel, pos_stop)
+    error("Thaw is not yet implemented for RunList level. To implement, we need to cache the last written qos as a Ref{Int}, then reconstruct prev_pos and i_prev from the ptr and right arrays")
     #=
     p = freshen(ctx, :p)
     pos_stop = ctx(cache!(ctx, :pos_stop, simplify(ctx, pos_stop)))
@@ -406,7 +406,7 @@ function thaw_level!(ctx::AbstractCompiler, lvl::VirtualDenseRLELevel, pos_stop)
     =#
 end
 
-function instantiate(ctx, fbr::VirtualSubFiber{VirtualDenseRLELevel}, mode::Reader, subprotos, ::Union{typeof(defaultread), typeof(walk)})
+function instantiate(ctx, fbr::VirtualSubFiber{VirtualRunListLevel}, mode::Reader, subprotos, ::Union{typeof(defaultread), typeof(walk)})
     (lvl, pos) = (fbr.lvl, fbr.pos)
     tag = lvl.ex
     Tp = postype(lvl)
@@ -447,7 +447,7 @@ function instantiate(ctx, fbr::VirtualSubFiber{VirtualDenseRLELevel}, mode::Read
     )
 end
 
-instantiate(ctx, fbr::VirtualSubFiber{VirtualDenseRLELevel}, mode::Updater, protos) =
+instantiate(ctx, fbr::VirtualSubFiber{VirtualRunListLevel}, mode::Updater, protos) =
     instantiate(ctx, VirtualHollowSubFiber(fbr.lvl, fbr.pos, freshen(ctx, :null)), mode, protos)
 
 #Invariants of the level (Write Mode):
@@ -456,7 +456,7 @@ instantiate(ctx, fbr::VirtualSubFiber{VirtualDenseRLELevel}, mode::Updater, prot
 # 3. for all p in 1:prevpos-1, ptr[p] is the number of runs in that position
 # 4. qos_fill is the position of the last index written
 
-function instantiate(ctx, fbr::VirtualHollowSubFiber{VirtualDenseRLELevel}, mode::Updater, subprotos, ::Union{typeof(defaultupdate), typeof(extrude)})
+function instantiate(ctx, fbr::VirtualHollowSubFiber{VirtualRunListLevel}, mode::Updater, subprotos, ::Union{typeof(defaultupdate), typeof(extrude)})
     (lvl, pos) = (fbr.lvl, fbr.pos)
     tag = lvl.ex
     Tp = postype(lvl)
@@ -478,7 +478,7 @@ function instantiate(ctx, fbr::VirtualHollowSubFiber{VirtualDenseRLELevel}, mode
                 $qos = $qos_fill + 1
                 $(if issafe(get_mode_flag(ctx))
                     quote
-                        $(lvl.prev_pos) <= $(ctx(pos)) || throw(FinchProtocolError("DenseRLELevels cannot be updated multiple times"))
+                        $(lvl.prev_pos) <= $(ctx(pos)) || throw(FinchProtocolError("RunListLevels cannot be updated multiple times"))
                     end
                 end)
                 $local_i_prev = $(lvl.i_prev)

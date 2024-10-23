@@ -15,7 +15,7 @@ quote
     Finch.resize_if_smaller!(tmp_lvl_ptr, 1 + 1)
     Finch.fill_range!(tmp_lvl_ptr, 0, 1 + 1, 1 + 1)
     tmp_lvl_qos = 0 + 1
-    0 < 1 || throw(FinchProtocolError("SparseRLELevels cannot be updated multiple times"))
+    0 < 1 || throw(FinchProtocolError("SparseRunListLevels cannot be updated multiple times"))
     ref_lvl_q = ref_lvl_ptr[1]
     ref_lvl_q_stop = ref_lvl_ptr[1 + 1]
     if ref_lvl_q < ref_lvl_q_stop
@@ -104,5 +104,5 @@ quote
     qos_stop = q_2 - 1
     resize!(tmp_lvl_val, qos_stop)
     resize!(tmp_lvl_val_2, 0)
-    (tmp = Tensor((SparseRLELevel){Int32}(tmp_lvl_2, ref_lvl.shape, tmp_lvl_ptr, tmp_lvl_left, tmp_lvl_right, tmp_lvl_3; merge = true)),)
+    (tmp = Tensor((SparseRunListLevel){Int32}(tmp_lvl_2, ref_lvl.shape, tmp_lvl_ptr, tmp_lvl_left, tmp_lvl_right, tmp_lvl_3; merge = true)),)
 end

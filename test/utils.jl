@@ -62,7 +62,7 @@ isstructequal(a::T, b::T) where {T <: SparseCOO} =
     a.tbl == b.tbl &&
     isstructequal(a.lvl, b.lvl)
 
-isstructequal(a::T, b::T) where {T <: SparseVBL} =
+isstructequal(a::T, b::T) where {T <: SparseBlockList} =
     a.shape == b.shape &&
     a.ptr == b.ptr &&
     a.idx == b.idx &&
@@ -83,14 +83,14 @@ isstructequal(a::T, b::T) where {T <: SparseByteMap} =
     a.srt == b.srt &&
     isstructequal(a.lvl, b.lvl)
 
-isstructequal(a::T, b::T) where {T <: SparseRLE} =
+isstructequal(a::T, b::T) where {T <: SparseRunList} =
     a.shape == b.shape &&
     a.ptr == b.ptr &&
     a.left == b.left &&
     a.right == b.right &&
     isstructequal(a.lvl, b.lvl)
 
-isstructequal(a::T, b::T) where {T <: DenseRLE} =
+isstructequal(a::T, b::T) where {T <: RunList} =
     a.shape == b.shape &&
     a.ptr == b.ptr &&
     a.right == b.right &&

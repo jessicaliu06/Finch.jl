@@ -23,8 +23,8 @@ using Preferences
 export @finch, @finch_program, @finch_code, @finch_kernel, value
 
 export Tensor
-export SparseRLE, SparseRLELevel
-export DenseRLE, DenseRLELevel
+export SparseRunList, SparseRunListLevel
+export RunList, RunListLevel
 export SparseInterval, SparseIntervalLevel
 export Sparse, SparseLevel
 export SparseList, SparseListLevel
@@ -33,7 +33,7 @@ export SparsePoint, SparsePointLevel
 export SparseBand, SparseBandLevel
 export SparseCOO, SparseCOOLevel
 export SparseByteMap, SparseByteMapLevel
-export SparseVBL, SparseVBLLevel
+export SparseBlockList, SparseBlockListLevel
 export Dense, DenseLevel
 export Element, ElementLevel
 export Separate, SeparateLevel
@@ -186,6 +186,13 @@ include("interface/einsum.jl")
 @deprecate redefault! set_fill_value!
 @deprecate dropdefaults dropfills
 @deprecate dropdefaults! dropfills!
+
+@deprecate SparseRLE SparseRunList
+@deprecate SparseRLELevel SparseRunListLevel
+@deprecate DenseRLE RunList
+@deprecate DenseRLELevel RunListLevel
+@deprecate SparseVBL SparseBlockList
+@deprecate SparseVBLLevel SparseBlockListLevel
 
 @static if !isdefined(Base, :get_extension)
     function __init__()

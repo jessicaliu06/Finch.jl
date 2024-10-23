@@ -1,5 +1,5 @@
 """
-    SparseRLELevel{[Ti=Int], [Ptr, Left, Right]}(lvl, [dim]; [merge = true])
+    SparseRunListLevel{[Ti=Int], [Ptr, Left, Right]}(lvl, [dim]; [merge = true])
 
 The sparse RLE level represent runs of equivalent slices `A[:, ..., :, i]`
 which are not entirely [`fill_value`](@ref). A sorted list is used to record the
@@ -13,19 +13,19 @@ The `merge` keyword argument is used to specify whether the level should merge
 duplicate consecutive runs.
 
 ```jldoctest
-julia> Tensor(Dense(SparseRLELevel(Element(0.0))), [10 0 20; 30 0 0; 0 0 40])
+julia> Tensor(Dense(SparseRunListLevel(Element(0.0))), [10 0 20; 30 0 0; 0 0 40])
 3×3-Tensor
 └─ Dense [:,1:3]
-   ├─ [:, 1]: SparseRLE (0.0) [1:3]
+   ├─ [:, 1]: SparseRunList (0.0) [1:3]
    │  ├─ [1:1]: 10.0
    │  └─ [2:2]: 30.0
-   ├─ [:, 2]: SparseRLE (0.0) [1:3]
-   └─ [:, 3]: SparseRLE (0.0) [1:3]
+   ├─ [:, 2]: SparseRunList (0.0) [1:3]
+   └─ [:, 3]: SparseRunList (0.0) [1:3]
       ├─ [1:1]: 20.0
       └─ [3:3]: 40.0
 ```
 """
-struct SparseRLELevel{Ti, Ptr<:AbstractVector, Left<:AbstractVector, Right<:AbstractVector, merge, Lvl} <: AbstractLevel
+struct SparseRunListLevel{Ti, Ptr<:AbstractVector, Left<:AbstractVector, Right<:AbstractVector, merge, Lvl} <: AbstractLevel
     lvl::Lvl
     shape::Ti
     ptr::Ptr
@@ -34,51 +34,51 @@ struct SparseRLELevel{Ti, Ptr<:AbstractVector, Left<:AbstractVector, Right<:Abst
     buf::Lvl
 end
 
-const SparseRLE = SparseRLELevel
-SparseRLELevel(lvl; kwargs...) = SparseRLELevel{Int}(lvl; kwargs...)
-SparseRLELevel(lvl, shape, args...; kwargs...) = SparseRLELevel{typeof(shape)}(lvl, shape, args...; kwargs...)
-SparseRLELevel{Ti}(lvl; kwargs...) where {Ti} = SparseRLELevel(lvl, zero(Ti); kwargs...)
-SparseRLELevel{Ti}(lvl, shape; kwargs...) where {Ti} = SparseRLELevel{Ti}(lvl, shape, postype(lvl)[1], Ti[], Ti[], deepcopy(lvl); kwargs...) #TODO if similar_level could return the same type, we could use it here
-SparseRLELevel{Ti}(lvl::Lvl, shape, ptr::Ptr, left::Left, right::Right, buf::Lvl; merge=true) where {Ti, Lvl, Ptr, Left, Right} =
-    SparseRLELevel{Ti, Ptr, Left, Right, merge, Lvl}(lvl, Ti(shape), ptr, left, right, buf)
+const SparseRunList = SparseRunListLevel
+SparseRunListLevel(lvl; kwargs...) = SparseRunListLevel{Int}(lvl; kwargs...)
+SparseRunListLevel(lvl, shape, args...; kwargs...) = SparseRunListLevel{typeof(shape)}(lvl, shape, args...; kwargs...)
+SparseRunListLevel{Ti}(lvl; kwargs...) where {Ti} = SparseRunListLevel(lvl, zero(Ti); kwargs...)
+SparseRunListLevel{Ti}(lvl, shape; kwargs...) where {Ti} = SparseRunListLevel{Ti}(lvl, shape, postype(lvl)[1], Ti[], Ti[], deepcopy(lvl); kwargs...) #TODO if similar_level could return the same type, we could use it here
+SparseRunListLevel{Ti}(lvl::Lvl, shape, ptr::Ptr, left::Left, right::Right, buf::Lvl; merge=true) where {Ti, Lvl, Ptr, Left, Right} =
+    SparseRunListLevel{Ti, Ptr, Left, Right, merge, Lvl}(lvl, Ti(shape), ptr, left, right, buf)
 
-getmerge(lvl::SparseRLELevel{Ti, Ptr, Left, Right, merge}) where {Ti, Ptr, Left, Right, merge} = merge
+getmerge(lvl::SparseRunListLevel{Ti, Ptr, Left, Right, merge}) where {Ti, Ptr, Left, Right, merge} = merge
 
-Base.summary(lvl::SparseRLELevel) = "SparseRLE($(summary(lvl.lvl)))"
-similar_level(lvl::SparseRLELevel, fill_value, eltype::Type, dim, tail...) =
-    SparseRLE(similar_level(lvl.lvl, fill_value, eltype, tail...), dim)
+Base.summary(lvl::SparseRunListLevel) = "SparseRunList($(summary(lvl.lvl)))"
+similar_level(lvl::SparseRunListLevel, fill_value, eltype::Type, dim, tail...) =
+    SparseRunList(similar_level(lvl.lvl, fill_value, eltype, tail...), dim)
 
-function postype(::Type{SparseRLELevel{Ti, Ptr, Left, Right, merge, Lvl}}) where {Ti, Ptr, Left, Right, merge, Lvl}
+function postype(::Type{SparseRunListLevel{Ti, Ptr, Left, Right, merge, Lvl}}) where {Ti, Ptr, Left, Right, merge, Lvl}
     return postype(Lvl)
 end
 
-function moveto(lvl::SparseRLELevel{Ti}, device) where {Ti}
+function moveto(lvl::SparseRunListLevel{Ti}, device) where {Ti}
     lvl_2 = moveto(lvl.lvl, device)
     ptr = moveto(lvl.ptr, device)
     left = moveto(lvl.left, device)
     right = moveto(lvl.right, device)
     buf = moveto(lvl.buf, device)
-    return SparseRLELevel{Ti}(lvl_2, lvl.shape, lvl.ptr, lvl.left, lvl.right, lvl.buf; merge = getmerge(lvl))
+    return SparseRunListLevel{Ti}(lvl_2, lvl.shape, lvl.ptr, lvl.left, lvl.right, lvl.buf; merge = getmerge(lvl))
 end
 
-pattern!(lvl::SparseRLELevel{Ti}) where {Ti} =
-    SparseRLELevel{Ti}(pattern!(lvl.lvl), lvl.shape, lvl.ptr, lvl.left, lvl.right, pattern!(lvl.buf); merge = getmerge(lvl))
+pattern!(lvl::SparseRunListLevel{Ti}) where {Ti} =
+    SparseRunListLevel{Ti}(pattern!(lvl.lvl), lvl.shape, lvl.ptr, lvl.left, lvl.right, pattern!(lvl.buf); merge = getmerge(lvl))
 
-function countstored_level(lvl::SparseRLELevel, pos)
+function countstored_level(lvl::SparseRunListLevel, pos)
     countstored_level(lvl.lvl, lvl.ptr[pos + 1]-1)
 end
 
-set_fill_value!(lvl::SparseRLELevel{Ti}, init) where {Ti} =
-    SparseRLELevel{Ti}(set_fill_value!(lvl.lvl, init), lvl.shape, lvl.ptr, lvl.left, lvl.right, set_fill_value!(lvl.buf, init); merge = getmerge(lvl))
+set_fill_value!(lvl::SparseRunListLevel{Ti}, init) where {Ti} =
+    SparseRunListLevel{Ti}(set_fill_value!(lvl.lvl, init), lvl.shape, lvl.ptr, lvl.left, lvl.right, set_fill_value!(lvl.buf, init); merge = getmerge(lvl))
 
-Base.resize!(lvl::SparseRLELevel{Ti}, dims...) where {Ti} =
-    SparseRLELevel{Ti}(resize!(lvl.lvl, dims[1:end-1]...), dims[end], lvl.ptr, lvl.left, lvl.right, resize!(lvl.buf, dims[1:end-1]...); merge = getmerge(lvl))
+Base.resize!(lvl::SparseRunListLevel{Ti}, dims...) where {Ti} =
+    SparseRunListLevel{Ti}(resize!(lvl.lvl, dims[1:end-1]...), dims[end], lvl.ptr, lvl.left, lvl.right, resize!(lvl.buf, dims[1:end-1]...); merge = getmerge(lvl))
 
-function Base.show(io::IO, lvl::SparseRLELevel{Ti, Ptr, Left, Right, merge, Lvl}) where {Ti, Ptr, Left, Right, merge, Lvl}
+function Base.show(io::IO, lvl::SparseRunListLevel{Ti, Ptr, Left, Right, merge, Lvl}) where {Ti, Ptr, Left, Right, merge, Lvl}
     if get(io, :compact, false)
-        print(io, "SparseRLE(")
+        print(io, "SparseRunList(")
     else
-        print(io, "SparseRLE{$Ti}(")
+        print(io, "SparseRunList{$Ti}(")
     end
     show(io, lvl.lvl)
     print(io, ", ")
@@ -100,10 +100,10 @@ function Base.show(io::IO, lvl::SparseRLELevel{Ti, Ptr, Left, Right, merge, Lvl}
     print(io, ")")
 end
 
-labelled_show(io::IO, fbr::SubFiber{<:SparseRLELevel}) =
-    print(io, "SparseRLE (", fill_value(fbr), ") [", ":,"^(ndims(fbr) - 1), "1:", size(fbr)[end], "]")
+labelled_show(io::IO, fbr::SubFiber{<:SparseRunListLevel}) =
+    print(io, "SparseRunList (", fill_value(fbr), ") [", ":,"^(ndims(fbr) - 1), "1:", size(fbr)[end], "]")
 
-function labelled_children(fbr::SubFiber{<:SparseRLELevel})
+function labelled_children(fbr::SubFiber{<:SparseRunListLevel})
     lvl = fbr.lvl
     pos = fbr.pos
     pos + 1 > length(lvl.ptr) && return []
@@ -112,15 +112,15 @@ function labelled_children(fbr::SubFiber{<:SparseRLELevel})
     end
 end
 
-@inline level_ndims(::Type{<:SparseRLELevel{Ti, Ptr, Left, Right, merge, Lvl}}) where {Ti, Ptr, Left, Right, merge, Lvl} = 1 + level_ndims(Lvl)
-@inline level_size(lvl::SparseRLELevel) = (level_size(lvl.lvl)..., lvl.shape)
-@inline level_axes(lvl::SparseRLELevel) = (level_axes(lvl.lvl)..., Base.OneTo(lvl.shape))
-@inline level_eltype(::Type{<:SparseRLELevel{Ti, Ptr, Left, Right, merge, Lvl}}) where {Ti, Ptr, Left, Right, merge, Lvl} = level_eltype(Lvl)
-@inline level_fill_value(::Type{<:SparseRLELevel{Ti, Ptr, Left, Right, merge, Lvl}}) where {Ti, Ptr, Left, Right, merge, Lvl}= level_fill_value(Lvl)
-data_rep_level(::Type{<:SparseRLELevel{Ti, Ptr, Left, Right, merge, Lvl}}) where {Ti, Ptr, Left, Right, merge, Lvl} = SparseData(data_rep_level(Lvl))
+@inline level_ndims(::Type{<:SparseRunListLevel{Ti, Ptr, Left, Right, merge, Lvl}}) where {Ti, Ptr, Left, Right, merge, Lvl} = 1 + level_ndims(Lvl)
+@inline level_size(lvl::SparseRunListLevel) = (level_size(lvl.lvl)..., lvl.shape)
+@inline level_axes(lvl::SparseRunListLevel) = (level_axes(lvl.lvl)..., Base.OneTo(lvl.shape))
+@inline level_eltype(::Type{<:SparseRunListLevel{Ti, Ptr, Left, Right, merge, Lvl}}) where {Ti, Ptr, Left, Right, merge, Lvl} = level_eltype(Lvl)
+@inline level_fill_value(::Type{<:SparseRunListLevel{Ti, Ptr, Left, Right, merge, Lvl}}) where {Ti, Ptr, Left, Right, merge, Lvl}= level_fill_value(Lvl)
+data_rep_level(::Type{<:SparseRunListLevel{Ti, Ptr, Left, Right, merge, Lvl}}) where {Ti, Ptr, Left, Right, merge, Lvl} = SparseData(data_rep_level(Lvl))
 
-(fbr::AbstractFiber{<:SparseRLELevel})() = fbr
-function (fbr::SubFiber{<:SparseRLELevel})(idxs...)
+(fbr::AbstractFiber{<:SparseRunListLevel})() = fbr
+function (fbr::SubFiber{<:SparseRunListLevel})(idxs...)
     isempty(idxs) && return fbr
     lvl = fbr.lvl
     p = fbr.pos
@@ -131,7 +131,7 @@ function (fbr::SubFiber{<:SparseRLELevel})(idxs...)
     r1 != r2 ? fill_value(fbr_2) : fbr_2(idxs[1:end-1]...)
 end
 
-mutable struct VirtualSparseRLELevel <: AbstractVirtualLevel
+mutable struct VirtualSparseRunListLevel <: AbstractVirtualLevel
     lvl
     ex
     Ti
@@ -146,19 +146,19 @@ mutable struct VirtualSparseRLELevel <: AbstractVirtualLevel
     prev_pos
 end
 
-is_level_injective(ctx, lvl::VirtualSparseRLELevel) = [false, is_level_injective(ctx, lvl.lvl)...]
-function is_level_atomic(ctx, lvl::VirtualSparseRLELevel)
+is_level_injective(ctx, lvl::VirtualSparseRunListLevel) = [false, is_level_injective(ctx, lvl.lvl)...]
+function is_level_atomic(ctx, lvl::VirtualSparseRunListLevel)
     (below, atomic) = is_level_atomic(ctx, lvl.lvl)
     return ([below; [atomic]], atomic)
 end
-function is_level_concurrent(ctx, lvl::VirtualSparseRLELevel)
+function is_level_concurrent(ctx, lvl::VirtualSparseRunListLevel)
     (data, _) = is_level_concurrent(ctx, lvl.lvl)
     return ([data; [false]], false)
 end
 
-postype(lvl::VirtualSparseRLELevel) = postype(lvl.lvl)
+postype(lvl::VirtualSparseRunListLevel) = postype(lvl.lvl)
 
-function virtualize(ctx, ex, ::Type{SparseRLELevel{Ti, Ptr, Left, Right, merge, Lvl}}, tag=:lvl) where {Ti, Ptr, Left, Right, merge, Lvl}
+function virtualize(ctx, ex, ::Type{SparseRunListLevel{Ti, Ptr, Left, Right, merge, Lvl}}, tag=:lvl) where {Ti, Ptr, Left, Right, merge, Lvl}
     sym = freshen(ctx, tag)
     shape = value(:($sym.shape), Int)
     qos_fill = freshen(ctx, sym, :_qos_fill)
@@ -178,11 +178,11 @@ function virtualize(ctx, ex, ::Type{SparseRLELevel{Ti, Ptr, Left, Right, merge, 
     prev_pos = freshen(ctx, sym, :_prev_pos)
     lvl_2 = virtualize(ctx, :($sym.lvl), Lvl, sym)
     buf = virtualize(ctx, :($sym.buf), Lvl, sym)
-    VirtualSparseRLELevel(lvl_2, sym, Ti, shape, qos_fill, qos_stop, ptr, left, right, buf, merge, prev_pos)
+    VirtualSparseRunListLevel(lvl_2, sym, Ti, shape, qos_fill, qos_stop, ptr, left, right, buf, merge, prev_pos)
 end
-function lower(ctx::AbstractCompiler, lvl::VirtualSparseRLELevel, ::DefaultStyle)
+function lower(ctx::AbstractCompiler, lvl::VirtualSparseRunListLevel, ::DefaultStyle)
     quote
-        $SparseRLELevel{$(lvl.Ti)}(
+        $SparseRunListLevel{$(lvl.Ti)}(
             $(ctx(lvl.lvl)),
             $(ctx(lvl.shape)),
             $(lvl.ptr),
@@ -194,21 +194,21 @@ function lower(ctx::AbstractCompiler, lvl::VirtualSparseRLELevel, ::DefaultStyle
     end
 end
 
-Base.summary(lvl::VirtualSparseRLELevel) = "SparseRLE($(summary(lvl.lvl)))"
+Base.summary(lvl::VirtualSparseRunListLevel) = "SparseRunList($(summary(lvl.lvl)))"
 
-function virtual_level_size(ctx, lvl::VirtualSparseRLELevel)
+function virtual_level_size(ctx, lvl::VirtualSparseRunListLevel)
     ext = make_extent(lvl.Ti, literal(lvl.Ti(1.0)), lvl.shape)
     (virtual_level_size(ctx, lvl.lvl)..., ext)
 end
 
-function virtual_level_resize!(ctx, lvl::VirtualSparseRLELevel, dims...)
+function virtual_level_resize!(ctx, lvl::VirtualSparseRunListLevel, dims...)
     lvl.shape = getstop(dims[end])
     lvl.lvl = virtual_level_resize!(ctx, lvl.lvl, dims[1:end-1]...)
     lvl.buf = virtual_level_resize!(ctx, lvl.buf, dims[1:end-1]...)
     lvl
 end
 
-function virtual_moveto_level(ctx::AbstractCompiler, lvl::VirtualSparseRLELevel, arch)
+function virtual_moveto_level(ctx::AbstractCompiler, lvl::VirtualSparseRunListLevel, arch)
     ptr_2 = freshen(ctx, lvl.ptr)
     left_2 = freshen(ctx, lvl.left)
     right_2 = freshen(ctx, lvl.right)
@@ -229,10 +229,10 @@ function virtual_moveto_level(ctx::AbstractCompiler, lvl::VirtualSparseRLELevel,
     virtual_moveto_level(ctx, lvl.buf, arch)
 end
 
-virtual_level_eltype(lvl::VirtualSparseRLELevel) = virtual_level_eltype(lvl.lvl)
-virtual_level_fill_value(lvl::VirtualSparseRLELevel) = virtual_level_fill_value(lvl.lvl)
+virtual_level_eltype(lvl::VirtualSparseRunListLevel) = virtual_level_eltype(lvl.lvl)
+virtual_level_fill_value(lvl::VirtualSparseRunListLevel) = virtual_level_fill_value(lvl.lvl)
 
-function declare_level!(ctx::AbstractCompiler, lvl::VirtualSparseRLELevel, pos, init)
+function declare_level!(ctx::AbstractCompiler, lvl::VirtualSparseRunListLevel, pos, init)
     Tp = postype(lvl)
     Ti = lvl.Ti
     qos = call(-, call(getindex, :($(lvl.ptr)), call(+, pos, 1)), 1)
@@ -249,7 +249,7 @@ function declare_level!(ctx::AbstractCompiler, lvl::VirtualSparseRLELevel, pos, 
     return lvl
 end
 
-function assemble_level!(ctx, lvl::VirtualSparseRLELevel, pos_start, pos_stop)
+function assemble_level!(ctx, lvl::VirtualSparseRunListLevel, pos_start, pos_stop)
     pos_start = ctx(cache!(ctx, :p_start, pos_start))
     pos_stop = ctx(cache!(ctx, :p_start, pos_stop))
     return quote
@@ -259,7 +259,7 @@ function assemble_level!(ctx, lvl::VirtualSparseRLELevel, pos_start, pos_stop)
 end
 
 #=
-function freeze_level!(ctx::AbstractCompiler, lvl::VirtualSparseRLELevel, pos_stop)
+function freeze_level!(ctx::AbstractCompiler, lvl::VirtualSparseRunListLevel, pos_stop)
     (lvl.buf, lvl.lvl) = (lvl.lvl, lvl.buf)
     p = freshen(ctx, :p)
     pos_stop = ctx(cache!(ctx, :pos_stop, simplify(ctx, pos_stop)))
@@ -278,7 +278,7 @@ function freeze_level!(ctx::AbstractCompiler, lvl::VirtualSparseRLELevel, pos_st
 end
 =#
 
-function freeze_level!(ctx::AbstractCompiler, lvl::VirtualSparseRLELevel, pos_stop)
+function freeze_level!(ctx::AbstractCompiler, lvl::VirtualSparseRunListLevel, pos_stop)
     Tp = postype(lvl)
     p = freshen(ctx, :p)
     pos_stop = ctx(cache!(ctx, :pos_stop, simplify(ctx, pos_stop)))
@@ -371,7 +371,7 @@ function freeze_level!(ctx::AbstractCompiler, lvl::VirtualSparseRLELevel, pos_st
     end
 end
 
-function thaw_level!(ctx::AbstractCompiler, lvl::VirtualSparseRLELevel, pos_stop)
+function thaw_level!(ctx::AbstractCompiler, lvl::VirtualSparseRunListLevel, pos_stop)
     p = freshen(ctx, :p)
     pos_stop = ctx(cache!(ctx, :pos_stop, simplify(ctx, pos_stop)))
     qos_stop = freshen(ctx, :qos_stop)
@@ -393,7 +393,7 @@ function thaw_level!(ctx::AbstractCompiler, lvl::VirtualSparseRLELevel, pos_stop
     return lvl
 end
 
-function instantiate(ctx, fbr::VirtualSubFiber{VirtualSparseRLELevel}, mode::Reader, subprotos, ::Union{typeof(defaultread), typeof(walk)})
+function instantiate(ctx, fbr::VirtualSubFiber{VirtualSparseRunListLevel}, mode::Reader, subprotos, ::Union{typeof(defaultread), typeof(walk)})
     (lvl, pos) = (fbr.lvl, fbr.pos)
     tag = lvl.ex
     Tp = postype(lvl)
@@ -457,10 +457,10 @@ function instantiate(ctx, fbr::VirtualSubFiber{VirtualSparseRLELevel}, mode::Rea
 end
 
 
-instantiate(ctx, fbr::VirtualSubFiber{VirtualSparseRLELevel}, mode::Updater, protos) =
+instantiate(ctx, fbr::VirtualSubFiber{VirtualSparseRunListLevel}, mode::Updater, protos) =
     instantiate(ctx, VirtualHollowSubFiber(fbr.lvl, fbr.pos, freshen(ctx, :null)), mode, protos)
 
-function instantiate(ctx, fbr::VirtualHollowSubFiber{VirtualSparseRLELevel}, mode::Updater, subprotos, ::Union{typeof(defaultupdate), typeof(extrude)})
+function instantiate(ctx, fbr::VirtualHollowSubFiber{VirtualSparseRunListLevel}, mode::Updater, subprotos, ::Union{typeof(defaultupdate), typeof(extrude)})
     (lvl, pos) = (fbr.lvl, fbr.pos)
     tag = lvl.ex
     Tp = postype(lvl)
@@ -476,7 +476,7 @@ function instantiate(ctx, fbr::VirtualHollowSubFiber{VirtualSparseRLELevel}, mod
                 $qos = $qos_fill + 1
                 $(if issafe(get_mode_flag(ctx))
                     quote
-                        $(lvl.prev_pos) < $(ctx(pos)) || throw(FinchProtocolError("SparseRLELevels cannot be updated multiple times"))
+                        $(lvl.prev_pos) < $(ctx(pos)) || throw(FinchProtocolError("SparseRunListLevels cannot be updated multiple times"))
                     end
                 end)
             end,

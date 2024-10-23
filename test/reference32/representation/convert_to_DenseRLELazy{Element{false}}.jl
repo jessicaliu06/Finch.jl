@@ -15,7 +15,7 @@ quote
     Finch.resize_if_smaller!(tmp_lvl_ptr, 1 + 1)
     Finch.fill_range!(tmp_lvl_ptr, 1, 1 + 1, 1 + 1)
     tmp_lvl_qos = 0 + 1
-    1 <= 1 || throw(FinchProtocolError("DenseRLELevels cannot be updated multiple times"))
+    1 <= 1 || throw(FinchProtocolError("RunListLevels cannot be updated multiple times"))
     tmp_lvl_i_prev_3 = tmp_lvl_i_prev
     if 1 < 1
         tmp_lvl_qos += (1 - 1) - 1
@@ -103,5 +103,5 @@ quote
     tmp_lvl_qos_stop = tmp_lvl_ptr[1 + 1] - 1
     resize!(tmp_lvl_right, tmp_lvl_qos_stop)
     resize!(tmp_lvl_val_2, tmp_lvl_qos_stop)
-    (tmp = Tensor((DenseRLELevel){Int32}(tmp_lvl_3, ref_lvl.shape, tmp_lvl_ptr, tmp_lvl_right, tmp_lvl_2; merge = false)),)
+    (tmp = Tensor((RunListLevel){Int32}(tmp_lvl_3, ref_lvl.shape, tmp_lvl_ptr, tmp_lvl_right, tmp_lvl_2; merge = false)),)
 end

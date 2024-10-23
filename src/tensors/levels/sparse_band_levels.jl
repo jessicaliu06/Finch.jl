@@ -1,7 +1,7 @@
 """
 SparseBandLevel{[Ti=Int], [Ptr, Idx, Ofs]}(lvl, [dim])
 
-Like the [`SparseVBLLevel`](@ref), but stores only a single block, and fills in zeros.
+Like the [`SparseBlockListLevel`](@ref), but stores only a single block, and fills in zeros.
 
 ```jldoctest
 julia> Tensor(Dense(SparseBand(Element(0.0))), [10 0 20; 30 40 0; 0 0 50])

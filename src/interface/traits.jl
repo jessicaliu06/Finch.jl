@@ -319,7 +319,7 @@ function aggregate_rep_def(op, z, lvl::ExtrudeData, drop, drops...)
     end
 end
 
-aggregate_rep_def(op, z, lvl::ElementData) = ElementData(z, fixpoint_type(op, z, lvl))
+aggregate_rep_def(op, z, lvl::ElementData) = ElementData(z, fixpoint_type(op, z, eltype(lvl)))
 
 """
     permutedims_rep(tns, perm)

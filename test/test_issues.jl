@@ -943,4 +943,12 @@ using SparseArrays
         @test C_follow == C_walk
     end
 
+    #https://github.com/finch-tensor/Finch.jl/issues/615
+
+    A = Tensor(Dense(Dense(Element(0.0))), 10, 10)
+    res = sum(tensordot(A, A, ((1,), (2,))))
+
+    A_lazy = Finch.LazyTensor(A)
+    res = sum(tensordot(A_lazy, A_lazy, ((1,), (2,))))  # fails
+
 end

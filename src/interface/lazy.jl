@@ -114,27 +114,27 @@ function initial_value(op, T)
     throw(ArgumentError("Please supply initial value for reduction of $T with $op."))
 end
 
-function fixpoint_type(op, z, tns)
+function fixpoint_type(op, z, T)
     S = Union{}
-    T = typeof(z)
-    while T != S
-        S = T
-        T = Union{T, return_type(DefaultAlgebra(), op, T, eltype(tns))}
+    R = typeof(z)
+    while R != S
+        S = R
+        R = Union{R, return_type(DefaultAlgebra(), op, R, T)}
     end
-    T
+    R
 end
 
 function Base.reduce(op, arg::LazyTensor{T, N}; dims=:, init = initial_value(op, T)) where {T, N}
     dims = dims == Colon() ? (1:N) : collect(dims)
     extrude = ((arg.extrude[n] for n in 1:N if !(n in dims))...,)
     fields = [field(gensym(:i)) for _ in 1:N]
-    S = fixpoint_type(op, init, arg)
+    S = fixpoint_type(op, init, eltype(arg))
     data = aggregate(immediate(op), immediate(init), relabel(arg.data, fields), fields[dims]...)
     LazyTensor{S}(identify(data), extrude, init)
 end
 
 # tensordot takes in two tensors `A` and `B` and performs a product and contraction
-function tensordot(A::LazyTensor{T1, N1}, B::LazyTensor{T2, N2}, idxs; mult_op=*, add_op=+, init = initial_value(add_op, return_type(DefaultAlgebra(), *, T1, T2))) where {T1, T2, N1, N2}
+function tensordot(A::LazyTensor{T1, N1}, B::LazyTensor{T2, N2}, idxs; mult_op=*, add_op=+, init = initial_value(add_op, return_type(DefaultAlgebra(), mult_op, T1, T2))) where {T1, T2, N1, N2}
     if idxs isa Number
         idxs = ([i for i in 1:idxs], [i for i in 1:idxs])
     end
@@ -158,7 +158,8 @@ function tensordot(A::LazyTensor{T1, N1}, B::LazyTensor{T2, N2}, idxs; mult_op=*
     end
     AB = mapjoin(immediate(mult_op), relabel(A.data, A_fields), relabel(B.data, B_fields))
     AB_reduce = aggregate(immediate(add_op), immediate(init), AB, reduce_fields...)
-    S = fixpoint_type(add_op, init, AB_reduce)
+    T = return_type(DefaultAlgebra(), mult_op, T1, T2)
+    S = fixpoint_type(add_op, init, T)
     return LazyTensor{S}(identify(AB_reduce), extrude, init)
 end
 

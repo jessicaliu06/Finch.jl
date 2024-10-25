@@ -83,7 +83,8 @@ defined in the following grammar:
     EXPR := LEAF |
             reorder(EXPR, FIELD...) |
             relabel(EXPR, FIELD...) |
-            mapjoin(IMMEDIATE, EXPR...)
+            mapjoin(IMMEDIATE, EXPR...) |
+            aggregate(IMMEDIATE, IMMEDIATE, EXPR, FIELD...)
 ```
 
 Pushes all reorder and relabel statements down to LEAF nodes of each EXPR.
@@ -96,6 +97,12 @@ function push_fields(root)
         (@rule relabel(mapjoin(~op, ~args...), ~idxs...) => begin
             idxs_2 = getfields(mapjoin(op, args...))
             mapjoin(op, map(arg -> relabel(reorder(arg, idxs_2...), idxs...), args)...)
+        end),
+        (@rule relabel(aggregate(~op, ~init, ~arg, ~idxs...), ~idxs_2...) => begin
+            idxs_3 = setdiff(getfields(arg), idxs)
+            reidx = Dict(map(Pair, idxs_3, idxs_2)...)
+            idxs_4 = map(idx -> get(reidx, idx, idx), getfields(arg))
+            aggregate(op, init, relabel(arg, idxs_4...), idxs...)
         end),
         (@rule relabel(relabel(~arg, ~idxs...), ~idxs_2...) =>
             relabel(~arg, ~idxs_2...)),
@@ -113,6 +120,12 @@ function push_fields(root)
     root = Rewrite(Prewalk(Fixpoint(Chain([
         (@rule reorder(mapjoin(~op, ~args...), ~idxs...) =>
             mapjoin(op, map(arg -> reorder(arg, ~idxs...), args)...)),
+        (@rule reorder(aggregate(~op, ~init, ~arg, ~idxs...), ~idxs_2...) => begin
+            idxs_3 = setdiff(getfields(arg), idxs)
+            reidx = Dict(map(Pair, idxs_3, idxs_2)...)
+            idxs_4 = map(idx -> get(reidx, idx, idx), getfields(arg))
+            aggregate(op, init, reorder(arg, idxs_4...), idxs...)
+        end),
         (@rule reorder(reorder(~arg, ~idxs...), ~idxs_2...) =>
             reorder(~arg, ~idxs_2...)),
     ]))))(root)
@@ -405,6 +418,37 @@ function propagate_map_queries(root)
     ])))(root)
 end
 
+function propagate_map_queries_backward(root)
+    root = Rewrite(Postwalk(@rule aggregate(~op, ~init, ~arg) => mapjoin(op, init, arg)))(root)
+    uses = Dict{LogicNode, Int}()
+    defs = Dict{LogicNode, LogicNode}()
+    rets = getproductions(root)
+    for node in PostOrderDFS(root)
+        if node.kind === alias
+            uses[node] = get(uses, node, 0) + 1
+        elseif @capture node query(~a, ~b)
+            uses[a] = get(uses, a, 0) - 1
+            defs[a] = b
+        end
+    end
+    root = Rewrite(Prewalk(Chain([
+        (@rule query(~a, ~b) => if uses[a] == 1 && !(a in rets) plan() end),
+        (@rule ~a => if get(uses, a, 0) == 1 && !(a in rets) get(defs, a, a) end)
+    ])))(root)
+    root = push_fields(root)
+    root = Rewrite(Prewalk(Chain([
+        (@rule mapjoin(~f::isimmediate, ~a1..., aggregate(~g::isimmediate, ~init::isimmediate, ~arg, ~idxs...), ~a2...) => begin
+            if isdistributive(DefaultAlgebra(), literal(g.val), literal(f.val)) &&
+                isannihilator(DefaultAlgebra(), literal(f.val), literal(init.val)) &&
+                length(getfields(aggregate(g, init, arg, idxs...))) ==
+                    length(getfields(mapjoin(f, a1..., a2...)))
+                aggregate(g, init, mapjoin(f, a1..., arg, a2...), idxs...) 
+            end
+        end),
+    ])))(root)
+    root
+end
+
 function normalize_names(ex)
     spc = Namespace()
     scope = Dict()
@@ -540,6 +584,8 @@ function optimize(prgm)
 
     #At this point in the program, all statements should be unique, so
     #it is okay to name different occurences of things.
+
+    prgm = propagate_map_queries_backward(prgm)
 
     #these steps lift reformat, aggregate, and table nodes into separate
     #queries, using subqueries as temporaries.

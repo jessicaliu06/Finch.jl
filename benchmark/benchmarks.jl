@@ -56,7 +56,33 @@ let
             A, x = ($A, $x)
             @einsum y[i] += A[i, j] * x[j]
         end,
-        seconds = 10.0 #Bug in benchmarktools, will be fixed soon.
+    )
+end
+
+let
+    N = 1_000
+    K = 1_000
+    p = 0.001
+    A = Tensor(Dense(Dense(Element(0.0))), rand(N, K))
+    B = Tensor(Dense(Dense(Element(0.0))), rand(K, N))
+    M = Tensor(Dense(SparseList(Element(0.0))), fsprand(N, N, p))
+
+    SUITE["high-level"]["sddmm_fused"] = @benchmarkable(
+        begin
+            M = lazy($M)
+            A = lazy($A)
+            B = lazy($B)
+            compute(M .* (A * B))
+        end,
+    )
+
+    SUITE["high-level"]["sddmm_unfused"] = @benchmarkable(
+        begin
+            M = $M
+            A = $A
+            B = $B
+            M .* (A * B)
+        end,
     )
 end
 
@@ -242,3 +268,5 @@ for (key, mtx) in [
     SUITE["parallel"]["SpMV_serial"][key] = @benchmarkable spmv_serial($A, $x)
     SUITE["parallel"]["SpMV_threaded"][key] = @benchmarkable spmv_threaded($A, $x)
 end
+
+SUITE = SUITE["high-level"]

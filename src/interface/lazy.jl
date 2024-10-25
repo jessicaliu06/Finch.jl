@@ -133,6 +133,9 @@ function Base.reduce(op, arg::LazyTensor{T, N}; dims=:, init = initial_value(op,
     LazyTensor{S}(identify(data), extrude, init)
 end
 
+tensordot(A::LazyTensor, B::Union{AbstractTensor, AbstractArray}, idxs; kwargs...) = tensordot(A, LazyTensor(B), idxs; kwargs...)
+tensordot(A::Union{AbstractTensor, AbstractArray}, B::LazyTensor, idxs; kwargs...) = tensordot(LazyTensor(A), B, idxs; kwargs...)
+
 # tensordot takes in two tensors `A` and `B` and performs a product and contraction
 function tensordot(A::LazyTensor{T1, N1}, B::LazyTensor{T2, N2}, idxs; mult_op=*, add_op=+, init = initial_value(add_op, return_type(DefaultAlgebra(), mult_op, T1, T2))) where {T1, T2, N1, N2}
     if idxs isa Number
@@ -271,6 +274,19 @@ Base.:*(
     y::LazyTensor,
     z::Number...
 ) = map(*, y, x, z...)
+
+Base.:*(
+    A::LazyTensor,
+    B::Union{LazyTensor, AbstractTensor, AbstractArray}
+) = tensordot(A, B, (2, 1))
+Base.:*(
+    A::Union{LazyTensor, AbstractTensor, AbstractArray},
+    B::LazyTensor
+) = tensordot(A, B, (2, 1))
+Base.:*(
+    A::LazyTensor,
+    B::LazyTensor
+) = tensordot(A, B, (2, 1))
 
 Base.:-(x::LazyTensor) = map(-, x)
 

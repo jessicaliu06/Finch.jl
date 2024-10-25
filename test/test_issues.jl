@@ -945,10 +945,29 @@ using SparseArrays
 
     #https://github.com/finch-tensor/Finch.jl/issues/615
 
-    A = Tensor(Dense(Dense(Element(0.0))), 10, 10)
-    res = sum(tensordot(A, A, ((1,), (2,))))
+    let
+        A = Tensor(Dense(Dense(Element(0.0))), 10, 10)
+        res = sum(tensordot(A, A, ((1,), (2,))))
 
-    A_lazy = Finch.LazyTensor(A)
-    res = sum(tensordot(A_lazy, A_lazy, ((1,), (2,))))  # fails
+        A_lazy = Finch.LazyTensor(A)
+        res = sum(tensordot(A_lazy, A_lazy, ((1,), (2,))))  # fails
+    end
+
+    #https://github.com/finch-tensor/Finch.jl/issues/614
+
+    let
+        A = sprand(5, 5, 0.5)
+        B = sprand(5, 5, 0.5)
+        x = rand(5)
+        C = Tensor(Dense(SparseList(Element(0.0))), A)
+        D = Tensor(Dense(SparseList(Element(0.0))), B)
+
+        @test A * B == C * D
+        @test A * B == compute(lazy(C) * D)
+        @test A * B == compute(C * lazy(D))
+        @test A * x == C * x
+        @test A * x == compute(lazy(C) * x)
+    end
+
 
 end

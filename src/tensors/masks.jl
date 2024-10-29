@@ -19,27 +19,36 @@ virtualize(ctx, ex, ::Type{DiagMask}) = VirtualDiagMask()
 FinchNotation.finch_leaf(x::VirtualDiagMask) = virtual(x)
 Finch.virtual_size(ctx, ::VirtualDiagMask) = (dimless, dimless)
 
+struct VirtualDiagMaskColumn
+    j
+end
+
+FinchNotation.finch_leaf(x::VirtualDiagMaskColumn) = virtual(x)
+
 function instantiate(ctx, arr::VirtualDiagMask, mode::Reader, subprotos, ::typeof(defaultread), ::typeof(defaultread))
     Unfurled(
         arr = arr,
         body = Furlable(
             body = (ctx, ext) -> Lookup(
-                body = (ctx, i) -> Furlable(
-                    body = (ctx, ext) -> Sequence([
-                        Phase(
-                            stop = (ctx, ext) -> value(:($(ctx(i)) - 1)),
-                            body = (ctx, ext) -> Run(body=FillLeaf(false))
-                        ),
-                        Phase(
-                            stop = (ctx, ext) -> i,
-                            body = (ctx, ext) -> Run(body=FillLeaf(true)),
-                        ),
-                        Phase(body = (ctx, ext) -> Run(body=FillLeaf(false)))
-                    ])
-                )
+                body = (ctx, j) -> VirtualDiagMaskColumn(j)
             )
         )
     )
+end
+
+function unfurl(ctx, arr::VirtualDiagMaskColumn, ext, mode::Reader, protos...)
+    j = arr.j
+    Sequence([
+        Phase(
+            stop = (ctx, ext) -> value(:($(ctx(j)) - 1)),
+            body = (ctx, ext) -> Run(body=FillLeaf(false))
+        ),
+        Phase(
+            stop = (ctx, ext) -> j,
+            body = (ctx, ext) -> Run(body=FillLeaf(true)),
+        ),
+        Phase(body = (ctx, ext) -> Run(body=FillLeaf(false)))
+    ])
 end
 
 struct UpTriMask <: AbstractTensor end
@@ -63,25 +72,34 @@ virtualize(ctx, ex, ::Type{UpTriMask}) = VirtualUpTriMask()
 FinchNotation.finch_leaf(x::VirtualUpTriMask) = virtual(x)
 Finch.virtual_size(ctx, ::VirtualUpTriMask) = (dimless, dimless)
 
+struct VirtualUpTriMaskColumn
+    j
+end
+
+FinchNotation.finch_leaf(x::VirtualUpTriMaskColumn) = virtual(x)
+
 function instantiate(ctx, arr::VirtualUpTriMask, mode::Reader, subprotos, ::typeof(defaultread), ::typeof(defaultread))
     Unfurled(
         arr = arr,
         body = Furlable(
             body = (ctx, ext) -> Lookup(
-                body = (ctx, i) -> Furlable(
-                    body = (ctx, ext) -> Sequence([
-                        Phase(
-                            stop = (ctx, ext) -> value(:($(ctx(i)))),
-                            body = (ctx, ext) -> Run(body=FillLeaf(true))
-                        ),
-                        Phase(
-                            body = (ctx, ext) -> Run(body=FillLeaf(false)),
-                        )
-                    ])
-                )
+                body = (ctx, j) -> VirtualUpTriMaskColumn(j)
             )
         )
     )
+end
+
+function unfurl(ctx, arr::VirtualUpTriMaskColumn, ext, mode::Reader, protos...)
+    j = arr.j
+    Sequence([
+        Phase(
+            stop = (ctx, ext) -> value(:($(ctx(j)))),
+            body = (ctx, ext) -> Run(body=FillLeaf(true))
+        ),
+        Phase(
+            body = (ctx, ext) -> Run(body=FillLeaf(false)),
+        )
+    ])
 end
 
 struct LoTriMask <: AbstractTensor end
@@ -105,25 +123,34 @@ virtualize(ctx, ex, ::Type{LoTriMask}) = VirtualLoTriMask()
 FinchNotation.finch_leaf(x::VirtualLoTriMask) = virtual(x)
 Finch.virtual_size(ctx, ::VirtualLoTriMask) = (dimless, dimless)
 
+struct VirtualLoTriMaskColumn
+    j
+end
+
+FinchNotation.finch_leaf(x::VirtualLoTriMaskColumn) = virtual(x)
+
 function instantiate(ctx, arr::VirtualLoTriMask, mode::Reader, subprotos, ::typeof(defaultread), ::typeof(defaultread))
     Unfurled(
         arr = arr,
         body = Furlable(
             body = (ctx, ext) -> Lookup(
-                body = (ctx, i) -> Furlable(
-                    body = (ctx, ext) -> Sequence([
-                        Phase(
-                            stop = (ctx, ext) -> value(:($(ctx(i)) - 1)),
-                            body = (ctx, ext) -> Run(body=FillLeaf(false))
-                        ),
-                        Phase(
-                            body = (ctx, ext) -> Run(body=FillLeaf(true)),
-                        )
-                    ])
-                )
+                body = (ctx, j) -> VirtualLoTriMaskColumn(j)
             )
         )
     )
+end
+
+function unfurl(ctx, arr::VirtualLoTriMaskColumn, ext, mode::Reader, protos...)
+    j = arr.j
+    Sequence([
+        Phase(
+            stop = (ctx, ext) -> value(:($(ctx(j)) - 1)),
+            body = (ctx, ext) -> Run(body=FillLeaf(false))
+        ),
+        Phase(
+            body = (ctx, ext) -> Run(body=FillLeaf(true)),
+        )
+    ])
 end
 
 struct BandMask <: AbstractTensor end

@@ -108,6 +108,7 @@ is_concurrent(ctx, lvl::Unfurled) = is_concurrent(ctx, lvl.arr)
 
 function lower_access(ctx::AbstractCompiler, node, tns::Unfurled)
     if !isempty(node.idxs)
+        println(node.tns)
         error("Unfurled not lowered completely")
     end
     lower_access(ctx, node, tns.body)

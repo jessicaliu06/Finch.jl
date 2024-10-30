@@ -142,7 +142,7 @@ jumper_seek(ctx, node::VirtualProductArray, ext) = jumper_seek(ctx, node.body, e
 
 getroot(tns::VirtualProductArray) = getroot(tns.body)
 
-function unfurl(ctx, tns::VirtualProductArray, ext, mode, protos...)
+function unfurl(ctx, tns::VirtualProductArray, ext, mode, proto)
     if length(virtual_size(ctx, tns)) == tns.dim + 1
         Unfurled(tns,
             Lookup(
@@ -150,6 +150,6 @@ function unfurl(ctx, tns::VirtualProductArray, ext, mode, protos...)
             )
         )
     else
-        VirtualProductArray(unfurl(ctx, tns.body, ext, mode, protos...), tns.dim)
+        VirtualProductArray(unfurl(ctx, tns.body, ext, mode, proto), tns.dim)
     end
 end

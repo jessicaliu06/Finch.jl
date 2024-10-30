@@ -40,7 +40,7 @@ end
 
 FinchNotation.finch_leaf(x::VirtualAbstractArraySlice) = virtual(x)
 
-function unfurl(ctx, tns::VirtualAbstractArraySlice, ext, mode, protos...)
+function unfurl(ctx, tns::VirtualAbstractArraySlice, ext, mode, proto)
     arr = tns.arr
     idx = tns.idx
     Lookup(

@@ -82,8 +82,8 @@ get_switch_cases(ctx, node::Unfurled) = map(get_switch_cases(ctx, node.body)) do
     guard => Unfurled(node.arr, node.ndims, body)
 end
 
-unfurl(ctx, tns::Unfurled, ext, mode, protos...) =
-    Unfurled(tns.arr, tns.ndims, unfurl(ctx, tns.body, ext, mode, protos...))
+unfurl(ctx, tns::Unfurled, ext, mode, proto) =
+    Unfurled(tns.arr, tns.ndims, unfurl(ctx, tns.body, ext, mode, proto))
 
 stepper_range(ctx, node::Unfurled, ext) = stepper_range(ctx, node.body, ext)
 stepper_body(ctx, node::Unfurled, ext, ext_2) = Unfurled(node.arr, node.ndims, stepper_body(ctx, node.body, ext, ext_2))

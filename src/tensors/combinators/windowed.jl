@@ -133,12 +133,12 @@ short_circuit_cases(ctx, node::VirtualWindowedArray, op) =
 
 getroot(tns::VirtualWindowedArray) = getroot(tns.body)
 
-function unfurl(ctx, tns::VirtualWindowedArray, ext, mode, protos...)
+function unfurl(ctx, tns::VirtualWindowedArray, ext, mode, proto)
     if tns.dims[end] !== nothing
         dims = virtual_size(ctx, tns.body)
-        tns_2 = unfurl(ctx, tns.body, dims[end], mode, protos...)
+        tns_2 = unfurl(ctx, tns.body, dims[end], mode, proto)
         truncate(ctx, tns_2, dims[end], ext)
     else
-        unfurl(ctx, tns.body, ext, mode, protos...)
+        unfurl(ctx, tns.body, ext, mode, proto)
     end
 end

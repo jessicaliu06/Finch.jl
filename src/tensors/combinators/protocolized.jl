@@ -113,8 +113,8 @@ get_switch_cases(ctx, node::VirtualProtocolizedArray) = map(get_switch_cases(ctx
     guard => VirtualProtocolizedArray(body, node.protos)
 end
 
-unfurl(ctx, tns::VirtualProtocolizedArray, ext, mode, protos...) =
-    VirtualProtocolizedArray(unfurl(ctx, tns.body, ext, mode, map(something, tns.protos, protos)...), tns.protos)
+unfurl(ctx, tns::VirtualProtocolizedArray, ext, mode, proto) =
+    VirtualProtocolizedArray(unfurl(ctx, tns.body, ext, mode, something(tns.protos[end], proto)), tns.protos)
 
 stepper_range(ctx, node::VirtualProtocolizedArray, ext) = stepper_range(ctx, node.body, ext)
 stepper_body(ctx, node::VirtualProtocolizedArray, ext, ext_2) = VirtualProtocolizedArray(stepper_body(ctx, node.body, ext, ext_2), node.protos)

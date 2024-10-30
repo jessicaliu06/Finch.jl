@@ -17,8 +17,8 @@ declare!(ctx::AbstractCompiler, tns::FinchNode, init) = declare!(ctx, resolve(ct
 thaw!(ctx::AbstractCompiler, tns::FinchNode) = thaw!(ctx, resolve(ctx, tns))
 freeze!(ctx::AbstractCompiler, tns::FinchNode) = freeze!(ctx, resolve(ctx, tns))
 
-unfurl(ctx, tns::FinchNode, ext, mode, protos...) =
-    unfurl(ctx, resolve(ctx, tns), ext, mode, protos...)
+unfurl(ctx, tns::FinchNode, ext, mode, proto) =
+    unfurl(ctx, resolve(ctx, tns), ext, mode, proto)
 
 lower_access(ctx::AbstractCompiler, node, tns::FinchNode) =
     lower_access(ctx, node, resolve(ctx, tns))

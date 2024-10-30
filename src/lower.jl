@@ -259,8 +259,7 @@ end
 function lower_loop(ctx, root, ext)
     root_2 = Rewrite(Postwalk(@rule access(~tns, ~mode, ~idxs...) => begin
         if !isempty(idxs) && root.idx == idxs[end]
-            protos = [(mode.val === reader ? defaultread : defaultupdate) for _ in idxs]
-            tns_2 = unfurl(ctx, tns, root.ext.val, mode.val, protos...)
+            tns_2 = unfurl(ctx, tns, root.ext.val, mode.val, (mode.val === reader ? defaultread : defaultupdate))
             access(tns_2, mode, idxs...)
         end
     end))(root)

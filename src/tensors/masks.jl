@@ -36,7 +36,7 @@ function instantiate(ctx, arr::VirtualDiagMask, mode::Reader, subprotos, ::typeo
     )
 end
 
-function unfurl(ctx, arr::VirtualDiagMaskColumn, ext, mode::Reader, protos...)
+function unfurl(ctx, arr::VirtualDiagMaskColumn, ext, mode::Reader, proto)
     j = arr.j
     Sequence([
         Phase(
@@ -89,7 +89,7 @@ function instantiate(ctx, arr::VirtualUpTriMask, mode::Reader, subprotos, ::type
     )
 end
 
-function unfurl(ctx, arr::VirtualUpTriMaskColumn, ext, mode::Reader, protos...)
+function unfurl(ctx, arr::VirtualUpTriMaskColumn, ext, mode::Reader, proto)
     j = arr.j
     Sequence([
         Phase(
@@ -140,7 +140,7 @@ function instantiate(ctx, arr::VirtualLoTriMask, mode::Reader, subprotos, ::type
     )
 end
 
-function unfurl(ctx, arr::VirtualLoTriMaskColumn, ext, mode::Reader, protos...)
+function unfurl(ctx, arr::VirtualLoTriMaskColumn, ext, mode::Reader, proto)
     j = arr.j
     Sequence([
         Phase(
@@ -198,13 +198,13 @@ function instantiate(ctx, arr::VirtualBandMask, mode, subprotos, ::typeof(defaul
     )
 end
 
-function unfurl(ctx, arr::VirtualBandMaskSlice, ext, mode, protos...)
+function unfurl(ctx, arr::VirtualBandMaskSlice, ext, mode, proto)
     Lookup(
         body = (ctx, j_hi) -> VirtualBandMaskColumn(arr.j_lo, j_hi)
     )
 end
 
-function unfurl(ctx, arr::VirtualBandMaskColumn, ext, mode, protos...)
+function unfurl(ctx, arr::VirtualBandMaskColumn, ext, mode, proto)
     Sequence([
         Phase(
             stop = (ctx, ext) -> value(:($(ctx(j)) - 1)),
@@ -258,7 +258,7 @@ function instantiate(ctx, arr::VirtualSplitMask, mode::Reader, subprotos, ::type
     )
 end
 
-function unfurl(ctx, arr::VirtualSplitMaskColumn, ext_2, mode, protos...)
+function unfurl(ctx, arr::VirtualSplitMaskColumn, ext_2, mode, proto)
     j = arr.j
     P = arr.P
     Sequence([
@@ -346,7 +346,7 @@ function instantiate(ctx, arr::VirtualChunkMask, mode::Reader, subprotos, ::type
     )
 end
 
-function unfurl(ctx, arr::VirtualChunkMaskColumn, ext, mode, protos...)
+function unfurl(ctx, arr::VirtualChunkMaskColumn, ext, mode, proto)
     j = arr.j
     Sequence([
         Phase(
@@ -361,7 +361,7 @@ function unfurl(ctx, arr::VirtualChunkMaskColumn, ext, mode, protos...)
     ])
 end
 
-function unfurl(ctx, arr::VirtualChunkMaskCleanupColumn, ext, mode, protos...)
+function unfurl(ctx, arr::VirtualChunkMaskCleanupColumn, ext, mode, proto)
     Sequence([
         Phase(
             stop = (ctx, ext) -> call(*, call(fld, measure(arr.arr.dim), arr.arr.b), arr.arr.b),

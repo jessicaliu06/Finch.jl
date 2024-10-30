@@ -13,18 +13,17 @@ FinchNotation.finch_leaf(x::Furlable) = virtual(x)
 
 
 """
-    unfurl(ctx, tns, ext, protos...)
+    unfurl(ctx, tns, ext, proto)
 
 Return an array object (usually a looplet nest) for lowering the virtual tensor
-`tns`. `ext` is the extent of the looplet. `protos` is the list of protocols
-that should be used for each index, but one doesn't need to unfurl all the
-indices at once.
+`tns`. `ext` is the extent of the looplet. `proto` is the protocol that should
+be used for this index.
 """
-function unfurl(ctx, tns::Furlable, ext, mode, protos...)
+function unfurl(ctx, tns::Furlable, ext, mode, proto)
     tns = tns.body(ctx, ext)
     return tns
 end
-unfurl(ctx, tns, ext, mode, protos...) = tns
+unfurl(ctx, tns, ext, mode, proto) = tns
 
 instantiate(ctx, tns::Furlable, mode, protos) = tns
 is_injective(ctx, tns::Furlable) = is_injective(ctx, tns.body)

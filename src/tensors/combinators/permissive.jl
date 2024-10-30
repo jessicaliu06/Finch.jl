@@ -134,8 +134,8 @@ end
 
 getroot(tns::VirtualPermissiveArray) = getroot(tns.body)
 
-function unfurl(ctx, tns::VirtualPermissiveArray, ext, mode, protos...)
-    tns_2 = unfurl(ctx, tns.body, ext, mode, protos...)
+function unfurl(ctx, tns::VirtualPermissiveArray, ext, mode, proto)
+    tns_2 = unfurl(ctx, tns.body, ext, mode, proto)
     dims = virtual_size(ctx, tns.body)
     garb = (mode === reader) ? FillLeaf(literal(missing)) : FillLeaf(Null())
     if tns.dims[end] && dims[end] != dimless

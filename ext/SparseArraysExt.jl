@@ -245,7 +245,7 @@ function Finch.instantiate(ctx::AbstractCompiler, arr::VirtualSparseMatrixCSC, m
     )
 end
 
-function Finch.unfurl(ctx, tns::VirtualSparseMatrixCSCColumn, ext, mode, subprotos, ::Union{typeof(defaultupdate), typeof(extrude)})
+function Finch.unfurl(ctx, tns::VirtualSparseMatrixCSCColumn, ext, mode, ::Union{typeof(defaultupdate), typeof(extrude)})
     arr = tns.mtx
     tag = arr.ex
     j = tns.j

@@ -174,33 +174,50 @@ virtualize(ctx, ex, ::Type{BandMask}) = VirtualBandMask()
 FinchNotation.finch_leaf(x::VirtualBandMask) = virtual(x)
 Finch.virtual_size(ctx, ::VirtualBandMask) = (dimless, dimless, dimless)
 
+struct VirtualBandMaskSlice
+    j_lo
+end
+
+FinchNotation.finch_leaf(x::VirtualBandMaskSlice) = virtual(x)
+
+struct VirtualBandMaskColumn
+    j_lo
+    j_hi
+end
+
+FinchNotation.finch_leaf(x::VirtualBandMaskColumn) = virtual(x)
+
 function instantiate(ctx, arr::VirtualBandMask, mode, subprotos, ::typeof(defaultread), ::typeof(defaultread), ::typeof(defaultread))
     Unfurled(
         arr = arr,
         tns = Furlable(
             body = (ctx, ext) -> Lookup(
-                body = (ctx, k) -> Furlable(
-                    body = (ctx, ext) -> Lookup(
-                        body = (ctx, j) -> Furlable(
-                            body = (ctx, ext) -> Sequence([
-                                Phase(
-                                    stop = (ctx, ext) -> value(:($(ctx(j)) - 1)),
-                                    body = (ctx, ext) -> Run(body=FillLeaf(false))
-                                ),
-                                Phase(
-                                    stop = (ctx, ext) -> k,
-                                    body = (ctx, ext) -> Run(body=FillLeaf(true))
-                                ),
-                                Phase(
-                                    body = (ctx, ext) -> Run(body=FillLeaf(false)),
-                                )
-                            ])
-                        )
-                    )
-                )
+                body = (ctx, j_lo) -> VirtualBandMaskSlice(j_lo)
             )
         )
     )
+end
+
+function unfurl(ctx, arr::VirtualBandMaskSlice, ext, mode, protos...)
+    Lookup(
+        body = (ctx, j_hi) -> VirtualBandMaskColumn(arr.j_lo, j_hi)
+    )
+end
+
+function unfurl(ctx, arr::VirtualBandMaskColumn, ext, mode, protos...)
+    Sequence([
+        Phase(
+            stop = (ctx, ext) -> value(:($(ctx(j)) - 1)),
+            body = (ctx, ext) -> Run(body=FillLeaf(false))
+        ),
+        Phase(
+            stop = (ctx, ext) -> k,
+            body = (ctx, ext) -> Run(body=FillLeaf(true))
+        ),
+        Phase(
+            body = (ctx, ext) -> Run(body=FillLeaf(false)),
+        )
+    ])
 end
 
 struct SplitMask <: AbstractTensor

@@ -191,26 +191,26 @@ struct DenseTraversal
     subfiber_ctr
 end
 
-instantiate(ctx, fbr::VirtualSubFiber{VirtualDenseLevel}, mode, protos) =
-    instantiate(ctx, DenseTraversal(fbr, VirtualSubFiber), mode, protos)
-instantiate(ctx, fbr::VirtualHollowSubFiber{VirtualDenseLevel}, mode, protos) =
-    instantiate(ctx, DenseTraversal(fbr, (lvl, pos) -> VirtualHollowSubFiber(lvl, pos, fbr.dirty)), mode, protos)
+instantiate(ctx::AbstractCompiler, fbr::DenseTraversal, mode, protos) = fbr
 
-function instantiate(ctx, trv::DenseTraversal, mode, subprotos, ::Union{typeof(defaultread), typeof(follow), typeof(defaultupdate), typeof(laminate), typeof(extrude)})
+unfurl(ctx, fbr::VirtualSubFiber{VirtualDenseLevel}, ext, mode, proto) =
+    unfurl(ctx, DenseTraversal(fbr, VirtualSubFiber), ext, mode, proto)
+unfurl(ctx, fbr::VirtualHollowSubFiber{VirtualDenseLevel}, ext, mode, proto) =
+    unfurl(ctx, DenseTraversal(fbr, (lvl, pos) -> VirtualHollowSubFiber(lvl, pos, fbr.dirty)), ext, mode, proto)
+
+function unfurl(ctx, trv::DenseTraversal, ext, mode, ::Union{typeof(defaultread), typeof(follow), typeof(defaultupdate), typeof(laminate), typeof(extrude)})
     (lvl, pos) = (trv.fbr.lvl, trv.fbr.pos)
     tag = lvl.ex
     Ti = lvl.Ti
 
     q = freshen(ctx, tag, :_q)
 
-    Furlable(
-        body = (ctx, ext) -> Lookup(
-            body = (ctx, i) -> Thunk(
-                preamble = quote
-                    $q = ($(ctx(pos)) - $(Ti(1))) * $(ctx(lvl.shape)) + $(ctx(i))
-                end,
-                body = (ctx) -> instantiate(ctx, trv.subfiber_ctr(lvl.lvl, value(q, lvl.Ti)), mode, subprotos)
-            )
+    Lookup(
+        body = (ctx, i) -> Thunk(
+            preamble = quote
+                $q = ($(ctx(pos)) - $(Ti(1))) * $(ctx(lvl.shape)) + $(ctx(i))
+            end,
+            body = (ctx) -> trv.subfiber_ctr(lvl.lvl, value(q, lvl.Ti))
         )
     )
 end

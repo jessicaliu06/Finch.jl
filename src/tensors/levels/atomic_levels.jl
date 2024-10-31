@@ -209,7 +209,6 @@ function instantiate(ctx, fbr::VirtualSubFiber{VirtualAtomicLevel}, mode::Update
     lockVal = freshen(ctx, lvl.ex, :lockVal)
     dev = lower(ctx, virtual_get_device(ctx.code.task), DefaultStyle())
     return Thunk(
-
         body =  (ctx) -> begin
         preamble = quote
             $atomicData =  Finch.get_lock($dev, $(lvl.locks), $(ctx(pos)), eltype($(lvl.AVal)))

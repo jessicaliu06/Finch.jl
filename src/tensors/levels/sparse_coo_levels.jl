@@ -289,16 +289,21 @@ struct SparseCOOWalkTraversal
     stop
 end
 
-function instantiate(ctx, fbr::VirtualSubFiber{VirtualSparseCOOLevel}, mode::Reader, protos)
+instantiate(ctx::AbstractCompiler, fbr::SparseCOOWalkTraversal, mode, protos) = fbr
+
+function unfurl(ctx, fbr::VirtualSubFiber{VirtualSparseCOOLevel}, ext, mode::Reader, proto)
     (lvl, pos) = (fbr.lvl, fbr.pos)
     Tp = postype(lvl)
     start = value(:($(lvl.ptr)[$(ctx(pos))]), Tp)
     stop = value(:($(lvl.ptr)[$(ctx(pos)) + 1]), Tp)
 
-    instantiate(ctx, SparseCOOWalkTraversal(lvl, lvl.N, start, stop), mode, protos)
+    Unfurled(
+        arr = fbr,
+        body = unfurl(ctx, SparseCOOWalkTraversal(lvl, lvl.N, start, stop), ext, mode, proto)
+    )
 end
 
-function instantiate(ctx, trv::SparseCOOWalkTraversal, mode::Reader, subprotos, ::Union{typeof(defaultread), typeof(walk)})
+function unfurl(ctx, trv::SparseCOOWalkTraversal, ext, mode::Reader, ::Union{typeof(defaultread), typeof(walk)})
     (lvl, R, start, stop) = (trv.lvl, trv.R, trv.start, trv.stop)
     tag = lvl.ex
     TI = lvl.TI
@@ -309,66 +314,64 @@ function instantiate(ctx, trv::SparseCOOWalkTraversal, mode::Reader, subprotos, 
     my_q_stop = freshen(ctx, tag, :_q_stop)
     my_i_stop = freshen(ctx, tag, :_i_stop)
 
-    Furlable(
-        body = (ctx, ext) -> Thunk(
-            preamble = quote
-                $my_q = $(ctx(start))
-                $my_q_stop = $(ctx(stop))
-                if $my_q < $my_q_stop
-                    $my_i = $(lvl.tbl[R])[$my_q]
-                    $my_i_stop = $(lvl.tbl[R])[$my_q_stop - 1]
-                else
-                    $my_i = $(TI.parameters[R](1))
-                    $my_i_stop = $(TI.parameters[R](0))
-                end
-            end,
-            body = (ctx) -> Sequence([
-                Phase(
-                    stop = (ctx, ext) -> value(my_i_stop),
-                    body = (ctx, ext) ->
-                        if R == 1
-                            Stepper(
-                                seek = (ctx, ext) -> quote
-                                    if $(lvl.tbl[R])[$my_q] < $(ctx(getstart(ext)))
-                                        $my_q = Finch.scansearch($(lvl.tbl[R]), $(ctx(getstart(ext))), $my_q, $my_q_stop - 1)
-                                    end
-                                end,
-                                preamble = :($my_i = $(lvl.tbl[R])[$my_q]),
-                                stop =  (ctx, ext) -> value(my_i),
-                                chunk = Spike(
-                                    body = FillLeaf(virtual_level_fill_value(lvl)),
-                                    tail = instantiate(ctx, VirtualSubFiber(lvl.lvl, my_q), mode, subprotos),
-                                ),
-                                next = (ctx, ext) -> :($my_q += $(Tp(1)))
-                            )
-                        else
-                            Stepper(
-                                seek = (ctx, ext) -> quote
-                                    if $(lvl.tbl[R])[$my_q] < $(ctx(getstart(ext)))
-                                        $my_q = Finch.scansearch($(lvl.tbl[R]), $(ctx(getstart(ext))), $my_q, $my_q_stop - 1)
-                                    end
-                                end,
-                                preamble = quote
-                                    $my_i = $(lvl.tbl[R])[$my_q]
-                                    $my_q_step = $my_q
-                                    if $(lvl.tbl[R])[$my_q_step] == $my_i
-                                        $my_q_step = Finch.scansearch($(lvl.tbl[R]), $my_i + 1, $my_q_step, $my_q_stop - 1)
-                                    end
-                                end,
-                                stop = (ctx, ext) -> value(my_i),
-                                chunk = Spike(
-                                    body = FillLeaf(virtual_level_fill_value(lvl)),
-                                    tail = instantiate(ctx, SparseCOOWalkTraversal(lvl, R - 1, value(my_q, Tp), value(my_q_step, Tp)), mode, subprotos),
-                                ),
-                                next = (ctx, ext) -> :($my_q = $my_q_step)
-                            )
-                        end
-                ),
-                Phase(
-                    body = (ctx, ext) -> Run(FillLeaf(virtual_level_fill_value(lvl)))
-                )
-            ])
-        )
+    Thunk(
+        preamble = quote
+            $my_q = $(ctx(start))
+            $my_q_stop = $(ctx(stop))
+            if $my_q < $my_q_stop
+                $my_i = $(lvl.tbl[R])[$my_q]
+                $my_i_stop = $(lvl.tbl[R])[$my_q_stop - 1]
+            else
+                $my_i = $(TI.parameters[R](1))
+                $my_i_stop = $(TI.parameters[R](0))
+            end
+        end,
+        body = (ctx) -> Sequence([
+            Phase(
+                stop = (ctx, ext) -> value(my_i_stop),
+                body = (ctx, ext) ->
+                    if R == 1
+                        Stepper(
+                            seek = (ctx, ext) -> quote
+                                if $(lvl.tbl[R])[$my_q] < $(ctx(getstart(ext)))
+                                    $my_q = Finch.scansearch($(lvl.tbl[R]), $(ctx(getstart(ext))), $my_q, $my_q_stop - 1)
+                                end
+                            end,
+                            preamble = :($my_i = $(lvl.tbl[R])[$my_q]),
+                            stop =  (ctx, ext) -> value(my_i),
+                            chunk = Spike(
+                                body = FillLeaf(virtual_level_fill_value(lvl)),
+                                tail = VirtualSubFiber(lvl.lvl, my_q),
+                            ),
+                            next = (ctx, ext) -> :($my_q += $(Tp(1)))
+                        )
+                    else
+                        Stepper(
+                            seek = (ctx, ext) -> quote
+                                if $(lvl.tbl[R])[$my_q] < $(ctx(getstart(ext)))
+                                    $my_q = Finch.scansearch($(lvl.tbl[R]), $(ctx(getstart(ext))), $my_q, $my_q_stop - 1)
+                                end
+                            end,
+                            preamble = quote
+                                $my_i = $(lvl.tbl[R])[$my_q]
+                                $my_q_step = $my_q
+                                if $(lvl.tbl[R])[$my_q_step] == $my_i
+                                    $my_q_step = Finch.scansearch($(lvl.tbl[R]), $my_i + 1, $my_q_step, $my_q_stop - 1)
+                                end
+                            end,
+                            stop = (ctx, ext) -> value(my_i),
+                            chunk = Spike(
+                                body = FillLeaf(virtual_level_fill_value(lvl)),
+                                tail = SparseCOOWalkTraversal(lvl, R - 1, value(my_q, Tp), value(my_q_step, Tp)),
+                            ),
+                            next = (ctx, ext) -> :($my_q = $my_q_step)
+                        )
+                    end
+            ),
+            Phase(
+                body = (ctx, ext) -> Run(FillLeaf(virtual_level_fill_value(lvl)))
+            )
+        ])
     )
 end
 
@@ -380,9 +383,11 @@ struct SparseCOOExtrudeTraversal
     prev_coord
 end
 
-instantiate(ctx, fbr::VirtualSubFiber{VirtualSparseCOOLevel}, mode::Updater, protos) =
-    instantiate(ctx, VirtualHollowSubFiber(fbr.lvl, fbr.pos, freshen(ctx, :null)), mode, protos)
-function instantiate(ctx, fbr::VirtualHollowSubFiber{VirtualSparseCOOLevel}, mode::Updater, protos)
+instantiate(ctx::AbstractCompiler, fbr::SparseCOOExtrudeTraversal, mode, protos) = fbr
+
+unfurl(ctx, fbr::VirtualSubFiber{VirtualSparseCOOLevel}, ext, mode::Updater, proto) =
+    unfurl(ctx, VirtualHollowSubFiber(fbr.lvl, fbr.pos, freshen(ctx, :null)), ext, mode, proto)
+function unfurl(ctx, fbr::VirtualHollowSubFiber{VirtualSparseCOOLevel}, ext, mode::Updater, proto)
     (lvl, pos) = (fbr.lvl, fbr.pos)
     tag = lvl.ex
     TI = lvl.TI
@@ -402,7 +407,7 @@ function instantiate(ctx, fbr::VirtualHollowSubFiber{VirtualSparseCOOLevel}, mod
                 end
             end)
         end,
-        body = (ctx) -> instantiate(ctx, SparseCOOExtrudeTraversal(lvl, qos, fbr.dirty, [], prev_coord), mode, protos),
+        body = (ctx) -> SparseCOOExtrudeTraversal(lvl, qos, fbr.dirty, [], prev_coord),
         epilogue = quote
             $(lvl.ptr)[$(ctx(pos)) + 1] = $qos - $qos_fill - 1
             $(if issafe(get_mode_flag(ctx))
@@ -417,55 +422,52 @@ function instantiate(ctx, fbr::VirtualHollowSubFiber{VirtualSparseCOOLevel}, mod
     )
 end
 
-function instantiate(ctx, trv::SparseCOOExtrudeTraversal, mode::Updater, subprotos, ::Union{typeof(defaultupdate), typeof(extrude)})
+function unfurl(ctx, trv::SparseCOOExtrudeTraversal, ext, mode::Updater, ::Union{typeof(defaultupdate), typeof(extrude)})
     (lvl, qos, fbr_dirty, coords) = (trv.lvl, trv.qos, trv.fbr_dirty, trv.coords)
     TI = lvl.TI
     Tp = postype(lvl)
     qos_fill = lvl.qos_fill
     qos_stop = lvl.qos_stop
-    Furlable(
-        body = (ctx, ext) ->
-            if length(coords) + 1 < lvl.N
-                Lookup(
-                    body = (ctx, i) -> instantiate(ctx, SparseCOOExtrudeTraversal(lvl, qos, fbr_dirty, (i, coords...), trv.prev_coord), mode, subprotos),
-                )
-            else
-                dirty = freshen(ctx, :dirty)
-                Lookup(
-                    body = (ctx, idx) -> Thunk(
-                        preamble = quote
-                            if $qos > $qos_stop
-                                $qos_stop = max($qos_stop << 1, 1)
-                                $(Expr(:block, map(1:lvl.N) do n
-                                    :(Finch.resize_if_smaller!($(lvl.tbl[n]), $qos_stop))
-                                end...))
-                                $(contain(ctx_2->assemble_level!(ctx_2, lvl.lvl, value(qos, Tp), value(qos_stop, Tp)), ctx))
-                            end
-                            $dirty = false
-                        end,
-                        body = (ctx) -> instantiate(ctx, VirtualHollowSubFiber(lvl.lvl, value(qos, Tp), dirty), mode, subprotos),
-                        epilogue = begin
-                            coords_2 = map(ctx, (idx, coords...))
-                            quote
-                                if $dirty
-                                    $(if issafe(get_mode_flag(ctx))
-                                        quote
-                                            $(trv.prev_coord) < ($(reverse(coords_2)...),) || begin
-                                                throw(FinchProtocolError("SparseCOOLevels cannot be updated multiple times"))
-                                            end
-                                            $(trv.prev_coord) = ($(reverse(coords_2)...),)
-                                        end
-                                    end)
-                                    $(fbr_dirty) = true
-                                    $(Expr(:block, map(enumerate(coords_2)) do (n, i)
-                                        :($(lvl.tbl[n])[$qos] = $i)
-                                    end...))
-                                    $qos += $(Tp(1))
+    if length(coords) + 1 < lvl.N
+        Lookup(
+            body = (ctx, i) -> SparseCOOExtrudeTraversal(lvl, qos, fbr_dirty, (i, coords...), trv.prev_coord),
+        )
+    else
+        dirty = freshen(ctx, :dirty)
+        Lookup(
+            body = (ctx, idx) -> Thunk(
+                preamble = quote
+                    if $qos > $qos_stop
+                        $qos_stop = max($qos_stop << 1, 1)
+                        $(Expr(:block, map(1:lvl.N) do n
+                            :(Finch.resize_if_smaller!($(lvl.tbl[n]), $qos_stop))
+                        end...))
+                        $(contain(ctx_2->assemble_level!(ctx_2, lvl.lvl, value(qos, Tp), value(qos_stop, Tp)), ctx))
+                    end
+                    $dirty = false
+                end,
+                body = (ctx) -> VirtualHollowSubFiber(lvl.lvl, value(qos, Tp), dirty),
+                epilogue = begin
+                    coords_2 = map(ctx, (idx, coords...))
+                    quote
+                        if $dirty
+                            $(if issafe(get_mode_flag(ctx))
+                                quote
+                                    $(trv.prev_coord) < ($(reverse(coords_2)...),) || begin
+                                        throw(FinchProtocolError("SparseCOOLevels cannot be updated multiple times"))
+                                    end
+                                    $(trv.prev_coord) = ($(reverse(coords_2)...),)
                                 end
-                            end
+                            end)
+                            $(fbr_dirty) = true
+                            $(Expr(:block, map(enumerate(coords_2)) do (n, i)
+                                :($(lvl.tbl[n])[$qos] = $i)
+                            end...))
+                            $qos += $(Tp(1))
                         end
-                    )
-                )
-            end
-    )
+                    end
+                end
+            )
+        )
+    end
 end

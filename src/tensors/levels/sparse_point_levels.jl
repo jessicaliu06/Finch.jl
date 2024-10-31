@@ -272,7 +272,7 @@ function virtual_moveto_level(ctx::AbstractCompiler, lvl::VirtualSparsePointLeve
     virtual_moveto_level(ctx, lvl.lvl, arch)
 end
 
-function instantiate(ctx, fbr::VirtualSubFiber{VirtualSparsePointLevel}, mode::Reader, subprotos, ::Union{typeof(defaultread), typeof(walk)})
+function unfurl(ctx, fbr::VirtualSubFiber{VirtualSparsePointLevel}, ext, mode::Reader, ::Union{typeof(defaultread), typeof(walk)})
     (lvl, pos) = (fbr.lvl, fbr.pos)
     tag = lvl.ex
     Tp = postype(lvl)
@@ -281,39 +281,35 @@ function instantiate(ctx, fbr::VirtualSubFiber{VirtualSparsePointLevel}, mode::R
     my_q = freshen(ctx, tag, :_q)
     my_q_stop = freshen(ctx, tag, :_q_stop)
 
-    Furlable(
-        body = (ctx, ext) -> Thunk(
-            preamble = quote
-                $my_q = $(lvl.ptr)[$(ctx(pos))]
-                $my_q_stop = $(lvl.ptr)[$(ctx(pos)) + $(Tp(1))]
-                if $my_q < $my_q_stop
-                    $my_i = $(lvl.idx)[$my_q]
-                else
-                    $my_i = $(Ti(0))
-                end
-            end,
-            body = (ctx) -> Sequence([
-                Phase(
-                    start = (ctx, ext) -> literal(lvl.Ti(1)),
-                    stop = (ctx, ext) -> value(my_i),
-                    body = (ctx, ext) -> truncate(ctx, Spike(
-                            body = FillLeaf(virtual_level_fill_value(lvl)),
-                            tail = instantiate(ctx, VirtualSubFiber(lvl.lvl, value(my_q, Ti)), mode, subprotos)), similar_extent(ext, getstart(ext), value(my_i)), ext)
-                ),
-                Phase(
-                    stop = (ctx, ext) -> lvl.shape,
-                    body = (ctx, ext) -> Run(FillLeaf(virtual_level_fill_value(lvl)))
-                )
-            ])
-
-        )
+    Thunk(
+        preamble = quote
+            $my_q = $(lvl.ptr)[$(ctx(pos))]
+            $my_q_stop = $(lvl.ptr)[$(ctx(pos)) + $(Tp(1))]
+            if $my_q < $my_q_stop
+                $my_i = $(lvl.idx)[$my_q]
+            else
+                $my_i = $(Ti(0))
+            end
+        end,
+        body = (ctx) -> Sequence([
+            Phase(
+                start = (ctx, ext) -> literal(lvl.Ti(1)),
+                stop = (ctx, ext) -> value(my_i),
+                body = (ctx, ext) -> truncate(ctx, Spike(
+                        body = FillLeaf(virtual_level_fill_value(lvl)),
+                        tail = VirtualSubFiber(lvl.lvl, value(my_q, Ti))), similar_extent(ext, getstart(ext), value(my_i)), ext)
+            ),
+            Phase(
+                stop = (ctx, ext) -> lvl.shape,
+                body = (ctx, ext) -> Run(FillLeaf(virtual_level_fill_value(lvl)))
+            )
+        ])
     )
 end
 
-instantiate(ctx, fbr::VirtualSubFiber{VirtualSparsePointLevel}, mode::Updater, protos) = begin
-    instantiate(ctx, VirtualHollowSubFiber(fbr.lvl, fbr.pos, freshen(ctx, :null)), mode, protos)
-end
-function instantiate(ctx, fbr::VirtualHollowSubFiber{VirtualSparsePointLevel}, mode::Updater, subprotos, ::Union{typeof(defaultupdate), typeof(extrude)})
+unfurl(ctx, fbr::VirtualSubFiber{VirtualSparsePointLevel}, ext, mode::Updater, proto) = 
+    unfurl(ctx, VirtualHollowSubFiber(fbr.lvl, fbr.pos, freshen(ctx, :null)), ext, mode, proto)
+function unfurl(ctx, fbr::VirtualHollowSubFiber{VirtualSparsePointLevel}, ext, mode::Updater, ::Union{typeof(defaultupdate), typeof(extrude)})
     (lvl, pos) = (fbr.lvl, fbr.pos)
     tag = lvl.ex
     Tp = postype(lvl)
@@ -322,47 +318,45 @@ function instantiate(ctx, fbr::VirtualHollowSubFiber{VirtualSparsePointLevel}, m
     qos_stop = lvl.qos_stop
     dirty = freshen(ctx, tag, :dirty)
 
-    Furlable(
-        body = (ctx, ext) -> Thunk(
-            preamble = quote
-                $qos = $qos_fill + 1
-                $(lvl.ptr)[$(ctx(pos)) + 1] == 0 || throw(FinchProtocolError("SparsePointLevels can only be updated once"))
-                $(if issafe(get_mode_flag(ctx))
-                    quote
-                        $(lvl.prev_pos) < $(ctx(pos)) || throw(FinchProtocolError("SparsePointLevels cannot be updated multiple times"))
+    Thunk(
+        preamble = quote
+            $qos = $qos_fill + 1
+            $(lvl.ptr)[$(ctx(pos)) + 1] == 0 || throw(FinchProtocolError("SparsePointLevels can only be updated once"))
+            $(if issafe(get_mode_flag(ctx))
+                quote
+                    $(lvl.prev_pos) < $(ctx(pos)) || throw(FinchProtocolError("SparsePointLevels cannot be updated multiple times"))
+                end
+            end)
+        end,
+        body = (ctx) -> Lookup(
+            body = (ctx, idx) -> Thunk(
+                preamble = quote
+                    if $qos > $qos_stop
+                        $qos_stop = max($qos_stop << 1, 1)
+                        Finch.resize_if_smaller!($(lvl.idx), $qos_stop)
+                        $(contain(ctx_2->assemble_level!(ctx_2, lvl.lvl, value(qos, Tp), value(qos_stop, Tp)), ctx))
                     end
-                end)
-            end,
-            body = (ctx) -> Lookup(
-                body = (ctx, idx) -> Thunk(
-                    preamble = quote
-                        if $qos > $qos_stop
-                            $qos_stop = max($qos_stop << 1, 1)
-                            Finch.resize_if_smaller!($(lvl.idx), $qos_stop)
-                            $(contain(ctx_2->assemble_level!(ctx_2, lvl.lvl, value(qos, Tp), value(qos_stop, Tp)), ctx))
-                        end
-                        $dirty = false
-                    end,
-                    body = (ctx) -> instantiate(ctx, VirtualHollowSubFiber(lvl.lvl, value(qos, Tp), dirty), mode, subprotos),
-                    epilogue = quote
-                        if $dirty
-                            $(fbr.dirty) = true
-                            $qos == $qos_fill + 1 || throw(FinchProtocolError("SparsePointLevels can only be updated once"))
-                            $(lvl.idx)[$qos] = $(ctx(idx))
-                            $qos += $(Tp(1))
-                            $(if issafe(get_mode_flag(ctx))
-                                quote
-                                    $(lvl.prev_pos) = $(ctx(pos))
-                                end
-                            end)
-                        end
+                    $dirty = false
+                end,
+                body = (ctx) -> VirtualHollowSubFiber(lvl.lvl, value(qos, Tp), dirty),
+                epilogue = quote
+                    if $dirty
+                        $(fbr.dirty) = true
+                        $qos == $qos_fill + 1 || throw(FinchProtocolError("SparsePointLevels can only be updated once"))
+                        $(lvl.idx)[$qos] = $(ctx(idx))
+                        $qos += $(Tp(1))
+                        $(if issafe(get_mode_flag(ctx))
+                            quote
+                                $(lvl.prev_pos) = $(ctx(pos))
+                            end
+                        end)
                     end
-                )
-            ),
-            epilogue = quote
-                $(lvl.ptr)[$(ctx(pos)) + 1] += $qos - $qos_fill - 1
-                $qos_fill = $qos - 1
-            end
-        )
+                end
+            )
+        ),
+        epilogue = quote
+            $(lvl.ptr)[$(ctx(pos)) + 1] += $qos - $qos_fill - 1
+            $qos_fill = $qos - 1
+        end
     )
 end

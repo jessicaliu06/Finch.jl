@@ -63,8 +63,8 @@ virtual_size(ctx::AbstractCompiler, arr::VirtualProtocolizedArray) =
 virtual_resize!(ctx::AbstractCompiler, arr::VirtualProtocolizedArray, dim) =
     virtual_resize!(ctx, arr.body, dim)
 
-unwrap_outer(ctx, arr::VirtualProtocolizedArray, mode, protos) =
-    VirtualProtocolizedArray(unwrap_outer(ctx, arr.body, mode, map(something, arr.protos, protos)), arr.protos)
+unfurl_prehook(ctx, arr::VirtualProtocolizedArray, mode, protos) =
+    VirtualProtocolizedArray(unfurl_prehook(ctx, arr.body, mode, map(something, arr.protos, protos)), arr.protos)
 
 get_style(ctx, node::VirtualProtocolizedArray, root) = get_style(ctx, node.body, root)
 

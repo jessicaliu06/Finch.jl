@@ -68,8 +68,8 @@ virtual_resize!(ctx::AbstractCompiler, arr::VirtualWindowedArray, dims...) =
 
 virtual_fill_value(ctx::AbstractCompiler, arr::VirtualWindowedArray) = virtual_fill_value(ctx, arr.body)
 
-unwrap_outer(ctx, arr::VirtualWindowedArray, mode, protos) =
-    VirtualWindowedArray(unwrap_outer(ctx, arr.body, mode, protos), arr.dims)
+unfurl_prehook(ctx, arr::VirtualWindowedArray, mode, protos) =
+    VirtualWindowedArray(unfurl_prehook(ctx, arr.body, mode, protos), arr.dims)
 
 get_style(ctx, node::VirtualWindowedArray, root) = get_style(ctx, node.body, root)
 

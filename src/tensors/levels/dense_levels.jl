@@ -191,7 +191,7 @@ struct DenseTraversal
     subfiber_ctr
 end
 
-unwrap_outer(ctx::AbstractCompiler, fbr::DenseTraversal, mode, protos) = fbr
+unfurl_prehook(ctx::AbstractCompiler, fbr::DenseTraversal, mode, protos) = fbr
 
 unfurl(ctx, fbr::VirtualSubFiber{VirtualDenseLevel}, ext, mode, proto) =
     unfurl(ctx, DenseTraversal(fbr, VirtualSubFiber), ext, mode, proto)

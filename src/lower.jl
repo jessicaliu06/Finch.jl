@@ -152,7 +152,7 @@ function lower(ctx::AbstractCompiler, root::FinchNode, ::DefaultStyle)
                 set_thawed!(ctx, head.tns, val_2)
             else
                 preamble = contain(ctx) do ctx_2
-                    ctx_2(unwrap_outer!(ctx_2, head))
+                    ctx_2(unfurl_prehook!(ctx_2, head))
                 end
             end
 
@@ -178,7 +178,7 @@ function lower(ctx::AbstractCompiler, root::FinchNode, ::DefaultStyle)
         quote end
     elseif root.kind === access
         tns = resolve(ctx, root.tns)
-        tns_2 = unwrap_outer(ctx, tns, root.mode.val, [])
+        tns_2 = unfurl_prehook(ctx, tns, root.mode.val, [])
         if tns_2 != tns
             return ctx(access(tns_2, root.mode, root.idxs...))
         else
@@ -264,7 +264,7 @@ end
 
 function lower_loop(ctx, root, ext)
     contain(ctx) do ctx_2
-        root_2 = unwrap_outer!(ctx_2, root)
+        root_2 = unfurl_prehook!(ctx_2, root)
         if root_2 == root
             root_3 = Rewrite(Postwalk(@rule access(~tns, ~mode, ~idxs...) => begin
                 if !isempty(idxs) && root.idx == idxs[end]
@@ -319,7 +319,7 @@ function lower_parallel_loop(ctx, root, ext::ParallelDimension, device::VirtualC
             end
             contain(ctx_3) do ctx_4
                 open_scope(ctx_4) do ctx_5
-                    ctx_5(unwrap_outer!(ctx_5, root_2))
+                    ctx_5(unfurl_prehook!(ctx_5, root_2))
                 end
             end
         end

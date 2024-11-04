@@ -13,7 +13,7 @@ function Base.show(io::IO, mime::MIME"text/plain", ex::Thunk)
 end
 
 get_style(ctx, ::Thunk, root) = ThunkStyle()
-unwrap_outer(ctx, tns::Thunk, mode, protos) = tns
+unfurl_prehook(ctx, tns::Thunk, mode, protos) = tns
 combine_style(a::DefaultStyle, b::ThunkStyle) = ThunkStyle()
 combine_style(a::ThunkStyle, b::ThunkStyle) = ThunkStyle()
 combine_style(a::ThunkStyle, b::SimplifyStyle) = ThunkStyle()

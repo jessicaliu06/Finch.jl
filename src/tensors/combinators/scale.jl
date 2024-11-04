@@ -64,8 +64,8 @@ end
 
 virtual_fill_value(ctx::AbstractCompiler, arr::VirtualScaleArray) = virtual_fill_value(ctx, arr.body)
 
-unwrap_outer(ctx, arr::VirtualScaleArray, mode, protos) =
-    VirtualScaleArray(unwrap_outer(ctx, arr.body, mode, protos), arr.scale)
+unfurl_prehook(ctx, arr::VirtualScaleArray, mode, protos) =
+    VirtualScaleArray(unfurl_prehook(ctx, arr.body, mode, protos), arr.scale)
 
 get_style(ctx, node::VirtualScaleArray, root) = get_style(ctx, node.body, root)
 

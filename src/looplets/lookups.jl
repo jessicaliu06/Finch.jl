@@ -15,7 +15,6 @@ struct LookupStyle end
 
 get_style(ctx, ::Lookup, root) = root.kind === loop ? LookupStyle() : DefaultStyle()
 
-unfurl_prehook(ctx, tns::Lookup, mode, protos) = tns
 combine_style(a::DefaultStyle, b::LookupStyle) = LookupStyle()
 combine_style(a::ThunkStyle, b::LookupStyle) = ThunkStyle()
 combine_style(a::SimplifyStyle, b::LookupStyle) = a

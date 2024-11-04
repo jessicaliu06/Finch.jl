@@ -59,8 +59,8 @@ end
 
 virtual_fill_value(ctx::AbstractCompiler, arr::VirtualOffsetArray) = virtual_fill_value(ctx, arr.body)
 
-unfurl_prehook(ctx, arr::VirtualOffsetArray, mode, protos) =
-    VirtualOffsetArray(unfurl_prehook(ctx, arr.body, mode, protos), arr.delta)
+unfurl_posthook(ctx, arr::VirtualOffsetArray, mode) =
+    VirtualOffsetArray(unfurl_posthook(ctx, arr.body, mode), arr.delta)
 
 get_style(ctx, node::VirtualOffsetArray, root) = get_style(ctx, node.body, root)
 

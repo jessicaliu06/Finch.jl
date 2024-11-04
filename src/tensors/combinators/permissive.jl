@@ -68,8 +68,8 @@ virtual_resize!(ctx::AbstractCompiler, arr::VirtualPermissiveArray, dims...) =
 
 virtual_fill_value(ctx::AbstractCompiler, arr::VirtualPermissiveArray) = virtual_fill_value(ctx, arr.body)
 
-unfurl_prehook(ctx, arr::VirtualPermissiveArray, mode, protos) =
-    VirtualPermissiveArray(unfurl_prehook(ctx, arr.body, mode, protos), arr.dims)
+unfurl_posthook(ctx, arr::VirtualPermissiveArray, mode) =
+    VirtualPermissiveArray(unfurl_posthook(ctx, arr.body, mode), arr.dims)
 
 get_style(ctx, node::VirtualPermissiveArray, root) = get_style(ctx, node.body, root)
 

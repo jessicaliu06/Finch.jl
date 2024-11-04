@@ -216,14 +216,9 @@ function Finch.unfurl(ctx, tns::VirtualSparseMatrixCSCColumn, ext, mode, ::Union
     )
 end
 
-Finch.unfurl_prehook(ctx, tns::VirtualSparseMatrixCSCColumn, mode, protos) = tns
 #Finch.is_injective(ctx, tns::VirtualSparseMatrixCSCColumn) = is_injective(ctx, tns.mtx)[1]
 #Finch.is_atomic(ctx, tns::VirtualSparseMatrixCSCColumn) = is_atomic(ctx, tns.mtx)[1]
 #Finch.is_concurrent(ctx, tns::VirtualSparseMatrixCSCColumn) = is_concurrent(ctx, tns.mtx)[1]
-
-function Finch.unfurl_prehook(ctx::AbstractCompiler, arr::VirtualSparseMatrixCSC, mode::Reader, subprotos, ::Union{typeof(defaultread), typeof(walk), typeof(follow)}, ::Union{typeof(defaultread), typeof(walk)})
-    arr
-end
 
 function Finch.unfurl(ctx::AbstractCompiler, arr::VirtualSparseMatrixCSC, ext, mode::Reader, ::Union{typeof(defaultread), typeof(walk)})
     tag = arr.ex
@@ -233,10 +228,6 @@ function Finch.unfurl(ctx::AbstractCompiler, arr::VirtualSparseMatrixCSC, ext, m
             body = (ctx, j) -> VirtualSparseMatrixCSCColumn(arr, j)
         )
     )
-end
-
-function Finch.unfurl_prehook(ctx::AbstractCompiler, arr::VirtualSparseMatrixCSC, mode::Updater, subprotos, ::Union{typeof(defaultupdate), typeof(extrude)}, ::Union{typeof(defaultupdate), typeof(extrude)})
-    arr
 end
 
 function Finch.unfurl(ctx::AbstractCompiler, arr::VirtualSparseMatrixCSC, ext, mode::Updater, ::Union{typeof(defaultupdate), typeof(extrude)})
@@ -392,10 +383,6 @@ function Finch.thaw!(ctx::AbstractCompiler, arr::VirtualSparseVector)
     return arr
 end
 
-function Finch.unfurl_prehook(ctx::AbstractCompiler, arr::VirtualSparseVector, mode::Reader, subprotos, ::Union{typeof(defaultread), typeof(walk)})
-    arr
-end
-
 function Finch.unfurl(ctx::AbstractCompiler, arr::VirtualSparseVector, ext, mode::Reader, ::Union{typeof(defaultread), typeof(walk)})
     tag = arr.ex
     Ti = arr.Ti
@@ -450,10 +437,6 @@ function Finch.unfurl(ctx::AbstractCompiler, arr::VirtualSparseVector, ext, mode
             ])
         )
     )
-end
-
-function Finch.unfurl_prehook(ctx, arr::VirtualSparseVector, mode::Updater, subprotos, ::Union{typeof(defaultupdate), typeof(extrude)})
-    arr
 end
 
 function Finch.unfurl(ctx, arr::VirtualSparseVector, ext, mode::Updater, ::Union{typeof(defaultupdate), typeof(extrude)})

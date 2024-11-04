@@ -10,8 +10,6 @@ struct FillStyle end
 
 get_style(ctx, ::FillLeaf, root) = FillStyle()
 
-unfurl_prehook(ctx, tns::FillLeaf, mode, protos) = tns
-
 combine_style(a::DefaultStyle, b::FillStyle) = FillStyle()
 combine_style(a::LookupStyle, b::FillStyle) = FillStyle()
 combine_style(a::ThunkStyle, b::FillStyle) = FillStyle()

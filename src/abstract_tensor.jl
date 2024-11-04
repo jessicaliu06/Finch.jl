@@ -10,25 +10,20 @@ Afterwards the tensor is update-only.
 declare!(ctx, tns, init) = @assert virtual_fill_value(ctx, tns) == init
 
 """
+    unfurl_posthook(ctx, tns, mode)
+
+Process the tensor `tns` in the context `ctx`, just after it has been unfurled,
+declared, or thawed. The earliest opportunity to process `tns`.
+"""
+unfurl_posthook(ctx, tns, mode) = tns
+
+"""
     unfurl_prehook(ctx, tns, mode)
 
-Return an object which we can either unfurl or call 
-Return an object capable of unfurling the
-virtual tensor `tns`. Before executing a statement, each
-subsequent in-scope access will be initialized with a separate call to
-`unfurl_prehook`. `protos` is the list of protocols in each case.
-
-The fallback for `unfurl_prehook` will iteratively move the last element of
-`protos` into the arguments of a function. This allows fibers to specialize on
-the last arguments of protos rather than the first, as Finch is column major.
+Process the tensor `tns` in the context `ctx`, just before it is unfurled,
+or just before it is accessed.  The latest opportunity to process `tns`.
 """
-function unfurl_prehook(ctx, tns, mode, subprotos, protos...)
-    if isempty(subprotos)
-        throw(FinchProtocolError("$(typeof(tns)) does not support reads with protocol $(protos)"))
-    else
-        unfurl_prehook(ctx, tns, mode, subprotos[1:end-1], subprotos[end], protos...)
-    end
-end
+unfurl_prehook(ctx, tns, mode) = tns
 
 """
     freeze!(ctx, tns)

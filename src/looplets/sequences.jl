@@ -12,7 +12,6 @@ FinchNotation.finch_leaf(x::Sequence) = virtual(x)
 struct SequenceStyle end
 
 get_style(ctx, ::Sequence, root) = root.kind === loop ? SequenceStyle() : DefaultStyle()
-unfurl_prehook(ctx, tns::Sequence, mode, protos) = tns
 combine_style(a::DefaultStyle, b::SequenceStyle) = SequenceStyle()
 combine_style(a::LookupStyle, b::SequenceStyle) = SequenceStyle()
 combine_style(a::ThunkStyle, b::SequenceStyle) = ThunkStyle()

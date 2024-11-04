@@ -31,7 +31,7 @@ virtual_size(ctx, tns::Unfurled) = virtual_size(ctx, tns.arr)[1 : end - tns.ndim
 virtual_resize!(ctx, tns::Unfurled, dims...) = virtual_resize!(ctx, tns.arr, dims...) # TODO SHOULD NOT HAPPEN BREAKS LIFECYCLES
 virtual_fill_value(ctx, tns::Unfurled) = virtual_fill_value(ctx, tns.arr)
 
-unfurl_prehook(ctx, tns::Unfurled, mode, protos) = Unfurled(tns.arr, tns.ndims, unfurl_prehook(ctx, tns.body, mode, protos))
+unfurl_posthook(ctx, tns::Unfurled, mode) = Unfurled(tns.arr, tns.ndims, unfurl_posthook(ctx, tns.body, mode))
 
 get_style(ctx, node::Unfurled, root) = get_style(ctx, node.body, root)
 

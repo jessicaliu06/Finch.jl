@@ -11,22 +11,22 @@ function issafe(mode)
 end
 
 """
-    unfurl_prehook!(ctx, prgm)
+    unfurl_posthook!(ctx, prgm)
 
-A transformation to unfurl_prehook readers and updaters before executing an
+A transformation to call `unfurl_posthook` on tensors before executing an
 expression.
 """
-function unfurl_prehook!(ctx, prgm)
-    prgm = InstantiateTensors(ctx=ctx)(prgm)
+function unfurl_posthook!(ctx, prgm)
+    prgm = PosthookTensors(ctx=ctx)(prgm)
     return prgm
 end
 
-@kwdef struct InstantiateTensors{Ctx}
+@kwdef struct PosthookTensors{Ctx}
     ctx::Ctx
     escape = Set()
 end
 
-function (ctx::InstantiateTensors)(node::FinchNode)
+function (ctx::PosthookTensors)(node::FinchNode)
     if node.kind === block
         block(map(ctx, node.bodies)...)
     elseif node.kind === define
@@ -43,8 +43,7 @@ function (ctx::InstantiateTensors)(node::FinchNode)
         node
     elseif (@capture node access(~tns, ~mode, ~idxs...)) && !(getroot(tns) in ctx.escape)
         #@assert get(ctx.ctx.modes, tns, reader) === node.mode.val
-        protos = [(mode.val === reader ? defaultread : defaultupdate) for _ in idxs]
-        tns_2 = unfurl_prehook(ctx.ctx, tns, mode.val, protos)
+        tns_2 = unfurl_posthook(ctx.ctx, tns, mode.val)
         access(tns_2, mode, idxs...)
     elseif istree(node)
         return similarterm(node, operation(node), map(ctx, arguments(node)))
@@ -107,7 +106,7 @@ function lower_global(ctx, prgm)
                 prgm = concordize(ctx_2, prgm)
                 prgm = evaluate_partial(ctx_2, prgm)
                 prgm = simplify(ctx_2, prgm) #appears necessary
-                prgm = unfurl_prehook!(ctx_2, prgm)
+                prgm = unfurl_posthook!(ctx_2, prgm)
                 contain(ctx_2) do ctx_3
                     ctx_3(prgm)
                 end

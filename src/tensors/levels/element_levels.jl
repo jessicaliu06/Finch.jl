@@ -159,7 +159,7 @@ function virtual_moveto_level(ctx::AbstractCompiler, lvl::VirtualElementLevel, a
     end)
 end
 
-function unfurl_prehook(ctx, fbr::VirtualSubFiber{VirtualElementLevel}, mode::Reader, protos)
+function unfurl_posthook(ctx, fbr::VirtualSubFiber{VirtualElementLevel}, mode::Reader)
     (lvl, pos) = (fbr.lvl, fbr.pos)
     val = freshen(ctx, lvl.ex, :_val)
     return Thunk(
@@ -170,12 +170,12 @@ function unfurl_prehook(ctx, fbr::VirtualSubFiber{VirtualElementLevel}, mode::Re
     )
 end
 
-function unfurl_prehook(ctx, fbr::VirtualSubFiber{VirtualElementLevel}, mode::Updater, protos)
+function unfurl_posthook(ctx, fbr::VirtualSubFiber{VirtualElementLevel}, mode::Updater)
     (lvl, pos) = (fbr.lvl, fbr.pos)
     VirtualScalar(nothing, lvl.Tv, lvl.Vf, gensym(), :($(lvl.val)[$(ctx(pos))]))
 end
 
-function unfurl_prehook(ctx, fbr::VirtualHollowSubFiber{VirtualElementLevel}, mode::Updater, protos)
+function unfurl_posthook(ctx, fbr::VirtualHollowSubFiber{VirtualElementLevel}, mode::Updater)
     (lvl, pos) = (fbr.lvl, fbr.pos)
     VirtualSparseScalar(nothing, lvl.Tv, lvl.Vf, gensym(), :($(lvl.val)[$(ctx(pos))]), fbr.dirty)
 end

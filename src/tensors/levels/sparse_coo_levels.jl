@@ -289,8 +289,6 @@ struct SparseCOOWalkTraversal
     stop
 end
 
-unfurl_prehook(ctx::AbstractCompiler, fbr::SparseCOOWalkTraversal, mode, protos) = fbr
-
 function unfurl(ctx, fbr::VirtualSubFiber{VirtualSparseCOOLevel}, ext, mode::Reader, proto)
     (lvl, pos) = (fbr.lvl, fbr.pos)
     Tp = postype(lvl)
@@ -382,8 +380,6 @@ struct SparseCOOExtrudeTraversal
     coords
     prev_coord
 end
-
-unfurl_prehook(ctx::AbstractCompiler, fbr::SparseCOOExtrudeTraversal, mode, protos) = fbr
 
 unfurl(ctx, fbr::VirtualSubFiber{VirtualSparseCOOLevel}, ext, mode::Updater, proto) =
     unfurl(ctx, VirtualHollowSubFiber(fbr.lvl, fbr.pos, freshen(ctx, :null)), ext, mode, proto)

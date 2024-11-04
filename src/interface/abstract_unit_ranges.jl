@@ -22,10 +22,6 @@ end
 
 virtual_resize!(ctx::AbstractCompiler, arr::VirtualAbstractUnitRange, idx_dim) = arr
 
-function unfurl_prehook(ctx, arr::VirtualAbstractUnitRange, mode::Reader, subprotos, proto::typeof(defaultread))
-    arr
-end
-
 function unfurl(ctx, arr::VirtualAbstractUnitRange, ext, mode, proto)
     Unfurled(
         arr = arr,
@@ -38,9 +34,6 @@ end
 function declare!(ctx::AbstractCompiler, arr::VirtualAbstractUnitRange, init)
     throw(FinchProtocolError("$(arr.arrtype) is not writeable"))
 end
-
-unfurl_prehook(ctx::AbstractCompiler, arr::VirtualAbstractUnitRange, mode::Updater, protos...) =
-    throw(FinchProtocolError("$(arr.arrtype) is not writeable"))
 
 unfurl(ctx::AbstractCompiler, arr::VirtualAbstractUnitRange, ext, mode::Updater, proto) =
     throw(FinchProtocolError("$(arr.arrtype) is not writeable"))

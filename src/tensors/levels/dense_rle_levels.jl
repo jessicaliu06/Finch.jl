@@ -337,7 +337,7 @@ function freeze_level!(ctx::AbstractCompiler, lvl::VirtualRunListLevel, pos_stop
                             for (ind, ext) in zip(inds, exts)
                                 prgm = loop(ind, ext, prgm)
                             end
-                            prgm = unfurl_prehook!(ctx_2, prgm)
+                            prgm = unfurl_posthook!(ctx_2, prgm)
                             ctx_2(prgm)
                         end)
                         if !$checkval
@@ -358,7 +358,7 @@ function freeze_level!(ctx::AbstractCompiler, lvl::VirtualRunListLevel, pos_stop
                         for (ind, ext) in zip(inds, exts)
                             prgm = loop(ind, ext, prgm)
                         end
-                        prgm = unfurl_prehook!(ctx_2, prgm)
+                        prgm = unfurl_posthook!(ctx_2, prgm)
                         ctx_2(prgm)
                     end)
                     $q_2 += 1

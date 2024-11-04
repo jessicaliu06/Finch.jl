@@ -5,7 +5,6 @@
     range = (ctx, ext) -> similar_extent(ext, something(start(ctx, ext), getstart(ext)), something(stop(ctx, ext), getstop(ext)))
 end
 FinchNotation.finch_leaf(x::Phase) = virtual(x)
-unfurl_prehook(ctx, tns::Phase, mode, protos) = tns
 
 Base.show(io::IO, ex::Phase) = Base.show(io, MIME"text/plain"(), ex)
 function Base.show(io::IO, mime::MIME"text/plain", ex::Phase)

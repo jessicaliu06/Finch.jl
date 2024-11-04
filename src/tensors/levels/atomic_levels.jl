@@ -191,18 +191,12 @@ function virtual_moveto_level(ctx::AbstractCompiler, lvl::VirtualAtomicLevel, ar
     virtual_moveto_level(ctx, lvl.lvl, arch)
 end
 
-function unfurl_prehook(ctx, fbr::VirtualSubFiber{VirtualAtomicLevel}, mode::Reader, protos)
+function unfurl_posthook(ctx, fbr::VirtualSubFiber{VirtualAtomicLevel}, mode::Reader)
     (lvl, pos) = (fbr.lvl, fbr.pos)
-    # lvlp = freshen(ctx, lvl.ex, :_lvl)
-    # sym = freshen(ctx, lvl.ex, :_after_atomic_lvl)
-    return body = Thunk(
-        body = (ctx) -> begin
-            unfurl_prehook(ctx, VirtualSubFiber(lvl.lvl, pos), mode, protos)
-        end,
-    )
+    unfurl_posthook(ctx, VirtualSubFiber(lvl.lvl, pos), mode)
 end
 
-function unfurl_prehook(ctx, fbr::VirtualSubFiber{VirtualAtomicLevel}, mode::Updater, protos)
+function unfurl_posthook(ctx, fbr::VirtualSubFiber{VirtualAtomicLevel}, mode::Updater)
     (lvl, pos) = (fbr.lvl, fbr.pos)
     sym = freshen(ctx, lvl.ex, :after_atomic_lvl)
     atomicData = freshen(ctx, lvl.ex, :atomicArraysAcc)
@@ -219,13 +213,13 @@ function unfurl_prehook(ctx, fbr::VirtualSubFiber{VirtualAtomicLevel}, mode::Upd
         push_preamble!(ctx, preamble)
         push_epilogue!(ctx, epilogue)
             lvl_2 = lvl.lvl
-            update = unfurl_prehook(ctx, VirtualSubFiber(lvl_2, pos), mode, protos)
+            update = unfurl_posthook(ctx, VirtualSubFiber(lvl_2, pos), mode)
             return update
         end,
 
     )
 end
-function unfurl_prehook(ctx, fbr::VirtualHollowSubFiber{VirtualAtomicLevel}, mode::Updater, protos)
+function unfurl_posthook(ctx, fbr::VirtualHollowSubFiber{VirtualAtomicLevel}, mode::Updater)
     (lvl, pos) = (fbr.lvl, fbr.pos)
     sym = freshen(ctx, lvl.ex, :after_atomic_lvl)
     atomicData = freshen(ctx, lvl.ex, :atomicArrays)
@@ -243,7 +237,7 @@ function unfurl_prehook(ctx, fbr::VirtualHollowSubFiber{VirtualAtomicLevel}, mod
             push_preamble!(ctx, preamble)
             push_epilogue!(ctx, epilogue)
             lvl_2 = lvl.lvl
-            update = unfurl_prehook(ctx, VirtualHollowSubFiber(lvl_2, pos, fbr.dirty), mode, protos)
+            update = unfurl_posthook(ctx, VirtualHollowSubFiber(lvl_2, pos, fbr.dirty), mode)
             return update
         end
     )

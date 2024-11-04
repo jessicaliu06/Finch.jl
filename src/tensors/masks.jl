@@ -25,10 +25,6 @@ end
 
 FinchNotation.finch_leaf(x::VirtualDiagMaskColumn) = virtual(x)
 
-function unfurl_prehook(ctx, arr::VirtualDiagMask, mode::Reader, subprotos, ::typeof(defaultread), ::typeof(defaultread))
-    arr
-end
-
 function unfurl(ctx, arr::VirtualDiagMask, ext, mode::Reader, proto)
     Unfurled(
         arr = arr,
@@ -80,10 +76,6 @@ end
 
 FinchNotation.finch_leaf(x::VirtualUpTriMaskColumn) = virtual(x)
 
-function unfurl_prehook(ctx, arr::VirtualUpTriMask, mode::Reader, subprotos, ::typeof(defaultread), ::typeof(defaultread))
-    arr
-end
-
 function unfurl(ctx, arr::VirtualUpTriMask, ext, mode::Reader, proto)
     Unfurled(
         arr = arr,
@@ -132,10 +124,6 @@ struct VirtualLoTriMaskColumn
 end
 
 FinchNotation.finch_leaf(x::VirtualLoTriMaskColumn) = virtual(x)
-
-function unfurl_prehook(ctx, arr::VirtualLoTriMask, mode::Reader, subprotos, ::typeof(defaultread), ::typeof(defaultread))
-    arr
-end
 
 function unfurl(ctx, arr::VirtualLoTriMask, ext, mode::Reader, proto)
     Unfurled(
@@ -192,10 +180,6 @@ struct VirtualBandMaskColumn
 end
 
 FinchNotation.finch_leaf(x::VirtualBandMaskColumn) = virtual(x)
-
-function unfurl_prehook(ctx, arr::VirtualBandMask, mode, subprotos, ::typeof(defaultread), ::typeof(defaultread), ::typeof(defaultread))
-    arr
-end
 
 function unfurl(ctx, arr::VirtualBandMask, ext, mode, proto)
     Unfurled(
@@ -254,10 +238,6 @@ struct VirtualSplitMaskColumn
 end
 
 FinchNotation.finch_leaf(x::VirtualSplitMaskColumn) = virtual(x)
-
-function unfurl_prehook(ctx, arr::VirtualSplitMask, mode::Reader, subprotos, ::typeof(defaultread), ::typeof(defaultread))
-    arr
-end
 
 function unfurl(ctx, arr::VirtualSplitMask, ext, mode, proto)
     Unfurled(
@@ -334,10 +314,6 @@ end
 
 FinchNotation.finch_leaf(x::VirtualChunkMaskColumn) = virtual(x)
 FinchNotation.finch_leaf(x::VirtualChunkMaskCleanupColumn) = virtual(x)
-
-function unfurl_prehook(ctx, arr::VirtualChunkMask, mode::Reader, subprotos, ::typeof(defaultread), ::typeof(defaultread))
-    arr
-end
 
 function unfurl(ctx, arr::VirtualChunkMask, ext, mode, proto)
     Unfurled(

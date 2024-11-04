@@ -81,11 +81,8 @@ function virtual_resize!(ctx::AbstractCompiler, arr::VirtualProductArray, dims..
     virtual_resize!(ctx, arr.body, dims[1:arr.dim - 1]..., dimless, dims[arr.dim + 2:end]...)
 end
 
-function unfurl_prehook_reader(arr::VirtualProductArray, ctx, protos)
-    VirtualProductArray(unfurl_prehook_reader(arr.body, ctx, [protos[1:arr.dim]; protos[arr.dim + 2:end]]), arr.dim)
-end
-function unfurl_prehook_updater(arr::VirtualProductArray, ctx, protos)
-    VirtualProductArray(unfurl_prehook_updater(arr.body, ctx, [protos[1:arr.dim]; protos[arr.dim + 2:end]]), arr.dim)
+function unfurl_posthook(arr::VirtualProductArray, ctx, mode)
+    VirtualProductArray(unfurl_posthook(arr.body, ctx, mode), arr.dim)
 end
 
 get_style(ctx, node::VirtualProductArray, root) = get_style(ctx, node.body, root)

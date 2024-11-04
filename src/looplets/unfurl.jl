@@ -23,7 +23,7 @@ function unfurl(ctx, tns::Furlable, ext, mode, proto)
     tns = tns.body(ctx, ext)
     return tns
 end
-unfurl(ctx, tns, ext, mode, proto) = tns
+unfurl(ctx, tns, ext, mode, proto) = error(sprint(dump, tns))
 
 instantiate(ctx, tns::Furlable, mode, protos) = tns
 is_injective(ctx, tns::Furlable) = is_injective(ctx, tns.body)

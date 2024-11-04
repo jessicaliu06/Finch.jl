@@ -387,6 +387,7 @@ instantiate(ctx::AbstractCompiler, fbr::SparseCOOExtrudeTraversal, mode, protos)
 
 unfurl(ctx, fbr::VirtualSubFiber{VirtualSparseCOOLevel}, ext, mode::Updater, proto) =
     unfurl(ctx, VirtualHollowSubFiber(fbr.lvl, fbr.pos, freshen(ctx, :null)), ext, mode, proto)
+
 function unfurl(ctx, fbr::VirtualHollowSubFiber{VirtualSparseCOOLevel}, ext, mode::Updater, proto)
     (lvl, pos) = (fbr.lvl, fbr.pos)
     tag = lvl.ex
@@ -407,7 +408,7 @@ function unfurl(ctx, fbr::VirtualHollowSubFiber{VirtualSparseCOOLevel}, ext, mod
                 end
             end)
         end,
-        body = (ctx) -> SparseCOOExtrudeTraversal(lvl, qos, fbr.dirty, [], prev_coord),
+        body = (ctx) -> unfurl(ctx, SparseCOOExtrudeTraversal(lvl, qos, fbr.dirty, [], prev_coord), ext, mode, proto),
         epilogue = quote
             $(lvl.ptr)[$(ctx(pos)) + 1] = $qos - $qos_fill - 1
             $(if issafe(get_mode_flag(ctx))
@@ -422,7 +423,7 @@ function unfurl(ctx, fbr::VirtualHollowSubFiber{VirtualSparseCOOLevel}, ext, mod
     )
 end
 
-function unfurl(ctx, trv::SparseCOOExtrudeTraversal, ext, mode::Updater, ::Union{typeof(defaultupdate), typeof(extrude)})
+function unfurl(ctx, trv::SparseCOOExtrudeTraversal, ext, mode::Updater, proto)#::Union{typeof(defaultupdate), typeof(extrude)})
     (lvl, qos, fbr_dirty, coords) = (trv.lvl, trv.qos, trv.fbr_dirty, trv.coords)
     TI = lvl.TI
     Tp = postype(lvl)

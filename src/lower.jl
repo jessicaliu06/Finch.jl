@@ -177,7 +177,13 @@ function lower(ctx::AbstractCompiler, root::FinchNode, ::DefaultStyle)
         #arguably, the declare, freeze, or thaw nodes should never reach this case but we'll leave that alone for now
         quote end
     elseif root.kind === access
-        return lower_access(ctx, root, resolve(ctx, root.tns))
+        tns = resolve(ctx, root.tns)
+        tns_2 = instantiate(ctx, tns, root.mode.val, [])
+        if tns_2 != tns
+            return ctx(access(tns_2, root.mode, root.idxs...))
+        else
+            return lower_access(ctx, root, tns_2)
+        end
     elseif root.kind === call
         root = simplify(ctx, root)
         if root.kind === call
@@ -257,13 +263,20 @@ function lower_access(ctx, node, tns::Number)
 end
 
 function lower_loop(ctx, root, ext)
-    root_2 = Rewrite(Postwalk(@rule access(~tns, ~mode, ~idxs...) => begin
-        if !isempty(idxs) && root.idx == idxs[end]
-            tns_2 = unfurl(ctx, tns, root.ext.val, mode.val, (mode.val === reader ? defaultread : defaultupdate))
-            access(Unfurled(resolve(ctx, tns), tns_2), mode, idxs...)
+    contain(ctx) do ctx_2
+        root_2 = instantiate!(ctx_2, root)
+        if root_2 == root
+            root_3 = Rewrite(Postwalk(@rule access(~tns, ~mode, ~idxs...) => begin
+                if !isempty(idxs) && root.idx == idxs[end]
+                    tns_2 = unfurl(ctx_2, tns, root.ext.val, mode.val, (mode.val === reader ? defaultread : defaultupdate))
+                    access(Unfurled(resolve(ctx_2, tns), tns_2), mode, idxs...)
+                end
+            end))(root_2)
+            return ctx_2(root_3, result_style(LookupStyle(), get_style(ctx_2, root_3)))
+        else
+            return ctx_2(root_2)
         end
-    end))(root)
-    return ctx(root_2, result_style(LookupStyle(), get_style(ctx, root_2)))
+    end
 end
 
 lower_loop(ctx, root, ext::ParallelDimension) =

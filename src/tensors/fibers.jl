@@ -162,10 +162,10 @@ function virtual_moveto(ctx::AbstractCompiler, fbr::VirtualHollowSubFiber, arch)
     return VirtualHollowSubFiber(virtual_moveto_level(ctx, fbr.lvl, arch), fbr.pos, fbr.dirty)
 end
 
-instantiate(ctx, fbr::VirtualFiber, mode, protos) = 
-    instantiate(ctx, VirtualSubFiber(fbr.lvl, literal(1)), mode, protos)
-instantiate(ctx, fbr::VirtualSubFiber, mode, protos) = fbr
-instantiate(ctx, fbr::VirtualHollowSubFiber, mode, protos) = fbr
+unwrap_outer(ctx, fbr::VirtualFiber, mode, protos) = 
+    unwrap_outer(ctx, VirtualSubFiber(fbr.lvl, literal(1)), mode, protos)
+unwrap_outer(ctx, fbr::VirtualSubFiber, mode, protos) = fbr
+unwrap_outer(ctx, fbr::VirtualHollowSubFiber, mode, protos) = fbr
 
 unfurl(ctx, fbr::VirtualFiber, ext, mode, proto) =
     unfurl(ctx, VirtualSubFiber(fbr.lvl, literal(1)), ext, mode, proto)

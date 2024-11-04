@@ -163,7 +163,7 @@ thaw
 
 Finch AST statement that executes each of it's arguments in turn. If the body is
 not a block, replaces accesses to tensors in the body with
-instantiate.
+unwrap_outer.
 """
 block
 

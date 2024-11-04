@@ -10,7 +10,7 @@ struct FillStyle end
 
 get_style(ctx, ::FillLeaf, root) = FillStyle()
 
-instantiate(ctx, tns::FillLeaf, mode, protos) = tns
+unwrap_outer(ctx, tns::FillLeaf, mode, protos) = tns
 
 combine_style(a::DefaultStyle, b::FillStyle) = FillStyle()
 combine_style(a::LookupStyle, b::FillStyle) = FillStyle()

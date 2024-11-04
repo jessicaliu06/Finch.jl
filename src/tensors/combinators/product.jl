@@ -81,11 +81,11 @@ function virtual_resize!(ctx::AbstractCompiler, arr::VirtualProductArray, dims..
     virtual_resize!(ctx, arr.body, dims[1:arr.dim - 1]..., dimless, dims[arr.dim + 2:end]...)
 end
 
-function instantiate_reader(arr::VirtualProductArray, ctx, protos)
-    VirtualProductArray(instantiate_reader(arr.body, ctx, [protos[1:arr.dim]; protos[arr.dim + 2:end]]), arr.dim)
+function unwrap_outer_reader(arr::VirtualProductArray, ctx, protos)
+    VirtualProductArray(unwrap_outer_reader(arr.body, ctx, [protos[1:arr.dim]; protos[arr.dim + 2:end]]), arr.dim)
 end
-function instantiate_updater(arr::VirtualProductArray, ctx, protos)
-    VirtualProductArray(instantiate_updater(arr.body, ctx, [protos[1:arr.dim]; protos[arr.dim + 2:end]]), arr.dim)
+function unwrap_outer_updater(arr::VirtualProductArray, ctx, protos)
+    VirtualProductArray(unwrap_outer_updater(arr.body, ctx, [protos[1:arr.dim]; protos[arr.dim + 2:end]]), arr.dim)
 end
 
 get_style(ctx, node::VirtualProductArray, root) = get_style(ctx, node.body, root)

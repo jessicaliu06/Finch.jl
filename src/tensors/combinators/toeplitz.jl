@@ -79,8 +79,8 @@ end
 virtual_resize!(ctx::AbstractCompiler, arr::VirtualToeplitzArray, dims...) =
     virtual_resize!(ctx, arr.body, dims[1:arr.dim - 1]..., dimless, dims[arr.dim + 2:end]...)
 
-instantiate(ctx, arr::VirtualToeplitzArray, mode, protos) =
-    VirtualToeplitzArray(instantiate(ctx, arr.body, mode, [protos[1:arr.dim]; protos[arr.dim + 2:end]]), arr.dim)
+unwrap_outer(ctx, arr::VirtualToeplitzArray, mode, protos) =
+    VirtualToeplitzArray(unwrap_outer(ctx, arr.body, mode, [protos[1:arr.dim]; protos[arr.dim + 2:end]]), arr.dim)
 
 get_style(ctx, node::VirtualToeplitzArray, root) = get_style(ctx, node.body, root)
 

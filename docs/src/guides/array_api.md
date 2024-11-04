@@ -17,19 +17,19 @@ julia> A = fsparse([1, 1, 2, 3], [2, 4, 5, 6], [1.0, 2.0, 3.0])
    └─ [2, 5]: 3.0
 
 julia> A + 0
-ERROR: MethodError: instantiate(::Finch.FinchCompiler, ::Finch.VirtualSubFiber{Finch.VirtualElementLevel}, ::Finch.FinchNotation.Reader, ::Vector{Function}) is ambiguous.
+ERROR: MethodError: unwrap_outer(::Finch.FinchCompiler, ::Finch.VirtualSubFiber{Finch.VirtualElementLevel}, ::Finch.FinchNotation.Reader, ::Vector{Function}) is ambiguous.
 
 Candidates:
-  instantiate(ctx::Finch.AbstractCompiler, fbr::Finch.VirtualSubFiber, mode, protos)
+  unwrap_outer(ctx::Finch.AbstractCompiler, fbr::Finch.VirtualSubFiber, mode, protos)
     @ Finch ~/Projects/Finch.jl/src/tensors/fibers.jl:166
-  instantiate(ctx, fbr::Finch.VirtualSubFiber{Finch.VirtualElementLevel}, mode::Finch.FinchNotation.Reader, protos)
+  unwrap_outer(ctx, fbr::Finch.VirtualSubFiber{Finch.VirtualElementLevel}, mode::Finch.FinchNotation.Reader, protos)
     @ Finch ~/Projects/Finch.jl/src/tensors/levels/element_levels.jl:162
 
 Possible fix, define
-  instantiate(::Finch.AbstractCompiler, ::Finch.VirtualSubFiber{Finch.VirtualElementLevel}, ::Finch.FinchNotation.Reader, ::Any)
+  unwrap_outer(::Finch.AbstractCompiler, ::Finch.VirtualSubFiber{Finch.VirtualElementLevel}, ::Finch.FinchNotation.Reader, ::Any)
 
 Stacktrace:
-  [1] instantiate(ctx::Finch.FinchCompiler, tns::Finch.FinchNotation.FinchNode, mode::Finch.FinchNotation.Reader, protos::Vector{Function})
+  [1] unwrap_outer(ctx::Finch.FinchCompiler, tns::Finch.FinchNotation.FinchNode, mode::Finch.FinchNotation.Reader, protos::Vector{Function})
     @ Finch ~/Projects/Finch.jl/src/tensors/combinators/roots.jl:10
   [2] (::Finch.InstantiateTensors{Finch.FinchCompiler})(node::Finch.FinchNotation.FinchNode)
     @ Finch ~/Projects/Finch.jl/src/execute.jl:47
@@ -61,7 +61,7 @@ Stacktrace:
     @ Base ./abstractarray.jl:3371
  [16] (::Finch.InstantiateTensors{Finch.FinchCompiler})(node::Finch.FinchNotation.FinchNode)
     @ Finch ~/Projects/Finch.jl/src/execute.jl:31
- [17] instantiate!(ctx::Finch.FinchCompiler, prgm::Finch.FinchNotation.FinchNode)
+ [17] unwrap_outer!(ctx::Finch.FinchCompiler, prgm::Finch.FinchNotation.FinchNode)
     @ Finch ~/Projects/Finch.jl/src/execute.jl:20
  [18] (::Finch.var"#278#280"{Finch.FinchCompiler})(ctx_2::Finch.FinchCompiler)
     @ Finch ~/Projects/Finch.jl/src/execute.jl:110
@@ -149,19 +149,19 @@ Stacktrace:
     @ Finch ~/Projects/Finch.jl/src/interface/eager.jl:56
 
 julia> A + 1
-ERROR: MethodError: instantiate(::Finch.FinchCompiler, ::Finch.VirtualSubFiber{Finch.VirtualElementLevel}, ::Finch.FinchNotation.Reader, ::Vector{Function}) is ambiguous.
+ERROR: MethodError: unwrap_outer(::Finch.FinchCompiler, ::Finch.VirtualSubFiber{Finch.VirtualElementLevel}, ::Finch.FinchNotation.Reader, ::Vector{Function}) is ambiguous.
 
 Candidates:
-  instantiate(ctx::Finch.AbstractCompiler, fbr::Finch.VirtualSubFiber, mode, protos)
+  unwrap_outer(ctx::Finch.AbstractCompiler, fbr::Finch.VirtualSubFiber, mode, protos)
     @ Finch ~/Projects/Finch.jl/src/tensors/fibers.jl:166
-  instantiate(ctx, fbr::Finch.VirtualSubFiber{Finch.VirtualElementLevel}, mode::Finch.FinchNotation.Reader, protos)
+  unwrap_outer(ctx, fbr::Finch.VirtualSubFiber{Finch.VirtualElementLevel}, mode::Finch.FinchNotation.Reader, protos)
     @ Finch ~/Projects/Finch.jl/src/tensors/levels/element_levels.jl:162
 
 Possible fix, define
-  instantiate(::Finch.AbstractCompiler, ::Finch.VirtualSubFiber{Finch.VirtualElementLevel}, ::Finch.FinchNotation.Reader, ::Any)
+  unwrap_outer(::Finch.AbstractCompiler, ::Finch.VirtualSubFiber{Finch.VirtualElementLevel}, ::Finch.FinchNotation.Reader, ::Any)
 
 Stacktrace:
-  [1] instantiate(ctx::Finch.FinchCompiler, tns::Finch.FinchNotation.FinchNode, mode::Finch.FinchNotation.Reader, protos::Vector{Function})
+  [1] unwrap_outer(ctx::Finch.FinchCompiler, tns::Finch.FinchNotation.FinchNode, mode::Finch.FinchNotation.Reader, protos::Vector{Function})
     @ Finch ~/Projects/Finch.jl/src/tensors/combinators/roots.jl:10
   [2] (::Finch.InstantiateTensors{Finch.FinchCompiler})(node::Finch.FinchNotation.FinchNode)
     @ Finch ~/Projects/Finch.jl/src/execute.jl:47
@@ -193,7 +193,7 @@ Stacktrace:
     @ Base ./abstractarray.jl:3371
  [16] (::Finch.InstantiateTensors{Finch.FinchCompiler})(node::Finch.FinchNotation.FinchNode)
     @ Finch ~/Projects/Finch.jl/src/execute.jl:31
- [17] instantiate!(ctx::Finch.FinchCompiler, prgm::Finch.FinchNotation.FinchNode)
+ [17] unwrap_outer!(ctx::Finch.FinchCompiler, prgm::Finch.FinchNotation.FinchNode)
     @ Finch ~/Projects/Finch.jl/src/execute.jl:20
  [18] (::Finch.var"#278#280"{Finch.FinchCompiler})(ctx_2::Finch.FinchCompiler)
     @ Finch ~/Projects/Finch.jl/src/execute.jl:110
@@ -281,19 +281,19 @@ Stacktrace:
     @ Finch ~/Projects/Finch.jl/src/interface/eager.jl:56
 
 julia> B = A .* 2
-ERROR: MethodError: instantiate(::Finch.FinchCompiler, ::Finch.VirtualSubFiber{Finch.VirtualElementLevel}, ::Finch.FinchNotation.Reader, ::Vector{Function}) is ambiguous.
+ERROR: MethodError: unwrap_outer(::Finch.FinchCompiler, ::Finch.VirtualSubFiber{Finch.VirtualElementLevel}, ::Finch.FinchNotation.Reader, ::Vector{Function}) is ambiguous.
 
 Candidates:
-  instantiate(ctx::Finch.AbstractCompiler, fbr::Finch.VirtualSubFiber, mode, protos)
+  unwrap_outer(ctx::Finch.AbstractCompiler, fbr::Finch.VirtualSubFiber, mode, protos)
     @ Finch ~/Projects/Finch.jl/src/tensors/fibers.jl:166
-  instantiate(ctx, fbr::Finch.VirtualSubFiber{Finch.VirtualElementLevel}, mode::Finch.FinchNotation.Reader, protos)
+  unwrap_outer(ctx, fbr::Finch.VirtualSubFiber{Finch.VirtualElementLevel}, mode::Finch.FinchNotation.Reader, protos)
     @ Finch ~/Projects/Finch.jl/src/tensors/levels/element_levels.jl:162
 
 Possible fix, define
-  instantiate(::Finch.AbstractCompiler, ::Finch.VirtualSubFiber{Finch.VirtualElementLevel}, ::Finch.FinchNotation.Reader, ::Any)
+  unwrap_outer(::Finch.AbstractCompiler, ::Finch.VirtualSubFiber{Finch.VirtualElementLevel}, ::Finch.FinchNotation.Reader, ::Any)
 
 Stacktrace:
-  [1] instantiate(ctx::Finch.FinchCompiler, tns::Finch.FinchNotation.FinchNode, mode::Finch.FinchNotation.Reader, protos::Vector{Function})
+  [1] unwrap_outer(ctx::Finch.FinchCompiler, tns::Finch.FinchNotation.FinchNode, mode::Finch.FinchNotation.Reader, protos::Vector{Function})
     @ Finch ~/Projects/Finch.jl/src/tensors/combinators/roots.jl:10
   [2] (::Finch.InstantiateTensors{Finch.FinchCompiler})(node::Finch.FinchNotation.FinchNode)
     @ Finch ~/Projects/Finch.jl/src/execute.jl:47
@@ -325,7 +325,7 @@ Stacktrace:
     @ Base ./abstractarray.jl:3371
  [16] (::Finch.InstantiateTensors{Finch.FinchCompiler})(node::Finch.FinchNotation.FinchNode)
     @ Finch ~/Projects/Finch.jl/src/execute.jl:31
- [17] instantiate!(ctx::Finch.FinchCompiler, prgm::Finch.FinchNotation.FinchNode)
+ [17] unwrap_outer!(ctx::Finch.FinchCompiler, prgm::Finch.FinchNotation.FinchNode)
     @ Finch ~/Projects/Finch.jl/src/execute.jl:20
  [18] (::Finch.var"#278#280"{Finch.FinchCompiler})(ctx_2::Finch.FinchCompiler)
     @ Finch ~/Projects/Finch.jl/src/execute.jl:110

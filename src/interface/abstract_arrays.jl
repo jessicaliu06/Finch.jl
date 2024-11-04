@@ -65,12 +65,12 @@ function unfurl(ctx, tns::VirtualAbstractArraySlice, ext, mode, proto)
     )
 end
 
-instantiate(ctx, tns::VirtualAbstractArraySlice, mode, protos) = tns
+unwrap_outer(ctx, tns::VirtualAbstractArraySlice, mode, protos) = tns
 #is_injective(ctx, tns::VirtualAbstractArraySlice) = is_injective(ctx, tns.body)
 #is_atomic(ctx, tns::VirtualAbstractArraySlice) = is_atomic(ctx, tns.body)
 #is_concurrent(ctx, tns::VirtualAbstractArraySlice) = is_concurrent(ctx, tns.body)
 
-function instantiate(ctx::AbstractCompiler, arr::VirtualAbstractArray, mode, subprotos, protos...)
+function unwrap_outer(ctx::AbstractCompiler, arr::VirtualAbstractArray, mode, subprotos, protos...)
     if arr.ndims == 0
         val = freshen(ctx, :val)
         if mode === reader

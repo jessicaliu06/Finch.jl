@@ -10,22 +10,22 @@ Afterwards the tensor is update-only.
 declare!(ctx, tns, init) = @assert virtual_fill_value(ctx, tns) == init
 
 """
-    instantiate(ctx, tns, mode, protos)
+    unwrap_outer(ctx, tns, mode, protos)
 
 Return an object (usually a looplet nest) capable of unfurling the
 virtual tensor `tns`. Before executing a statement, each
 subsequent in-scope access will be initialized with a separate call to
-`instantiate`. `protos` is the list of protocols in each case.
+`unwrap_outer`. `protos` is the list of protocols in each case.
 
-The fallback for `instantiate` will iteratively move the last element of
+The fallback for `unwrap_outer` will iteratively move the last element of
 `protos` into the arguments of a function. This allows fibers to specialize on
 the last arguments of protos rather than the first, as Finch is column major.
 """
-function instantiate(ctx, tns, mode, subprotos, protos...)
+function unwrap_outer(ctx, tns, mode, subprotos, protos...)
     if isempty(subprotos)
         throw(FinchProtocolError("$(typeof(tns)) does not support reads with protocol $(protos)"))
     else
-        instantiate(ctx, tns, mode, subprotos[1:end-1], subprotos[end], protos...)
+        unwrap_outer(ctx, tns, mode, subprotos[1:end-1], subprotos[end], protos...)
     end
 end
 

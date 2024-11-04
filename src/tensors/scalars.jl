@@ -64,7 +64,7 @@ function freeze!(ctx, tns::VirtualScalar)
     end)
     return tns
 end
-instantiate(ctx, tns::VirtualScalar, mode, subprotos) = tns
+unwrap_outer(ctx, tns::VirtualScalar, mode, subprotos) = tns
 
 function lower_access(ctx::AbstractCompiler, node, tns::VirtualScalar)
     @assert isempty(node.idxs)
@@ -150,8 +150,8 @@ function freeze!(ctx, tns::VirtualSparseScalar)
     return tns
 end
 
-instantiate(ctx, tns::VirtualSparseScalar, mode::Updater, subprotos) = tns
-function instantiate(ctx, tns::VirtualSparseScalar, mode::Reader, subprotos)
+unwrap_outer(ctx, tns::VirtualSparseScalar, mode::Updater, subprotos) = tns
+function unwrap_outer(ctx, tns::VirtualSparseScalar, mode::Reader, subprotos)
     Switch(
         tns.dirty => tns,
         true => Simplify(FillLeaf(tns.Vf)),
@@ -232,7 +232,7 @@ function freeze!(ctx, tns::VirtualShortCircuitScalar)
     end)
     return tns
 end
-instantiate(ctx, tns::VirtualShortCircuitScalar, mode, subprotos) = tns
+unwrap_outer(ctx, tns::VirtualShortCircuitScalar, mode, subprotos) = tns
 
 function lower_access(ctx::AbstractCompiler, node, tns::VirtualShortCircuitScalar)
     @assert isempty(node.idxs)
@@ -316,8 +316,8 @@ function freeze!(ctx, tns::VirtualSparseShortCircuitScalar)
     return tns
 end
 
-instantiate(ctx, tns::VirtualSparseShortCircuitScalar, mode::Updater, subprotos) = tns
-function instantiate(ctx, tns::VirtualSparseShortCircuitScalar, mode::Reader, subprotos)
+unwrap_outer(ctx, tns::VirtualSparseShortCircuitScalar, mode::Updater, subprotos) = tns
+function unwrap_outer(ctx, tns::VirtualSparseShortCircuitScalar, mode::Reader, subprotos)
     Switch([
         value(tns.dirty, Bool) => tns,
         true => Simplify(FillLeaf(tns.Vf)),

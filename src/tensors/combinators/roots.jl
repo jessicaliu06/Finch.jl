@@ -3,11 +3,11 @@ virtual_size(ctx, tns::FinchNode) = virtual_size(ctx, resolve(ctx, tns))
 virtual_resize!(ctx, tns::FinchNode, dims...) = virtual_resize!(ctx, resolve(ctx, tns), dims...)
 virtual_fill_value(ctx, tns::FinchNode) = virtual_fill_value(ctx, resolve(ctx, tns))
 
-function instantiate(ctx::AbstractCompiler, tns::FinchNode, mode, protos)
+function unwrap_outer(ctx::AbstractCompiler, tns::FinchNode, mode, protos)
     if tns.kind === virtual
-        return instantiate(ctx, tns.val, mode, protos)
+        return unwrap_outer(ctx, tns.val, mode, protos)
     elseif tns.kind === variable
-        return Unfurled(tns, instantiate(ctx, resolve(ctx, tns), mode, protos))
+        return Unfurled(tns, unwrap_outer(ctx, resolve(ctx, tns), mode, protos))
     else
         return tns
     end

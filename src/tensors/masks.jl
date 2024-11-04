@@ -25,7 +25,7 @@ end
 
 FinchNotation.finch_leaf(x::VirtualDiagMaskColumn) = virtual(x)
 
-function instantiate(ctx, arr::VirtualDiagMask, mode::Reader, subprotos, ::typeof(defaultread), ::typeof(defaultread))
+function unwrap_outer(ctx, arr::VirtualDiagMask, mode::Reader, subprotos, ::typeof(defaultread), ::typeof(defaultread))
     arr
 end
 
@@ -80,7 +80,7 @@ end
 
 FinchNotation.finch_leaf(x::VirtualUpTriMaskColumn) = virtual(x)
 
-function instantiate(ctx, arr::VirtualUpTriMask, mode::Reader, subprotos, ::typeof(defaultread), ::typeof(defaultread))
+function unwrap_outer(ctx, arr::VirtualUpTriMask, mode::Reader, subprotos, ::typeof(defaultread), ::typeof(defaultread))
     arr
 end
 
@@ -133,7 +133,7 @@ end
 
 FinchNotation.finch_leaf(x::VirtualLoTriMaskColumn) = virtual(x)
 
-function instantiate(ctx, arr::VirtualLoTriMask, mode::Reader, subprotos, ::typeof(defaultread), ::typeof(defaultread))
+function unwrap_outer(ctx, arr::VirtualLoTriMask, mode::Reader, subprotos, ::typeof(defaultread), ::typeof(defaultread))
     arr
 end
 
@@ -193,7 +193,7 @@ end
 
 FinchNotation.finch_leaf(x::VirtualBandMaskColumn) = virtual(x)
 
-function instantiate(ctx, arr::VirtualBandMask, mode, subprotos, ::typeof(defaultread), ::typeof(defaultread), ::typeof(defaultread))
+function unwrap_outer(ctx, arr::VirtualBandMask, mode, subprotos, ::typeof(defaultread), ::typeof(defaultread), ::typeof(defaultread))
     arr
 end
 
@@ -255,7 +255,7 @@ end
 
 FinchNotation.finch_leaf(x::VirtualSplitMaskColumn) = virtual(x)
 
-function instantiate(ctx, arr::VirtualSplitMask, mode::Reader, subprotos, ::typeof(defaultread), ::typeof(defaultread))
+function unwrap_outer(ctx, arr::VirtualSplitMask, mode::Reader, subprotos, ::typeof(defaultread), ::typeof(defaultread))
     arr
 end
 
@@ -335,7 +335,7 @@ end
 FinchNotation.finch_leaf(x::VirtualChunkMaskColumn) = virtual(x)
 FinchNotation.finch_leaf(x::VirtualChunkMaskCleanupColumn) = virtual(x)
 
-function instantiate(ctx, arr::VirtualChunkMask, mode::Reader, subprotos, ::typeof(defaultread), ::typeof(defaultread))
+function unwrap_outer(ctx, arr::VirtualChunkMask, mode::Reader, subprotos, ::typeof(defaultread), ::typeof(defaultread))
     arr
 end
 

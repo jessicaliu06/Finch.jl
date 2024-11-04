@@ -191,18 +191,18 @@ function virtual_moveto_level(ctx::AbstractCompiler, lvl::VirtualAtomicLevel, ar
     virtual_moveto_level(ctx, lvl.lvl, arch)
 end
 
-function instantiate(ctx, fbr::VirtualSubFiber{VirtualAtomicLevel}, mode::Reader, protos)
+function unwrap_outer(ctx, fbr::VirtualSubFiber{VirtualAtomicLevel}, mode::Reader, protos)
     (lvl, pos) = (fbr.lvl, fbr.pos)
     # lvlp = freshen(ctx, lvl.ex, :_lvl)
     # sym = freshen(ctx, lvl.ex, :_after_atomic_lvl)
     return body = Thunk(
         body = (ctx) -> begin
-            instantiate(ctx, VirtualSubFiber(lvl.lvl, pos), mode, protos)
+            unwrap_outer(ctx, VirtualSubFiber(lvl.lvl, pos), mode, protos)
         end,
     )
 end
 
-function instantiate(ctx, fbr::VirtualSubFiber{VirtualAtomicLevel}, mode::Updater, protos)
+function unwrap_outer(ctx, fbr::VirtualSubFiber{VirtualAtomicLevel}, mode::Updater, protos)
     (lvl, pos) = (fbr.lvl, fbr.pos)
     sym = freshen(ctx, lvl.ex, :after_atomic_lvl)
     atomicData = freshen(ctx, lvl.ex, :atomicArraysAcc)
@@ -219,13 +219,13 @@ function instantiate(ctx, fbr::VirtualSubFiber{VirtualAtomicLevel}, mode::Update
         push_preamble!(ctx, preamble)
         push_epilogue!(ctx, epilogue)
             lvl_2 = lvl.lvl
-            update = instantiate(ctx, VirtualSubFiber(lvl_2, pos), mode, protos)
+            update = unwrap_outer(ctx, VirtualSubFiber(lvl_2, pos), mode, protos)
             return update
         end,
 
     )
 end
-function instantiate(ctx, fbr::VirtualHollowSubFiber{VirtualAtomicLevel}, mode::Updater, protos)
+function unwrap_outer(ctx, fbr::VirtualHollowSubFiber{VirtualAtomicLevel}, mode::Updater, protos)
     (lvl, pos) = (fbr.lvl, fbr.pos)
     sym = freshen(ctx, lvl.ex, :after_atomic_lvl)
     atomicData = freshen(ctx, lvl.ex, :atomicArrays)
@@ -243,7 +243,7 @@ function instantiate(ctx, fbr::VirtualHollowSubFiber{VirtualAtomicLevel}, mode::
             push_preamble!(ctx, preamble)
             push_epilogue!(ctx, epilogue)
             lvl_2 = lvl.lvl
-            update = instantiate(ctx, VirtualHollowSubFiber(lvl_2, pos, fbr.dirty), mode, protos)
+            update = unwrap_outer(ctx, VirtualHollowSubFiber(lvl_2, pos, fbr.dirty), mode, protos)
             return update
         end
     )

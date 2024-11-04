@@ -218,7 +218,7 @@ function broadcast_to_eltype(arg)
     eltype(arg)
 end
 
-Base.Broadcast.instantiate(bc::Broadcasted{LazyStyle{N}}) where {N} = bc
+Base.Broadcast.unwrap_outer(bc::Broadcasted{LazyStyle{N}}) where {N} = bc
 
 Base.copyto!(out, bc::Broadcasted{LazyStyle{N}}) where {N} = copyto!(out, copy(bc))
 

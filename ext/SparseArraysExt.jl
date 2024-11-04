@@ -216,12 +216,12 @@ function Finch.unfurl(ctx, tns::VirtualSparseMatrixCSCColumn, ext, mode, ::Union
     )
 end
 
-Finch.instantiate(ctx, tns::VirtualSparseMatrixCSCColumn, mode, protos) = tns
+Finch.unwrap_outer(ctx, tns::VirtualSparseMatrixCSCColumn, mode, protos) = tns
 #Finch.is_injective(ctx, tns::VirtualSparseMatrixCSCColumn) = is_injective(ctx, tns.mtx)[1]
 #Finch.is_atomic(ctx, tns::VirtualSparseMatrixCSCColumn) = is_atomic(ctx, tns.mtx)[1]
 #Finch.is_concurrent(ctx, tns::VirtualSparseMatrixCSCColumn) = is_concurrent(ctx, tns.mtx)[1]
 
-function Finch.instantiate(ctx::AbstractCompiler, arr::VirtualSparseMatrixCSC, mode::Reader, subprotos, ::Union{typeof(defaultread), typeof(walk), typeof(follow)}, ::Union{typeof(defaultread), typeof(walk)})
+function Finch.unwrap_outer(ctx::AbstractCompiler, arr::VirtualSparseMatrixCSC, mode::Reader, subprotos, ::Union{typeof(defaultread), typeof(walk), typeof(follow)}, ::Union{typeof(defaultread), typeof(walk)})
     arr
 end
 
@@ -235,7 +235,7 @@ function Finch.unfurl(ctx::AbstractCompiler, arr::VirtualSparseMatrixCSC, ext, m
     )
 end
 
-function Finch.instantiate(ctx::AbstractCompiler, arr::VirtualSparseMatrixCSC, mode::Updater, subprotos, ::Union{typeof(defaultupdate), typeof(extrude)}, ::Union{typeof(defaultupdate), typeof(extrude)})
+function Finch.unwrap_outer(ctx::AbstractCompiler, arr::VirtualSparseMatrixCSC, mode::Updater, subprotos, ::Union{typeof(defaultupdate), typeof(extrude)}, ::Union{typeof(defaultupdate), typeof(extrude)})
     arr
 end
 
@@ -392,7 +392,7 @@ function Finch.thaw!(ctx::AbstractCompiler, arr::VirtualSparseVector)
     return arr
 end
 
-function Finch.instantiate(ctx::AbstractCompiler, arr::VirtualSparseVector, mode::Reader, subprotos, ::Union{typeof(defaultread), typeof(walk)})
+function Finch.unwrap_outer(ctx::AbstractCompiler, arr::VirtualSparseVector, mode::Reader, subprotos, ::Union{typeof(defaultread), typeof(walk)})
     arr
 end
 
@@ -452,7 +452,7 @@ function Finch.unfurl(ctx::AbstractCompiler, arr::VirtualSparseVector, ext, mode
     )
 end
 
-function Finch.instantiate(ctx, arr::VirtualSparseVector, mode::Updater, subprotos, ::Union{typeof(defaultupdate), typeof(extrude)})
+function Finch.unwrap_outer(ctx, arr::VirtualSparseVector, mode::Updater, subprotos, ::Union{typeof(defaultupdate), typeof(extrude)})
     arr
 end
 

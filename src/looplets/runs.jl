@@ -84,7 +84,7 @@ function lower(ctx::AbstractCompiler, root::FinchNode, ::AcceptRunStyle)
             return ctx(root, LookupStyle())
         else
             #The loop body is constant after removing AcceptRuns, lower only the body once
-            return ctx(unfurl_posthook!(ctx, body))
+            return ctx(body)
         end
     elseif root.kind === block
         quote end #TODO this shouldn't need to be specified

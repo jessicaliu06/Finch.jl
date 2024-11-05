@@ -65,8 +65,7 @@ function freeze!(ctx, tns::VirtualScalar)
     return tns
 end
 
-function lower_access(ctx::AbstractCompiler, node, tns::VirtualScalar)
-    @assert isempty(node.idxs)
+function lower_access(ctx::AbstractCompiler, tns::VirtualScalar, mode)
     return tns.val
 end
 
@@ -158,8 +157,7 @@ end
 
 FinchNotation.finch_leaf(x::VirtualSparseScalar) = virtual(x)
 
-function lower_access(ctx::AbstractCompiler, node, tns::VirtualSparseScalar)
-    @assert isempty(node.idxs)
+function lower_access(ctx::AbstractCompiler, tns::VirtualSparseScalar, mode)
     push_preamble!(ctx, quote
         $(tns.dirty) = true
     end)
@@ -231,8 +229,7 @@ function freeze!(ctx, tns::VirtualShortCircuitScalar)
     return tns
 end
 
-function lower_access(ctx::AbstractCompiler, node, tns::VirtualShortCircuitScalar)
-    @assert isempty(node.idxs)
+function lower_access(ctx::AbstractCompiler, tns::VirtualShortCircuitScalar, mode)
     return tns.val
 end
 
@@ -322,8 +319,7 @@ end
 
 FinchNotation.finch_leaf(x::VirtualSparseShortCircuitScalar) = virtual(x)
 
-function lower_access(ctx::AbstractCompiler, node, tns::VirtualSparseShortCircuitScalar)
-    @assert isempty(node.idxs)
+function lower_access(ctx::AbstractCompiler, tns::VirtualSparseShortCircuitScalar, mode)
     push_preamble!(ctx, quote
         $(tns.dirty) = true
     end)

@@ -107,9 +107,6 @@ is_injective(ctx, lvl::Unfurled) = is_injective(ctx, lvl.arr)
 is_atomic(ctx, lvl::Unfurled) = is_atomic(ctx, lvl.arr)
 is_concurrent(ctx, lvl::Unfurled) = is_concurrent(ctx, lvl.arr)
 
-function lower_access(ctx::AbstractCompiler, node, tns::Unfurled)
-    if !isempty(node.idxs)
-        error("Unfurled not lowered completely: $(tns.body)")
-    end
-    lower_access(ctx, node, tns.body)
+function lower_access(ctx::AbstractCompiler, tns::Unfurled, mode)
+    lower_access(ctx, tns.body, mode)
 end

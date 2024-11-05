@@ -178,7 +178,11 @@ function lower(ctx::AbstractCompiler, root::FinchNode, ::DefaultStyle)
         quote end
     elseif root.kind === access
         tns = resolve(ctx, root.tns)
-        return lower_access(ctx, root, tns)
+        if length(root.idxs) > 0
+            throw(FinchCompileError("Finch failed to completely lower an access to $tns"))
+        end
+        @assert root.mode.kind === literal
+        return lower_access(ctx, tns, root.mode.val)
     elseif root.kind === call
         root = simplify(ctx, root)
         if root.kind === call
@@ -246,13 +250,12 @@ function lower(ctx::AbstractCompiler, root::FinchNode, ::DefaultStyle)
     end
 end
 
-function lower_access(ctx, node, tns)
+function lower_access(ctx, tns, mode)
     tns = ctx(tns)
-    idxs = map(ctx, node.idxs)
-    :($(ctx(tns))[$(idxs...)])
+    :($(ctx(tns))[])
 end
 
-function lower_access(ctx, node, tns::Number)
+function lower_access(ctx, tns::Number, mode)
     @assert node.mode.val === reader
     tns
 end

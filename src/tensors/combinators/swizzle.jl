@@ -76,9 +76,6 @@ get_style(ctx, node::VirtualSwizzleArray, root) = get_style(ctx, node.body, root
 
 getroot(tns::VirtualSwizzleArray) = getroot(tns.body)
 
-function lower_access(ctx::AbstractCompiler, node, tns::VirtualSwizzleArray)
-    if !isempty(node.idxs)
-        error("SwizzleArray not lowered completely")
-    end
-    lower_access(ctx, node, tns.body)
+function lower_access(ctx::AbstractCompiler, tns::VirtualSwizzleArray, mode)
+    lower_access(ctx, tns.body, mode)
 end

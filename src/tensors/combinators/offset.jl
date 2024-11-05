@@ -134,9 +134,6 @@ getroot(tns::VirtualOffsetArray) = getroot(tns.body)
 unfurl(ctx, tns::VirtualOffsetArray, ext, mode, proto) =
     VirtualOffsetArray(unfurl(ctx, tns.body, shiftdim(ext, tns.delta[end]), mode, proto), tns.delta)
 
-function lower_access(ctx::AbstractCompiler, node, tns::VirtualOffsetArray)
-    if !isempty(node.idxs)
-        error("OffsetArray not lowered completely")
-    end
-    lower_access(ctx, node, tns.body)
+function lower_access(ctx::AbstractCompiler, tns::VirtualOffsetArray, mode)
+    lower_access(ctx, tns.body, mode)
 end

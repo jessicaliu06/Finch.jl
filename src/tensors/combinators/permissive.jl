@@ -163,9 +163,6 @@ function unfurl(ctx, tns::VirtualPermissiveArray, ext, mode, proto)
     end
 end
 
-function lower_access(ctx::AbstractCompiler, node, tns::VirtualPermissiveArray)
-    if !isempty(node.idxs)
-        error("PermissiveArray not lowered completely")
-    end
-    lower_access(ctx, node, tns.body)
+function lower_access(ctx::AbstractCompiler, tns::VirtualPermissiveArray, mode)
+    lower_access(ctx, tns.body, mode)
 end

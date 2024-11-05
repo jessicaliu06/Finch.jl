@@ -133,9 +133,6 @@ getroot(tns::VirtualScaleArray) = getroot(tns.body)
 unfurl(ctx, tns::VirtualScaleArray, ext, mode, proto) =
     VirtualScaleArray(unfurl(ctx, tns.body, scaledim(ext, tns.scale[end]), mode, proto), tns.scale)
 
-function lower_access(ctx::AbstractCompiler, node, tns::VirtualScaleArray)
-    if !isempty(node.idxs)
-        error("oh no!")
-    end
-    lower_access(ctx, node, tns.body)
+function lower_access(ctx::AbstractCompiler, tns::VirtualScaleArray, mode)
+    lower_access(ctx, tns.body, mode)
 end

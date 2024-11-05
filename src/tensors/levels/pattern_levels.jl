@@ -125,7 +125,7 @@ function unfurl_posthook(ctx, fbr::VirtualHollowSubFiber{VirtualPatternLevel}, m
     VirtualScalar(nothing, Bool, false, gensym(), fbr.dirty)
 end
 
-function lower_access(ctx::AbstractCompiler, node, tns::VirtualFiber{VirtualPatternLevel})
+function lower_access(ctx::AbstractCompiler, tns::VirtualFiber{VirtualPatternLevel}, mode)
     val = freshen(ctx, :null)
     push_preamble!(ctx, :($val = false))
     val

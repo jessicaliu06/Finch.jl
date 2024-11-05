@@ -20,8 +20,8 @@ freeze!(ctx::AbstractCompiler, tns::FinchNode) = freeze!(ctx, resolve(ctx, tns))
 unfurl(ctx, tns::FinchNode, ext, mode, proto) =
     unfurl(ctx, resolve(ctx, tns), ext, mode, proto)
 
-lower_access(ctx::AbstractCompiler, node, tns::FinchNode) =
-    lower_access(ctx, node, resolve(ctx, tns))
+lower_access(ctx::AbstractCompiler, tns::FinchNode, mode) =
+    lower_access(ctx, resolve(ctx, tns), mode)
 
 is_injective(ctx, lvl::FinchNode) = is_injective(ctx, resolve(ctx, lvl))
 is_atomic(ctx, lvl::FinchNode) = is_atomic(ctx, resolve(ctx, lvl))

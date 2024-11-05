@@ -295,9 +295,15 @@ function unfurl(ctx, fbr::VirtualSubFiber{VirtualSparsePointLevel}, ext, mode::R
             Phase(
                 start = (ctx, ext) -> literal(lvl.Ti(1)),
                 stop = (ctx, ext) -> value(my_i),
-                body = (ctx, ext) -> truncate(ctx, Spike(
+                body = (ctx, ext) -> truncate(
+                    ctx,
+                    Spike(
                         body = FillLeaf(virtual_level_fill_value(lvl)),
-                        tail = VirtualSubFiber(lvl.lvl, value(my_q, Ti))), similar_extent(ext, getstart(ext), value(my_i)), ext)
+                        tail = instantiate(ctx, VirtualSubFiber(lvl.lvl, value(my_q, Ti)), mode)
+                    ),
+                    similar_extent(ext, getstart(ext), value(my_i)),
+                    ext
+                )
             ),
             Phase(
                 stop = (ctx, ext) -> lvl.shape,
@@ -338,7 +344,7 @@ function unfurl(ctx, fbr::VirtualHollowSubFiber{VirtualSparsePointLevel}, ext, m
                     end
                     $dirty = false
                 end,
-                body = (ctx) -> VirtualHollowSubFiber(lvl.lvl, value(qos, Tp), dirty),
+                body = (ctx) -> instantiate(ctx, VirtualHollowSubFiber(lvl.lvl, value(qos, Tp), dirty), mode),
                 epilogue = quote
                     if $dirty
                         $(fbr.dirty) = true

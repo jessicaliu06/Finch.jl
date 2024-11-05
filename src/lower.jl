@@ -152,7 +152,7 @@ function lower(ctx::AbstractCompiler, root::FinchNode, ::DefaultStyle)
                 set_thawed!(ctx, head.tns, val_2)
             else
                 preamble = contain(ctx) do ctx_2
-                    ctx_2(unfurl_posthook!(ctx_2, head))
+                    ctx_2(instantiate!(ctx_2, head))
                 end
             end
 
@@ -312,7 +312,7 @@ function lower_parallel_loop(ctx, root, ext::ParallelDimension, device::VirtualC
             end
             contain(ctx_3) do ctx_4
                 open_scope(ctx_4) do ctx_5
-                    ctx_5(unfurl_posthook!(ctx_5, root_2))
+                    ctx_5(instantiate!(ctx_5, root_2))
                 end
             end
         end

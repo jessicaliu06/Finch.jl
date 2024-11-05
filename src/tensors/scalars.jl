@@ -148,7 +148,7 @@ function freeze!(ctx, tns::VirtualSparseScalar)
     return tns
 end
 
-function unfurl_posthook(ctx, tns::VirtualSparseScalar, mode::Reader)
+function instantiate(ctx, tns::VirtualSparseScalar, mode::Reader)
     Switch(
         tns.dirty => tns,
         true => Simplify(FillLeaf(tns.Vf)),
@@ -310,7 +310,7 @@ function freeze!(ctx, tns::VirtualSparseShortCircuitScalar)
     return tns
 end
 
-function unfurl_posthook(ctx, tns::VirtualSparseShortCircuitScalar, mode::Reader)
+function instantiate(ctx, tns::VirtualSparseShortCircuitScalar, mode::Reader)
     Switch([
         value(tns.dirty, Bool) => tns,
         true => Simplify(FillLeaf(tns.Vf)),

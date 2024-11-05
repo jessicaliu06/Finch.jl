@@ -349,7 +349,7 @@ function unfurl(ctx, fbr::VirtualSubFiber{VirtualSparseByteMapLevel}, ext, mode:
                             body = FillLeaf(virtual_level_fill_value(lvl)),
                             tail = Thunk(
                                 preamble = :($my_q = ($(ctx(pos)) - $(Tp(1))) * $(ctx(lvl.shape)) + $my_i),
-                                body = (ctx) -> VirtualSubFiber(lvl.lvl, value(my_q, lvl.Ti)),
+                                body = (ctx) -> instantiate(ctx, VirtualSubFiber(lvl.lvl, value(my_q, lvl.Ti)), mode),
                             ),
                         ),
                         next = (ctx, ext) -> :($my_r += $(Tp(1))),
@@ -404,7 +404,7 @@ function unfurl(ctx, fbr::VirtualSubFiber{VirtualSparseByteMapLevel}, ext, mode:
                             body = FillLeaf(virtual_level_fill_value(lvl)),
                             tail = Thunk(
                                 preamble = :($my_q = ($(ctx(pos)) - $(Tp(1))) * $(ctx(lvl.shape)) + $my_i),
-                                body = (ctx) -> VirtualSubFiber(lvl.lvl, value(my_q, lvl.Ti)),
+                                body = (ctx) -> instantiate(ctx, VirtualSubFiber(lvl.lvl, value(my_q, lvl.Ti)), mode),
                             ),
                         ),
                         next = (ctx, ext) -> :($my_r += $(Tp(1)))
@@ -434,7 +434,7 @@ function unfurl(ctx, fbr::VirtualSubFiber{VirtualSparseByteMapLevel}, ext, mode:
                     $my_q = ($(ctx(q)) - $(Ti(1))) * $(ctx(lvl.shape)) + $(ctx(i))
                 end,
                 body = (ctx) -> Switch([
-                    value(:($(lvl.tbl)[$my_q])) => VirtualSubFiber(lvl.lvl, value(my_q)),
+                    value(:($(lvl.tbl)[$my_q])) => instantiate(ctx, VirtualSubFiber(lvl.lvl, value(my_q)), mode),
                     literal(true) => FillLeaf(virtual_level_fill_value(lvl))
                 ])
             )
@@ -459,7 +459,7 @@ function unfurl(ctx, fbr::VirtualHollowSubFiber{VirtualSparseByteMapLevel}, ext,
                     $my_q = ($(ctx(pos)) - $(Tp(1))) * $(ctx(lvl.shape)) + $(ctx(idx))
                     $dirty = false
                 end,
-                body = (ctx) -> VirtualHollowSubFiber(lvl.lvl, value(my_q, lvl.Ti), dirty),
+                body = (ctx) -> instantiate(ctx, VirtualHollowSubFiber(lvl.lvl, value(my_q, lvl.Ti), dirty), mode),
                 epilogue = quote
                     if $dirty
                         $(fbr.dirty) = true

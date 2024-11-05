@@ -309,7 +309,7 @@ function unfurl(ctx, fbr::VirtualSubFiber{VirtualSparseBandLevel}, ext, mode::Re
                     body = (ctx, ext) -> Lookup(
                         body = (ctx, i) -> Thunk(
                             preamble = :($my_q = $my_q_ofs + $(ctx(i))),
-                            body = (ctx) -> VirtualSubFiber(lvl.lvl, value(my_q, Tp)),
+                            body = (ctx) -> instantiate(ctx, VirtualSubFiber(lvl.lvl, value(my_q, Tp)), mode),
                         )
                     )
                 ),
@@ -379,7 +379,7 @@ function unfurl(ctx, fbr::VirtualHollowSubFiber{VirtualSparseBandLevel}, ext, mo
                         end
                         $dirty = false
                     end,
-                    body = (ctx) -> VirtualHollowSubFiber(lvl.lvl, value(qos, Tp), dirty),
+                    body = (ctx) -> instantiate(ctx, VirtualHollowSubFiber(lvl.lvl, value(qos, Tp), dirty), mode),
                     epilogue = quote
                         if $dirty
                             $(fbr.dirty) = true

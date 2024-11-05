@@ -295,7 +295,7 @@ function unfurl(ctx, fbr::VirtualSubFiber{VirtualSparseIntervalLevel}, ext, mode
             ),
             Phase(
                 stop = (ctx, ext) -> value(my_i_stop, lvl.Ti),
-                body = (ctx, ext) -> Run(Simplify(VirtualSubFiber(lvl.lvl, value(my_q)))),
+                body = (ctx, ext) -> Run(Simplify(instantiate(ctx, VirtualSubFiber(lvl.lvl, value(my_q)), mode))),
             ),
             Phase(
                 stop = (ctx, ext) -> lvl.shape,
@@ -336,7 +336,7 @@ function unfurl(ctx, fbr::VirtualHollowSubFiber{VirtualSparseIntervalLevel}, ext
                     end
                     $dirty = false
                 end,
-                body = (ctx) -> VirtualHollowSubFiber(lvl.lvl, value(qos, Tp), dirty),
+                body = (ctx) -> instantiate(ctx, VirtualHollowSubFiber(lvl.lvl, value(qos, Tp), dirty), mode),
                 epilogue = quote
                     if $dirty
                         $(fbr.dirty) = true

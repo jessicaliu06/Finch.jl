@@ -69,8 +69,8 @@ virtual_size(ctx::AbstractCompiler, arr::VirtualSwizzleArray) =
 virtual_resize!(ctx::AbstractCompiler, arr::VirtualSwizzleArray, dims...) =
     virtual_resize!(ctx, arr.body, dims[invperm(arr.dims)]...)
 
-unfurl_posthook(ctx, arr::VirtualSwizzleArray, mode) =
-    VirtualSwizzleArray(unfurl_posthook(ctx, arr.body, mode), arr.dims)
+instantiate(ctx, arr::VirtualSwizzleArray, mode) =
+    VirtualSwizzleArray(instantiate(ctx, arr.body, mode), arr.dims)
     
 get_style(ctx, node::VirtualSwizzleArray, root) = get_style(ctx, node.body, root)
 

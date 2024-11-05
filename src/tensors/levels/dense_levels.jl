@@ -208,7 +208,7 @@ function unfurl(ctx, trv::DenseTraversal, ext, mode, ::Union{typeof(defaultread)
             preamble = quote
                 $q = ($(ctx(pos)) - $(Ti(1))) * $(ctx(lvl.shape)) + $(ctx(i))
             end,
-            body = (ctx) -> trv.subfiber_ctr(lvl.lvl, value(q, lvl.Ti))
+            body = (ctx) -> instantiate(ctx, trv.subfiber_ctr(lvl.lvl, value(q, lvl.Ti)), mode)
         )
     )
 end

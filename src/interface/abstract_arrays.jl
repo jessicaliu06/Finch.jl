@@ -53,13 +53,17 @@ function unfurl(ctx, tns::VirtualAbstractArraySlice, ext, mode, proto)
                         preamble = quote
                             $val = $(arr.ex)[$(map(ctx, idx_2)...)]
                         end,
-                        body = (ctx) -> VirtualScalar(nothing, arr.eltype, nothing#=We don't know what init is, but it won't be used here =#, gensym(), val)
+                        body = (ctx) -> instantiate(ctx, VirtualScalar(nothing, arr.eltype, nothing#=We don't know what init is, but it won't be used here =#, gensym(), val), mode)
                     )
                 else
-                    VirtualScalar(nothing, arr.eltype, nothing#=We don't know what init is, but it won't be used here=#, gensym(), :($(arr.ex)[$(map(ctx, idx_2)...)]))
+                    Thunk(
+                        body = (ctx,) -> instantiate(ctx, VirtualScalar(nothing, arr.eltype, nothing#=We don't know what init is, but it won't be used here=#, gensym(), :($(arr.ex)[$(map(ctx, idx_2)...)])), mode)
+                    )
                 end
             else
-                VirtualAbstractArraySlice(arr, idx_2)
+                Thunk(
+                    body = (ctx,)-> instantiate(ctx, VirtualAbstractArraySlice(arr, idx_2), mode)
+                )
             end
         end
     )
@@ -69,7 +73,7 @@ end
 #is_atomic(ctx, tns::VirtualAbstractArraySlice) = is_atomic(ctx, tns.body)
 #is_concurrent(ctx, tns::VirtualAbstractArraySlice) = is_concurrent(ctx, tns.body)
 
-function unfurl_posthook(ctx::AbstractCompiler, arr::VirtualAbstractArray, mode)
+function instantiate(ctx::AbstractCompiler, arr::VirtualAbstractArray, mode)
     if arr.ndims == 0
         val = freshen(ctx, :val)
         if mode === reader
@@ -77,10 +81,12 @@ function unfurl_posthook(ctx::AbstractCompiler, arr::VirtualAbstractArray, mode)
                 preamble = quote
                     $val = $(arr.ex)[]
                 end,
-                body = (ctx) -> VirtualScalar(nothing, arr.eltype, nothing#=We don't know what init is, but it won't be used here =#, gensym(), val)
+                body = (ctx) -> instantiate(ctx, VirtualScalar(nothing, arr.eltype, nothing#=We don't know what init is, but it won't be used here =#, gensym(), val), mode)
             )
         else
-            VirtualScalar(nothing, arr.eltype, nothing#=We don't know what init is, but it won't be used here=#, gensym(), :($(arr.ex)[]))
+            Thunk(
+                body = (ctx,) -> instantiate(ctx, VirtualScalar(nothing, arr.eltype, nothing#=We don't know what init is, but it won't be used here=#, gensym(), :($(arr.ex)[])), mode)
+            )
         end
     else 
         Unfurled(

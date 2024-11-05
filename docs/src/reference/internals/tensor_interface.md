@@ -13,7 +13,7 @@ declare!
 freeze!
 thaw!
 unfurl
-unfurl_posthook
+instantiate
 fill_value
 virtual_eltype
 virtual_fill_value

@@ -191,78 +191,39 @@ function virtual_moveto_level(ctx::AbstractCompiler, lvl::VirtualAtomicLevel, ar
     virtual_moveto_level(ctx, lvl.lvl, arch)
 end
 
-function unfurl(ctx, fbr::VirtualSubFiber{VirtualAtomicLevel}, ext, mode::Reader, proto)
+function instantiate(ctx, fbr::VirtualSubFiber{VirtualAtomicLevel}, mode::Reader)
     (lvl, pos) = (fbr.lvl, fbr.pos)
-    unfurl(ctx, VirtualSubFiber(lvl.lvl, pos), ext, mode, proto)
+    instantiate(ctx, VirtualSubFiber(lvl.lvl, pos), mode)
 end
 
-function unfurl(ctx, fbr::VirtualSubFiber{VirtualAtomicLevel}, ext, mode::Updater, proto)
+function instantiate(ctx, fbr::VirtualSubFiber{VirtualAtomicLevel}, mode::Updater)
     (lvl, pos) = (fbr.lvl, fbr.pos)
     sym = freshen(ctx, lvl.ex, :after_atomic_lvl)
     atomicData = freshen(ctx, lvl.ex, :atomicArraysAcc)
     lockVal = freshen(ctx, lvl.ex, :lockVal)
     dev = lower(ctx, virtual_get_device(ctx.code.task), DefaultStyle())
     push_preamble!(ctx, quote
-        $atomicData =  Finch.get_lock($dev, $(lvl.locks), $(ctx(pos)), eltype($(lvl.AVal))) + 206
+        $atomicData =  Finch.get_lock($dev, $(lvl.locks), $(ctx(pos)), eltype($(lvl.AVal)))
         $lockVal = Finch.aquire_lock!($dev, $atomicData)
     end)
-    res = unfurl(ctx, VirtualSubFiber(lvl.lvl, pos), ext, mode, proto)
+    res = instantiate(ctx, VirtualSubFiber(lvl.lvl, pos), mode)
     push_epilogue!(ctx, quote
         Finch.release_lock!($dev, $atomicData)
     end)
     return res
 end
 
-function unfurl(ctx, fbr::VirtualHollowSubFiber{VirtualAtomicLevel}, ext, mode::Updater, proto)
+function instantiate(ctx, fbr::VirtualHollowSubFiber{VirtualAtomicLevel}, mode::Updater)
     (lvl, pos) = (fbr.lvl, fbr.pos)
     sym = freshen(ctx, lvl.ex, :after_atomic_lvl)
     atomicData = freshen(ctx, lvl.ex, :atomicArraysAcc)
     lockVal = freshen(ctx, lvl.ex, :lockVal)
     dev = lower(ctx, virtual_get_device(ctx.code.task), DefaultStyle())
     push_preamble!(ctx, quote
-        $atomicData =  Finch.get_lock($dev, $(lvl.locks), $(ctx(pos)), eltype($(lvl.AVal))) + 223
+        $atomicData =  Finch.get_lock($dev, $(lvl.locks), $(ctx(pos)), eltype($(lvl.AVal)))
         $lockVal = Finch.aquire_lock!($dev, $atomicData)
     end)
-    res = unfurl(ctx, VirtualHollowSubFiber(lvl.lvl, pos, fbr.dirty), ext, mode, proto)
-    push_epilogue!(ctx, quote
-        Finch.release_lock!($dev, $atomicData)
-    end)
-    return res
-end
-
-function lower_access(ctx, fbr::VirtualSubFiber{VirtualAtomicLevel}, mode::Reader)
-    (lvl, pos) = (fbr.lvl, fbr.pos)
-    lower_access(ctx, VirtualSubFiber(lvl.lvl, pos), mode)
-end
-
-function lower_access(ctx, fbr::VirtualSubFiber{VirtualAtomicLevel}, mode::Updater)
-    (lvl, pos) = (fbr.lvl, fbr.pos)
-    sym = freshen(ctx, lvl.ex, :after_atomic_lvl)
-    atomicData = freshen(ctx, lvl.ex, :atomicArraysAcc)
-    lockVal = freshen(ctx, lvl.ex, :lockVal)
-    dev = lower(ctx, virtual_get_device(ctx.code.task), DefaultStyle())
-    push_preamble!(ctx, quote
-        $atomicData =  Finch.get_lock($dev, $(lvl.locks), $(ctx(pos)), eltype($(lvl.AVal))) + 245
-        $lockVal = Finch.aquire_lock!($dev, $atomicData)
-    end)
-    res = lower_access(ctx, VirtualSubFiber(lvl.lvl, pos), mode)
-    push_epilogue!(ctx, quote
-        Finch.release_lock!($dev, $atomicData)
-    end)
-    return res
-end
-
-function lower_access(ctx, fbr::VirtualHollowSubFiber{VirtualAtomicLevel}, mode::Updater)
-    (lvl, pos) = (fbr.lvl, fbr.pos)
-    sym = freshen(ctx, lvl.ex, :after_atomic_lvl)
-    atomicData = freshen(ctx, lvl.ex, :atomicArraysAcc)
-    lockVal = freshen(ctx, lvl.ex, :lockVal)
-    dev = lower(ctx, virtual_get_device(ctx.code.task), DefaultStyle())
-    push_preamble!(ctx, quote
-        $atomicData =  Finch.get_lock($dev, $(lvl.locks), $(ctx(pos)), eltype($(lvl.AVal))) + 262
-        $lockVal = Finch.aquire_lock!($dev, $atomicData)
-    end)
-    res = lower_access(ctx, VirtualHollowSubFiber(lvl.lvl, pos, fbr.dirty), mode)
+    res = instantiate(ctx, VirtualHollowSubFiber(lvl.lvl, pos, fbr.dirty), mode)
     push_epilogue!(ctx, quote
         Finch.release_lock!($dev, $atomicData)
     end)

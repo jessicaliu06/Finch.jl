@@ -354,7 +354,7 @@ function unfurl(ctx, fbr::VirtualSubFiber{VirtualSparseDictLevel}, ext, mode::Re
                     stop = (ctx, ext) -> value(my_i),
                     chunk = Spike(
                         body = FillLeaf(virtual_level_fill_value(lvl)),
-                        tail = Simplify(VirtualSubFiber(lvl.lvl, value(my_v, Ti)))
+                        tail = Simplify(instantiate(ctx, VirtualSubFiber(lvl.lvl, value(my_v, Ti)), mode)),
                     ),
                     next = (ctx, ext) -> :($my_q += $(Tp(1)))
                 )
@@ -378,7 +378,7 @@ function unfurl(ctx, fbr::VirtualSubFiber{VirtualSparseDictLevel}, ext, mode::Re
                 $my_q = get($(lvl.tbl), ($(ctx(pos)), $(ctx(i))), 0)
             end,
             body = (ctx) -> Switch([
-                value(:($my_q != 0)) => VirtualSubFiber(lvl.lvl, value(my_q, Tp)),
+                value(:($my_q != 0)) => instantiate(ctx, VirtualSubFiber(lvl.lvl, value(my_q, Tp)), mode)
                 literal(true) => FillLeaf(virtual_level_fill_value(lvl))
             ])
         )
@@ -420,7 +420,7 @@ function unfurl(ctx, fbr::VirtualHollowSubFiber{VirtualSparseDictLevel}, ext, mo
                     end
                     $dirty = false
                 end,
-                body = (ctx) -> VirtualHollowSubFiber(lvl.lvl, value(qos, Tp), dirty),
+                body = (ctx) -> instantiate(ctx, VirtualHollowSubFiber(lvl.lvl, value(qos, Tp), dirty), mode),
                 epilogue = quote
                     if $dirty
                         $(lvl.val)[$qos] = $qos

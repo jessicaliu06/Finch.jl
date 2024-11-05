@@ -337,7 +337,7 @@ function freeze_level!(ctx::AbstractCompiler, lvl::VirtualRunListLevel, pos_stop
                             for (ind, ext) in zip(inds, exts)
                                 prgm = loop(ind, ext, prgm)
                             end
-                            prgm = unfurl_posthook!(ctx_2, prgm)
+                            prgm = instantiate!(ctx_2, prgm)
                             ctx_2(prgm)
                         end)
                         if !$checkval
@@ -358,7 +358,7 @@ function freeze_level!(ctx::AbstractCompiler, lvl::VirtualRunListLevel, pos_stop
                         for (ind, ext) in zip(inds, exts)
                             prgm = loop(ind, ext, prgm)
                         end
-                        prgm = unfurl_posthook!(ctx_2, prgm)
+                        prgm = instantiate!(ctx_2, prgm)
                         ctx_2(prgm)
                     end)
                     $q_2 += 1
@@ -440,7 +440,7 @@ function unfurl(ctx, fbr::VirtualSubFiber{VirtualRunListLevel}, ext, mode::Reade
                 preamble = :($my_i = $(lvl.right)[$my_q]),
                 stop = (ctx, ext) -> value(my_i),
                 chunk = Run(
-                    body = Simplify(VirtualSubFiber(lvl.lvl, value(my_q)))
+                    body = Simplify(instantiate(ctx, VirtualSubFiber(lvl.lvl, value(my_q)), mode))
                 ),
                 next = (ctx, ext) -> :($my_q += $(Tp(1)))
             )
@@ -509,7 +509,7 @@ function unfurl(ctx, fbr::VirtualHollowSubFiber{VirtualRunListLevel}, ext, mode:
                         end
                         $dirty = false
                     end,
-                    body = (ctx) -> VirtualHollowSubFiber(lvl.buf, value(qos_3, Tp), dirty),
+                    body = (ctx) -> instantiate(ctx, VirtualHollowSubFiber(lvl.buf, value(qos_3, Tp), dirty), mode),
                     epilogue = quote
                         if $dirty
                             $(lvl.right)[$qos] = $(ctx(getstart(ext))) - $unit

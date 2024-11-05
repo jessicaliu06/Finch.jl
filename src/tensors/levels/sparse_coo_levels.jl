@@ -339,7 +339,7 @@ function unfurl(ctx, trv::SparseCOOWalkTraversal, ext, mode::Reader, ::Union{typ
                             stop =  (ctx, ext) -> value(my_i),
                             chunk = Spike(
                                 body = FillLeaf(virtual_level_fill_value(lvl)),
-                                tail = VirtualSubFiber(lvl.lvl, my_q),
+                                tail = instantiate(ctx, VirtualSubFiber(lvl.lvl, my_q), mode),
                             ),
                             next = (ctx, ext) -> :($my_q += $(Tp(1)))
                         )
@@ -360,7 +360,7 @@ function unfurl(ctx, trv::SparseCOOWalkTraversal, ext, mode::Reader, ::Union{typ
                             stop = (ctx, ext) -> value(my_i),
                             chunk = Spike(
                                 body = FillLeaf(virtual_level_fill_value(lvl)),
-                                tail = SparseCOOWalkTraversal(lvl, R - 1, value(my_q, Tp), value(my_q_step, Tp)),
+                                tail = instantiate(ctx, SparseCOOWalkTraversal(lvl, R - 1, value(my_q, Tp), value(my_q_step, Tp)), mode),
                             ),
                             next = (ctx, ext) -> :($my_q = $my_q_step)
                         )
@@ -427,7 +427,7 @@ function unfurl(ctx, trv::SparseCOOExtrudeTraversal, ext, mode::Updater, proto)#
     qos_stop = lvl.qos_stop
     if length(coords) + 1 < lvl.N
         Lookup(
-            body = (ctx, i) -> SparseCOOExtrudeTraversal(lvl, qos, fbr_dirty, (i, coords...), trv.prev_coord),
+            body = (ctx, i) -> instantiate(ctx, SparseCOOExtrudeTraversal(lvl, qos, fbr_dirty, (i, coords...), trv.prev_coord), mode),
         )
     else
         dirty = freshen(ctx, :dirty)
@@ -443,7 +443,7 @@ function unfurl(ctx, trv::SparseCOOExtrudeTraversal, ext, mode::Updater, proto)#
                     end
                     $dirty = false
                 end,
-                body = (ctx) -> VirtualHollowSubFiber(lvl.lvl, value(qos, Tp), dirty),
+                body = (ctx) -> instantiate(ctx, VirtualHollowSubFiber(lvl.lvl, value(qos, Tp), dirty), mode),
                 epilogue = begin
                     coords_2 = map(ctx, (idx, coords...))
                     quote

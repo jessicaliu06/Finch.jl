@@ -203,48 +203,60 @@ function thaw_level!(ctx::AbstractCompiler, lvl::VirtualSeparateLevel, pos)
     return lvl
 end
 
-function unfurl_posthook(ctx, fbr::VirtualSubFiber{VirtualSeparateLevel}, mode::Reader)
+function instantiate(ctx, fbr::VirtualSubFiber{VirtualSeparateLevel}, mode::Reader)
     (lvl, pos) = (fbr.lvl, fbr.pos)
     tag = lvl.ex
     isnulltest = freshen(ctx, tag, :_nulltest)
     Vf = level_fill_value(lvl.Lvl)
     sym = freshen(ctx, :pointer_to_lvl)
     val = freshen(ctx, lvl.ex, :_val)
-    lvl_2 = virtualize(ctx.code, :($(lvl.val)[$(ctx(pos))]), lvl.Lvl, sym)
-    unfurl_posthook(ctx, VirtualSubFiber(lvl_2, literal(1)), mode)
+    return Thunk(
+        body = (ctx) -> begin
+            lvl_2 = virtualize(ctx.code, :($(lvl.val)[$(ctx(pos))]), lvl.Lvl, sym)
+            instantiate(ctx, VirtualSubFiber(lvl_2, literal(1)), mode)
+        end,
+    )
 end
 
-function unfurl_posthook(ctx, fbr::VirtualSubFiber{VirtualSeparateLevel}, mode::Updater)
+function instantiate(ctx, fbr::VirtualSubFiber{VirtualSeparateLevel}, mode::Updater)
     (lvl, pos) = (fbr.lvl, fbr.pos)
     tag = lvl.ex
     sym = freshen(ctx, :pointer_to_lvl)
 
-    lvl_2 = virtualize(ctx.code, :($(lvl.val)[$(ctx(pos))]), lvl.Lvl, sym)
-    lvl_2 = thaw_level!(ctx, lvl_2, literal(1))
-    push_preamble!(ctx, assemble_level!(ctx, lvl_2, literal(1), literal(1)))
-    res = unfurl_posthook(ctx, VirtualSubFiber(lvl_2, literal(1)), mode)
-    push_epilogue!(ctx,
-        contain(ctx) do ctx_2
-            lvl_2 = freeze_level!(ctx_2, lvl_2, literal(1))
-            :($(lvl.val)[$(ctx_2(pos))] = $(ctx_2(lvl_2)))
+    return Thunk(
+        body = (ctx) -> begin
+            lvl_2 = virtualize(ctx.code, :($(lvl.val)[$(ctx(pos))]), lvl.Lvl, sym)
+            lvl_2 = thaw_level!(ctx, lvl_2, literal(1))
+            push_preamble!(ctx, assemble_level!(ctx, lvl_2, literal(1), literal(1)))
+            res = instantiate(ctx, VirtualSubFiber(lvl_2, literal(1)), mode)
+            push_epilogue!(ctx,
+                contain(ctx) do ctx_2
+                    lvl_2 = freeze_level!(ctx_2, lvl_2, literal(1))
+                    :($(lvl.val)[$(ctx_2(pos))] = $(ctx_2(lvl_2)))
+                end
+            )
+            res
         end
     )
-    res
 end
-function unfurl_posthook(ctx, fbr::VirtualHollowSubFiber{VirtualSeparateLevel}, mode::Updater)
+function instantiate(ctx, fbr::VirtualHollowSubFiber{VirtualSeparateLevel}, mode::Updater)
     (lvl, pos) = (fbr.lvl, fbr.pos)
     tag = lvl.ex
     sym = freshen(ctx, :pointer_to_lvl)
 
-    lvl_2 = virtualize(ctx.code, :($(lvl.val)[$(ctx(pos))]), lvl.Lvl, sym)
-    lvl_2 = thaw_level!(ctx, lvl_2, literal(1))
-    push_preamble!(ctx, assemble_level!(ctx, lvl_2, literal(1), literal(1)))
-    res = unfurl_posthook(ctx, VirtualHollowSubFiber(lvl_2, literal(1), fbr.dirty), mode)
-    push_epilogue!(ctx,
-        contain(ctx) do ctx_2
-            lvl_2 = freeze_level!(ctx_2, lvl_2, literal(1))
-            :($(lvl.val)[$(ctx_2(pos))] = $(ctx_2(lvl_2)))
-        end
-    )
-    res
-end
+    return Thunk(
+        body = (ctx) -> begin
+            lvl_2 = virtualize(ctx.code, :($(lvl.val)[$(ctx(pos))]), lvl.Lvl, sym)
+            lvl_2 = thaw_level!(ctx, lvl_2, literal(1))
+            push_preamble!(ctx, assemble_level!(ctx, lvl_2, literal(1), literal(1)))
+            res = instantiate(ctx, VirtualHollowSubFiber(lvl_2, literal(1), fbr.dirty), mode)
+            push_epilogue!(ctx,
+                contain(ctx) do ctx_2
+                    lvl_2 = freeze_level!(ctx_2, lvl_2, literal(1))
+                    :($(lvl.val)[$(ctx_2(pos))] = $(ctx_2(lvl_2)))
+                end
+            )
+            res
+            end
+        )
+    end

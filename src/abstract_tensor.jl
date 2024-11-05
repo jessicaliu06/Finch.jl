@@ -10,12 +10,12 @@ Afterwards the tensor is update-only.
 declare!(ctx, tns, init) = @assert virtual_fill_value(ctx, tns) == init
 
 """
-    unfurl_posthook(ctx, tns, mode)
+    instantiate(ctx, tns, mode)
 
 Process the tensor `tns` in the context `ctx`, just after it has been unfurled,
 declared, or thawed. The earliest opportunity to process `tns`.
 """
-unfurl_posthook(ctx, tns, mode) = tns
+instantiate(ctx, tns, mode) = tns
 
 """
     freeze!(ctx, tns)

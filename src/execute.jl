@@ -11,22 +11,22 @@ function issafe(mode)
 end
 
 """
-    unfurl_posthook!(ctx, prgm)
+    instantiate!(ctx, prgm)
 
-A transformation to call `unfurl_posthook` on tensors before executing an
+A transformation to call `instantiate` on tensors before executing an
 expression.
 """
-function unfurl_posthook!(ctx, prgm)
-    prgm = PosthookTensors(ctx=ctx)(prgm)
+function instantiate!(ctx, prgm)
+    prgm = InstantiateTensors(ctx=ctx)(prgm)
     return prgm
 end
 
-@kwdef struct PosthookTensors{Ctx}
+@kwdef struct InstantiateTensors{Ctx}
     ctx::Ctx
     escape = Set()
 end
 
-function (ctx::PosthookTensors)(node::FinchNode)
+function (ctx::InstantiateTensors)(node::FinchNode)
     if node.kind === block
         block(map(ctx, node.bodies)...)
     elseif node.kind === define
@@ -43,7 +43,7 @@ function (ctx::PosthookTensors)(node::FinchNode)
         node
     elseif (@capture node access(~tns, ~mode, ~idxs...)) && !(getroot(tns) in ctx.escape)
         #@assert get(ctx.ctx.modes, tns, reader) === node.mode.val
-        tns_2 = unfurl_posthook(ctx.ctx, tns, mode.val)
+        tns_2 = instantiate(ctx.ctx, tns, mode.val)
         access(tns_2, mode, idxs...)
     elseif istree(node)
         return similarterm(node, operation(node), map(ctx, arguments(node)))
@@ -106,7 +106,7 @@ function lower_global(ctx, prgm)
                 prgm = concordize(ctx_2, prgm)
                 prgm = evaluate_partial(ctx_2, prgm)
                 prgm = simplify(ctx_2, prgm) #appears necessary
-                prgm = unfurl_posthook!(ctx_2, prgm)
+                prgm = instantiate!(ctx_2, prgm)
                 contain(ctx_2) do ctx_3
                     ctx_3(prgm)
                 end

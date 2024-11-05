@@ -178,7 +178,7 @@ function lower(ctx::AbstractCompiler, root::FinchNode, ::DefaultStyle)
         quote end
     elseif root.kind === access
         tns = resolve(ctx, root.tns)
-        return lower_access(ctx, root, tns_2)
+        return lower_access(ctx, root, tns)
     elseif root.kind === call
         root = simplify(ctx, root)
         if root.kind === call

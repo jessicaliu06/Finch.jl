@@ -64,7 +64,7 @@ virtual_resize!(ctx::AbstractCompiler, arr::VirtualProtocolizedArray, dim) =
     virtual_resize!(ctx, arr.body, dim)
 
 unfurl_posthook(ctx, arr::VirtualProtocolizedArray, mode) =
-    VirtualProtocolizedArray(unfurl_posthook(ctx, arr.body, mode), arr.protos)
+    VirtualProtocolizedArray(unfurl_posthook(ctx, arr.body, mode))
 
 get_style(ctx, node::VirtualProtocolizedArray, root) = get_style(ctx, node.body, root)
 

@@ -162,8 +162,8 @@ function virtual_moveto(ctx::AbstractCompiler, fbr::VirtualHollowSubFiber, arch)
     return VirtualHollowSubFiber(virtual_moveto_level(ctx, fbr.lvl, arch), fbr.pos, fbr.dirty)
 end
 
-unfurl_posthook(ctx, fbr::VirtualFiber, mode, protos) = 
-    unfurl_posthook(ctx, VirtualSubFiber(fbr.lvl, literal(1)), mode, protos)
+unfurl_posthook(ctx, fbr::VirtualFiber, mode) = 
+    unfurl_posthook(ctx, VirtualSubFiber(fbr.lvl, literal(1)), mode)
 
 unfurl(ctx, fbr::VirtualFiber, ext, mode, proto) =
     unfurl(ctx, VirtualSubFiber(fbr.lvl, literal(1)), ext, mode, proto)

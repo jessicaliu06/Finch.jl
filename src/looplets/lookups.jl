@@ -36,7 +36,7 @@ function lower(ctx::AbstractCompiler, root::FinchNode, ::LookupStyle)
                 end
             ))(root.body)
             open_scope(ctx_2) do ctx_3
-                ctx_3(body_3)
+                ctx_3(unfurl_posthook!(ctx_3, body_3))
             end
         end
         @assert isvirtual(root.ext)

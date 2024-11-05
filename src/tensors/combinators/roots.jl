@@ -3,7 +3,7 @@ virtual_size(ctx, tns::FinchNode) = virtual_size(ctx, resolve(ctx, tns))
 virtual_resize!(ctx, tns::FinchNode, dims...) = virtual_resize!(ctx, resolve(ctx, tns), dims...)
 virtual_fill_value(ctx, tns::FinchNode) = virtual_fill_value(ctx, resolve(ctx, tns))
 
-function unfurl(ctx::AbstractCompiler, tns::FinchNode, mode)
+function unfurl_posthook(ctx::AbstractCompiler, tns::FinchNode, mode)
     if tns.kind === virtual
         return unfurl_posthook(ctx, tns.val, mode)
     elseif tns.kind === variable

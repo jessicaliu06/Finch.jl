@@ -375,7 +375,7 @@ function unfurl(ctx, fbr::VirtualSubFiber{VirtualSparseByteMapLevel}, ext, mode:
     my_i_stop = freshen(ctx, tag, :_i_stop)
     my_j = freshen(ctx, tag, :_j)
 
-    Unfurl(
+    Unfurled(
         arr = fbr,
         body = Thunk(
             preamble = quote

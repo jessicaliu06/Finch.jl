@@ -24,83 +24,7 @@ s = Scalar(0.0)
 
 # output
 
-ERROR: MethodError: no method matching zero(::Type{Any})
-This error has been manually thrown, explicitly, so the method may exist but be intentionally marked as unimplemented.
-
-Closest candidates are:
-  zero(::Type{Union{Missing, T}}) where T
-   @ Base missing.jl:105
-  zero(!Matched::Type{Union{}}, Any...)
-   @ Base number.jl:310
-  zero(!Matched::Type{Dates.Time})
-   @ Dates ~/.julia/juliaup/julia-1.11.1+0.aarch64.apple.darwin14/share/julia/stdlib/v1.11/Dates/src/types.jl:460
-  ...
-
-Stacktrace:
-  [1] zero(::Type{Any})
-    @ Base ./missing.jl:106
-  [2] reduce_empty(::typeof(+), ::Type{Any})
-    @ Base ./reduce.jl:343
-  [3] reduce_empty(::typeof(Base.add_sum), ::Type{Any})
-    @ Base ./reduce.jl:350
-  [4] mapreduce_empty(::typeof(identity), op::Function, T::Type)
-    @ Base ./reduce.jl:369
-  [5] reduce_empty(op::Base.MappingRF{typeof(identity), typeof(Base.add_sum)}, ::Type{Any})
-    @ Base ./reduce.jl:358
-  [6] reduce_empty_iter
-    @ ./reduce.jl:381 [inlined]
-  [7] mapreduce_empty_iter(f::Function, op::Function, itr::Vector{Any}, ItrEltype::Base.HasEltype)
-    @ Base ./reduce.jl:377
-  [8] _mapreduce(f::typeof(identity), op::typeof(Base.add_sum), ::IndexLinear, A::Vector{Any})
-    @ Base ./reduce.jl:429
-  [9] _mapreduce_dim
-    @ ./reducedim.jl:337 [inlined]
- [10] mapreduce
-    @ ./reducedim.jl:329 [inlined]
- [11] _sum
-    @ ./reducedim.jl:987 [inlined]
- [12] _sum
-    @ ./reducedim.jl:986 [inlined]
- [13] sum(a::Vector{Any})
-    @ Base ./reducedim.jl:982
- [14] macro expansion
-    @ ~/Projects/Finch.jl/src/interface/index.jl:116 [inlined]
- [15] var"##setindex_helper_generator#280"(arr::Type, src::Type, inds::Type)
-    @ Finch ~/Projects/Finch.jl/src/util/staging.jl:30
- [16] (::Finch.var"#1800#1806"{DataType, DataType, DataType})()
-    @ Finch ~/Projects/Finch.jl/src/util/staging.jl:54
- [17] #s352#1799
-    @ ~/Projects/Finch.jl/src/util/staging.jl:63 [inlined]
- [18] var"#s352#1799"(::Any, arr::Any, src::Any, inds::Any)
-    @ Finch ./none:0
- [19] (::Core.GeneratedFunctionStub)(::UInt64, ::LineNumberNode, ::Any, ::Vararg{Any})
-    @ Core ./boot.jl:707
- [20] setindex!
-    @ ~/Projects/Finch.jl/src/interface/index.jl:103 [inlined]
- [21] macro expansion
-    @ ~/Projects/Finch.jl/src/execute.jl:78 [inlined]
- [22] macro expansion
-    @ ~/Projects/Finch.jl/src/util/staging.jl:59 [inlined]
- [23] execute_impl(ex::Finch.FinchNotation.BlockInstance{Tuple{Finch.FinchNotation.BlockInstance{Tuple{Finch.FinchNotation.DeclareInstance{Finch.FinchNotation.TagInstance{Finch.FinchNotation.VariableInstance{:dst}, Tensor{DenseLevel{Int64, SparseListLevel{Int64, Vector{Int64}, Vector{Int64}, ElementLevel{0.0, Float64, Int64, Vector{Float64}}}}}}, Finch.FinchNotation.LiteralInstance{0.0}}, Finch.FinchNotation.LoopInstance{Finch.FinchNotation.IndexInstance{:i_2}, Finch.FinchNotation.Dimensionless, Finch.FinchNotation.LoopInstance{Finch.FinchNotation.IndexInstance{:i_1}, Finch.FinchNotation.Dimensionless, Finch.FinchNotation.DefineInstance{Finch.FinchNotation.VariableInstance{:tmp}, Finch.FinchNotation.AccessInstance{Finch.FinchNotation.TagInstance{Finch.FinchNotation.VariableInstance{:src}, Tensor{SparseCOOLevel{2, Tuple{Int64, Int64}, Vector{Int64}, Tuple{Vector{Int64}, Vector{Int64}}, ElementLevel{0.0, Float64, Int64, Vector{Float64}}}}}, Finch.FinchNotation.LiteralInstance{Finch.FinchNotation.Reader()}, Tuple{Finch.FinchNotation.TagInstance{Finch.FinchNotation.VariableInstance{:i_1}, Finch.FinchNotation.IndexInstance{:i_1}}, Finch.FinchNotation.TagInstance{Finch.FinchNotation.VariableInstance{:i_2}, Finch.FinchNotation.IndexInstance{:i_2}}}}, Finch.FinchNotation.SieveInstance{Finch.FinchNotation.CallInstance{Finch.FinchNotation.TagInstance{Finch.FinchNotation.VariableInstance{:!}, Finch.FinchNotation.LiteralInstance{!}}, Tuple{Finch.FinchNotation.CallInstance{Finch.FinchNotation.TagInstance{Finch.FinchNotation.VariableInstance{:isequal}, Finch.FinchNotation.LiteralInstance{isequal}}, Tuple{Finch.FinchNotation.TagInstance{Finch.FinchNotation.VariableInstance{:tmp}, Finch.FinchNotation.VariableInstance{:tmp}}, Finch.FinchNotation.LiteralInstance{0.0}}}}}, Finch.FinchNotation.AssignInstance{Finch.FinchNotation.AccessInstance{Finch.FinchNotation.TagInstance{Finch.FinchNotation.VariableInstance{:dst}, Tensor{DenseLevel{Int64, SparseListLevel{Int64, Vector{Int64}, Vector{Int64}, ElementLevel{0.0, Float64, Int64, Vector{Float64}}}}}}, Finch.FinchNotation.LiteralInstance{Finch.FinchNotation.Updater()}, Tuple{Finch.FinchNotation.TagInstance{Finch.FinchNotation.VariableInstance{:i_1}, Finch.FinchNotation.IndexInstance{:i_1}}, Finch.FinchNotation.TagInstance{Finch.FinchNotation.VariableInstance{:i_2}, Finch.FinchNotation.IndexInstance{:i_2}}}}, Finch.FinchNotation.LiteralInstance{initwrite}, Finch.FinchNotation.TagInstance{Finch.FinchNotation.VariableInstance{:tmp}, Finch.FinchNotation.VariableInstance{:tmp}}}}}}}}}, Finch.FinchNotation.YieldBindInstance{Tuple{Finch.FinchNotation.VariableInstance{:dst}}}}}, algebra::Val{Finch.DefaultAlgebra()}, mode::Val{:fast})
-    @ Finch ~/Projects/Finch.jl/src/util/staging.jl:51
- [24] execute(ex::Finch.FinchNotation.BlockInstance{Tuple{Finch.FinchNotation.BlockInstance{Tuple{Finch.FinchNotation.DeclareInstance{Finch.FinchNotation.TagInstance{Finch.FinchNotation.VariableInstance{:dst}, Tensor{DenseLevel{Int64, SparseListLevel{Int64, Vector{Int64}, Vector{Int64}, ElementLevel{0.0, Float64, Int64, Vector{Float64}}}}}}, Finch.FinchNotation.LiteralInstance{0.0}}, Finch.FinchNotation.LoopInstance{Finch.FinchNotation.IndexInstance{:i_2}, Finch.FinchNotation.Dimensionless, Finch.FinchNotation.LoopInstance{Finch.FinchNotation.IndexInstance{:i_1}, Finch.FinchNotation.Dimensionless, Finch.FinchNotation.DefineInstance{Finch.FinchNotation.VariableInstance{:tmp}, Finch.FinchNotation.AccessInstance{Finch.FinchNotation.TagInstance{Finch.FinchNotation.VariableInstance{:src}, Tensor{SparseCOOLevel{2, Tuple{Int64, Int64}, Vector{Int64}, Tuple{Vector{Int64}, Vector{Int64}}, ElementLevel{0.0, Float64, Int64, Vector{Float64}}}}}, Finch.FinchNotation.LiteralInstance{Finch.FinchNotation.Reader()}, Tuple{Finch.FinchNotation.TagInstance{Finch.FinchNotation.VariableInstance{:i_1}, Finch.FinchNotation.IndexInstance{:i_1}}, Finch.FinchNotation.TagInstance{Finch.FinchNotation.VariableInstance{:i_2}, Finch.FinchNotation.IndexInstance{:i_2}}}}, Finch.FinchNotation.SieveInstance{Finch.FinchNotation.CallInstance{Finch.FinchNotation.TagInstance{Finch.FinchNotation.VariableInstance{:!}, Finch.FinchNotation.LiteralInstance{!}}, Tuple{Finch.FinchNotation.CallInstance{Finch.FinchNotation.TagInstance{Finch.FinchNotation.VariableInstance{:isequal}, Finch.FinchNotation.LiteralInstance{isequal}}, Tuple{Finch.FinchNotation.TagInstance{Finch.FinchNotation.VariableInstance{:tmp}, Finch.FinchNotation.VariableInstance{:tmp}}, Finch.FinchNotation.LiteralInstance{0.0}}}}}, Finch.FinchNotation.AssignInstance{Finch.FinchNotation.AccessInstance{Finch.FinchNotation.TagInstance{Finch.FinchNotation.VariableInstance{:dst}, Tensor{DenseLevel{Int64, SparseListLevel{Int64, Vector{Int64}, Vector{Int64}, ElementLevel{0.0, Float64, Int64, Vector{Float64}}}}}}, Finch.FinchNotation.LiteralInstance{Finch.FinchNotation.Updater()}, Tuple{Finch.FinchNotation.TagInstance{Finch.FinchNotation.VariableInstance{:i_1}, Finch.FinchNotation.IndexInstance{:i_1}}, Finch.FinchNotation.TagInstance{Finch.FinchNotation.VariableInstance{:i_2}, Finch.FinchNotation.IndexInstance{:i_2}}}}, Finch.FinchNotation.LiteralInstance{initwrite}, Finch.FinchNotation.TagInstance{Finch.FinchNotation.VariableInstance{:tmp}, Finch.FinchNotation.VariableInstance{:tmp}}}}}}}}}, Finch.FinchNotation.YieldBindInstance{Tuple{Finch.FinchNotation.VariableInstance{:dst}}}}}; algebra::Finch.DefaultAlgebra, mode::Symbol)
-    @ Finch ~/Projects/Finch.jl/src/execute.jl:56
- [25] execute
-    @ ~/Projects/Finch.jl/src/execute.jl:56 [inlined]
- [26] macro expansion
-    @ ~/Projects/Finch.jl/src/execute.jl:184 [inlined]
- [27] macro expansion
-    @ ~/Projects/Finch.jl/src/interface/copy.jl:77 [inlined]
- [28] macro expansion
-    @ ~/Projects/Finch.jl/src/util/staging.jl:59 [inlined]
- [29] dropfills_helper!(dst::Tensor{DenseLevel{Int64, SparseListLevel{Int64, Vector{Int64}, Vector{Int64}, ElementLevel{0.0, Float64, Int64, Vector{Float64}}}}}, src::Tensor{SparseCOOLevel{2, Tuple{Int64, Int64}, Vector{Int64}, Tuple{Vector{Int64}, Vector{Int64}}, ElementLevel{0.0, Float64, Int64, Vector{Float64}}}})
-    @ Finch ~/Projects/Finch.jl/src/util/staging.jl:51
- [30] dropfills!
-    @ ~/Projects/Finch.jl/src/interface/copy.jl:96 [inlined]
- [31] Tensor(lvl::DenseLevel{Int64, SparseListLevel{Int64, Vector{Int64}, Vector{Int64}, ElementLevel{0.0, Float64, Int64, Vector{Float64}}}}, arr::Tensor{SparseCOOLevel{2, Tuple{Int64, Int64}, Vector{Int64}, Tuple{Vector{Int64}, Vector{Int64}}, ElementLevel{0.0, Float64, Int64, Vector{Float64}}}})
-    @ Finch ~/Projects/Finch.jl/src/tensors/fibers.jl:44
- [32] top-level scope
-    @ none:1
+NamedTuple()
 ```
 
 We can investigate the generated code with `@finch_code`.  This code iterates
@@ -112,13 +36,50 @@ this takes `O(n + nnz)` time.
 
 # output
 
-ERROR: UndefVarError: `s` not defined in `Main`
-Suggestion: check for spelling errors or missing imports.
-Stacktrace:
- [1] macro expansion
-   @ ~/Projects/Finch.jl/src/FinchNotation/syntax.jl:157 [inlined]
- [2] top-level scope
-   @ none:217
+quote
+    s = (ex.bodies[1]).body.body.lhs.tns.bind
+    s_val = s.val
+    A_lvl = (ex.bodies[1]).body.body.rhs.tns.bind.lvl
+    A_lvl_2 = A_lvl.lvl
+    A_lvl_ptr = A_lvl_2.ptr
+    A_lvl_idx = A_lvl_2.idx
+    A_lvl_2_val = A_lvl_2.lvl.val
+    for j_3 = 1:A_lvl.shape
+        A_lvl_q = (1 - 1) * A_lvl.shape + j_3
+        A_lvl_2_q = A_lvl_ptr[A_lvl_q]
+        A_lvl_2_q_stop = A_lvl_ptr[A_lvl_q + 1]
+        if A_lvl_2_q < A_lvl_2_q_stop
+            A_lvl_2_i1 = A_lvl_idx[A_lvl_2_q_stop - 1]
+        else
+            A_lvl_2_i1 = 0
+        end
+        phase_stop = min(A_lvl_2_i1, A_lvl_2.shape)
+        if phase_stop >= 1
+            if A_lvl_idx[A_lvl_2_q] < 1
+                A_lvl_2_q = Finch.scansearch(A_lvl_idx, 1, A_lvl_2_q, A_lvl_2_q_stop - 1)
+            end
+            while true
+                A_lvl_2_i = A_lvl_idx[A_lvl_2_q]
+                if A_lvl_2_i < phase_stop
+                    A_lvl_3_val = A_lvl_2_val[A_lvl_2_q]
+                    s_val = A_lvl_3_val + s_val
+                    A_lvl_2_q += 1
+                else
+                    phase_stop_3 = min(phase_stop, A_lvl_2_i)
+                    if A_lvl_2_i == phase_stop_3
+                        A_lvl_3_val = A_lvl_2_val[A_lvl_2_q]
+                        s_val += A_lvl_3_val
+                        A_lvl_2_q += 1
+                    end
+                    break
+                end
+            end
+        end
+    end
+    result = ()
+    s.val = s_val
+    result
+end
 ```
 
 
@@ -137,13 +98,53 @@ Note the double for loop in the following code
 
 # output
 
-ERROR: UndefVarError: `s` not defined in `Main`
-Suggestion: check for spelling errors or missing imports.
-Stacktrace:
- [1] macro expansion
-   @ ~/Projects/Finch.jl/src/FinchNotation/syntax.jl:157 [inlined]
- [2] top-level scope
-   @ none:217
+quote
+    s = (ex.bodies[1]).body.body.lhs.tns.bind
+    s_val = s.val
+    A_lvl = (ex.bodies[1]).body.body.rhs.tns.bind.lvl
+    A_lvl_2 = A_lvl.lvl
+    A_lvl_ptr = A_lvl_2.ptr
+    A_lvl_idx = A_lvl_2.idx
+    A_lvl_2_val = A_lvl_2.lvl.val
+    @warn "Performance Warning: non-concordant traversal of A[i, j] (hint: most arrays prefer column major or first index fast, run in fast mode to ignore this warning)"
+    for i_3 = 1:A_lvl_2.shape
+        for j_3 = 1:A_lvl.shape
+            A_lvl_q = (1 - 1) * A_lvl.shape + j_3
+            A_lvl_2_q = A_lvl_ptr[A_lvl_q]
+            A_lvl_2_q_stop = A_lvl_ptr[A_lvl_q + 1]
+            if A_lvl_2_q < A_lvl_2_q_stop
+                A_lvl_2_i1 = A_lvl_idx[A_lvl_2_q_stop - 1]
+            else
+                A_lvl_2_i1 = 0
+            end
+            phase_stop = min(i_3, A_lvl_2_i1)
+            if phase_stop >= i_3
+                if A_lvl_idx[A_lvl_2_q] < i_3
+                    A_lvl_2_q = Finch.scansearch(A_lvl_idx, i_3, A_lvl_2_q, A_lvl_2_q_stop - 1)
+                end
+                while true
+                    A_lvl_2_i = A_lvl_idx[A_lvl_2_q]
+                    if A_lvl_2_i < phase_stop
+                        A_lvl_3_val = A_lvl_2_val[A_lvl_2_q]
+                        s_val = A_lvl_3_val + s_val
+                        A_lvl_2_q += 1
+                    else
+                        phase_stop_3 = min(phase_stop, A_lvl_2_i)
+                        if A_lvl_2_i == phase_stop_3
+                            A_lvl_3_val = A_lvl_2_val[A_lvl_2_q]
+                            s_val += A_lvl_3_val
+                            A_lvl_2_q += 1
+                        end
+                        break
+                    end
+                end
+            end
+        end
+    end
+    result = ()
+    s.val = s_val
+    result
+end
 ```
 
 TL;DR: As a quick heuristic, if your array indices are all in alphabetical order, then
@@ -166,83 +167,7 @@ countstored(B)
 
 # output
 
-ERROR: MethodError: no method matching zero(::Type{Any})
-This error has been manually thrown, explicitly, so the method may exist but be intentionally marked as unimplemented.
-
-Closest candidates are:
-  zero(::Type{Union{Missing, T}}) where T
-   @ Base missing.jl:105
-  zero(!Matched::Type{Union{}}, Any...)
-   @ Base number.jl:310
-  zero(!Matched::Type{Dates.Time})
-   @ Dates ~/.julia/juliaup/julia-1.11.1+0.aarch64.apple.darwin14/share/julia/stdlib/v1.11/Dates/src/types.jl:460
-  ...
-
-Stacktrace:
-  [1] zero(::Type{Any})
-    @ Base ./missing.jl:106
-  [2] reduce_empty(::typeof(+), ::Type{Any})
-    @ Base ./reduce.jl:343
-  [3] reduce_empty(::typeof(Base.add_sum), ::Type{Any})
-    @ Base ./reduce.jl:350
-  [4] mapreduce_empty(::typeof(identity), op::Function, T::Type)
-    @ Base ./reduce.jl:369
-  [5] reduce_empty(op::Base.MappingRF{typeof(identity), typeof(Base.add_sum)}, ::Type{Any})
-    @ Base ./reduce.jl:358
-  [6] reduce_empty_iter
-    @ ./reduce.jl:381 [inlined]
-  [7] mapreduce_empty_iter(f::Function, op::Function, itr::Vector{Any}, ItrEltype::Base.HasEltype)
-    @ Base ./reduce.jl:377
-  [8] _mapreduce(f::typeof(identity), op::typeof(Base.add_sum), ::IndexLinear, A::Vector{Any})
-    @ Base ./reduce.jl:429
-  [9] _mapreduce_dim
-    @ ./reducedim.jl:337 [inlined]
- [10] mapreduce
-    @ ./reducedim.jl:329 [inlined]
- [11] _sum
-    @ ./reducedim.jl:987 [inlined]
- [12] _sum
-    @ ./reducedim.jl:986 [inlined]
- [13] sum(a::Vector{Any})
-    @ Base ./reducedim.jl:982
- [14] macro expansion
-    @ ~/Projects/Finch.jl/src/interface/index.jl:116 [inlined]
- [15] var"##setindex_helper_generator#280"(arr::Type, src::Type, inds::Type)
-    @ Finch ~/Projects/Finch.jl/src/util/staging.jl:30
- [16] (::Finch.var"#1800#1806"{DataType, DataType, DataType})()
-    @ Finch ~/Projects/Finch.jl/src/util/staging.jl:54
- [17] #s352#1799
-    @ ~/Projects/Finch.jl/src/util/staging.jl:63 [inlined]
- [18] var"#s352#1799"(::Any, arr::Any, src::Any, inds::Any)
-    @ Finch ./none:0
- [19] (::Core.GeneratedFunctionStub)(::UInt64, ::LineNumberNode, ::Any, ::Vararg{Any})
-    @ Core ./boot.jl:707
- [20] setindex!
-    @ ~/Projects/Finch.jl/src/interface/index.jl:103 [inlined]
- [21] macro expansion
-    @ ~/Projects/Finch.jl/src/execute.jl:78 [inlined]
- [22] macro expansion
-    @ ~/Projects/Finch.jl/src/util/staging.jl:59 [inlined]
- [23] execute_impl(ex::Finch.FinchNotation.BlockInstance{Tuple{Finch.FinchNotation.BlockInstance{Tuple{Finch.FinchNotation.DeclareInstance{Finch.FinchNotation.TagInstance{Finch.FinchNotation.VariableInstance{:dst}, Tensor{DenseLevel{Int64, SparseListLevel{Int64, Vector{Int64}, Vector{Int64}, ElementLevel{0.0, Float64, Int64, Vector{Float64}}}}}}, Finch.FinchNotation.LiteralInstance{0.0}}, Finch.FinchNotation.LoopInstance{Finch.FinchNotation.IndexInstance{:i_2}, Finch.FinchNotation.Dimensionless, Finch.FinchNotation.LoopInstance{Finch.FinchNotation.IndexInstance{:i_1}, Finch.FinchNotation.Dimensionless, Finch.FinchNotation.DefineInstance{Finch.FinchNotation.VariableInstance{:tmp}, Finch.FinchNotation.AccessInstance{Finch.FinchNotation.TagInstance{Finch.FinchNotation.VariableInstance{:src}, Tensor{SparseCOOLevel{2, Tuple{Int64, Int64}, Vector{Int64}, Tuple{Vector{Int64}, Vector{Int64}}, ElementLevel{0.0, Float64, Int64, Vector{Float64}}}}}, Finch.FinchNotation.LiteralInstance{Finch.FinchNotation.Reader()}, Tuple{Finch.FinchNotation.TagInstance{Finch.FinchNotation.VariableInstance{:i_1}, Finch.FinchNotation.IndexInstance{:i_1}}, Finch.FinchNotation.TagInstance{Finch.FinchNotation.VariableInstance{:i_2}, Finch.FinchNotation.IndexInstance{:i_2}}}}, Finch.FinchNotation.SieveInstance{Finch.FinchNotation.CallInstance{Finch.FinchNotation.TagInstance{Finch.FinchNotation.VariableInstance{:!}, Finch.FinchNotation.LiteralInstance{!}}, Tuple{Finch.FinchNotation.CallInstance{Finch.FinchNotation.TagInstance{Finch.FinchNotation.VariableInstance{:isequal}, Finch.FinchNotation.LiteralInstance{isequal}}, Tuple{Finch.FinchNotation.TagInstance{Finch.FinchNotation.VariableInstance{:tmp}, Finch.FinchNotation.VariableInstance{:tmp}}, Finch.FinchNotation.LiteralInstance{0.0}}}}}, Finch.FinchNotation.AssignInstance{Finch.FinchNotation.AccessInstance{Finch.FinchNotation.TagInstance{Finch.FinchNotation.VariableInstance{:dst}, Tensor{DenseLevel{Int64, SparseListLevel{Int64, Vector{Int64}, Vector{Int64}, ElementLevel{0.0, Float64, Int64, Vector{Float64}}}}}}, Finch.FinchNotation.LiteralInstance{Finch.FinchNotation.Updater()}, Tuple{Finch.FinchNotation.TagInstance{Finch.FinchNotation.VariableInstance{:i_1}, Finch.FinchNotation.IndexInstance{:i_1}}, Finch.FinchNotation.TagInstance{Finch.FinchNotation.VariableInstance{:i_2}, Finch.FinchNotation.IndexInstance{:i_2}}}}, Finch.FinchNotation.LiteralInstance{initwrite}, Finch.FinchNotation.TagInstance{Finch.FinchNotation.VariableInstance{:tmp}, Finch.FinchNotation.VariableInstance{:tmp}}}}}}}}}, Finch.FinchNotation.YieldBindInstance{Tuple{Finch.FinchNotation.VariableInstance{:dst}}}}}, algebra::Val{Finch.DefaultAlgebra()}, mode::Val{:fast})
-    @ Finch ~/Projects/Finch.jl/src/util/staging.jl:51
- [24] execute(ex::Finch.FinchNotation.BlockInstance{Tuple{Finch.FinchNotation.BlockInstance{Tuple{Finch.FinchNotation.DeclareInstance{Finch.FinchNotation.TagInstance{Finch.FinchNotation.VariableInstance{:dst}, Tensor{DenseLevel{Int64, SparseListLevel{Int64, Vector{Int64}, Vector{Int64}, ElementLevel{0.0, Float64, Int64, Vector{Float64}}}}}}, Finch.FinchNotation.LiteralInstance{0.0}}, Finch.FinchNotation.LoopInstance{Finch.FinchNotation.IndexInstance{:i_2}, Finch.FinchNotation.Dimensionless, Finch.FinchNotation.LoopInstance{Finch.FinchNotation.IndexInstance{:i_1}, Finch.FinchNotation.Dimensionless, Finch.FinchNotation.DefineInstance{Finch.FinchNotation.VariableInstance{:tmp}, Finch.FinchNotation.AccessInstance{Finch.FinchNotation.TagInstance{Finch.FinchNotation.VariableInstance{:src}, Tensor{SparseCOOLevel{2, Tuple{Int64, Int64}, Vector{Int64}, Tuple{Vector{Int64}, Vector{Int64}}, ElementLevel{0.0, Float64, Int64, Vector{Float64}}}}}, Finch.FinchNotation.LiteralInstance{Finch.FinchNotation.Reader()}, Tuple{Finch.FinchNotation.TagInstance{Finch.FinchNotation.VariableInstance{:i_1}, Finch.FinchNotation.IndexInstance{:i_1}}, Finch.FinchNotation.TagInstance{Finch.FinchNotation.VariableInstance{:i_2}, Finch.FinchNotation.IndexInstance{:i_2}}}}, Finch.FinchNotation.SieveInstance{Finch.FinchNotation.CallInstance{Finch.FinchNotation.TagInstance{Finch.FinchNotation.VariableInstance{:!}, Finch.FinchNotation.LiteralInstance{!}}, Tuple{Finch.FinchNotation.CallInstance{Finch.FinchNotation.TagInstance{Finch.FinchNotation.VariableInstance{:isequal}, Finch.FinchNotation.LiteralInstance{isequal}}, Tuple{Finch.FinchNotation.TagInstance{Finch.FinchNotation.VariableInstance{:tmp}, Finch.FinchNotation.VariableInstance{:tmp}}, Finch.FinchNotation.LiteralInstance{0.0}}}}}, Finch.FinchNotation.AssignInstance{Finch.FinchNotation.AccessInstance{Finch.FinchNotation.TagInstance{Finch.FinchNotation.VariableInstance{:dst}, Tensor{DenseLevel{Int64, SparseListLevel{Int64, Vector{Int64}, Vector{Int64}, ElementLevel{0.0, Float64, Int64, Vector{Float64}}}}}}, Finch.FinchNotation.LiteralInstance{Finch.FinchNotation.Updater()}, Tuple{Finch.FinchNotation.TagInstance{Finch.FinchNotation.VariableInstance{:i_1}, Finch.FinchNotation.IndexInstance{:i_1}}, Finch.FinchNotation.TagInstance{Finch.FinchNotation.VariableInstance{:i_2}, Finch.FinchNotation.IndexInstance{:i_2}}}}, Finch.FinchNotation.LiteralInstance{initwrite}, Finch.FinchNotation.TagInstance{Finch.FinchNotation.VariableInstance{:tmp}, Finch.FinchNotation.VariableInstance{:tmp}}}}}}}}}, Finch.FinchNotation.YieldBindInstance{Tuple{Finch.FinchNotation.VariableInstance{:dst}}}}}; algebra::Finch.DefaultAlgebra, mode::Symbol)
-    @ Finch ~/Projects/Finch.jl/src/execute.jl:56
- [25] execute
-    @ ~/Projects/Finch.jl/src/execute.jl:56 [inlined]
- [26] macro expansion
-    @ ~/Projects/Finch.jl/src/execute.jl:184 [inlined]
- [27] macro expansion
-    @ ~/Projects/Finch.jl/src/interface/copy.jl:77 [inlined]
- [28] macro expansion
-    @ ~/Projects/Finch.jl/src/util/staging.jl:59 [inlined]
- [29] dropfills_helper!(dst::Tensor{DenseLevel{Int64, SparseListLevel{Int64, Vector{Int64}, Vector{Int64}, ElementLevel{0.0, Float64, Int64, Vector{Float64}}}}}, src::Tensor{SparseCOOLevel{2, Tuple{Int64, Int64}, Vector{Int64}, Tuple{Vector{Int64}, Vector{Int64}}, ElementLevel{0.0, Float64, Int64, Vector{Float64}}}})
-    @ Finch ~/Projects/Finch.jl/src/util/staging.jl:51
- [30] dropfills!
-    @ ~/Projects/Finch.jl/src/interface/copy.jl:96 [inlined]
- [31] Tensor(lvl::DenseLevel{Int64, SparseListLevel{Int64, Vector{Int64}, Vector{Int64}, ElementLevel{0.0, Float64, Int64, Vector{Float64}}}}, arr::Tensor{SparseCOOLevel{2, Tuple{Int64, Int64}, Vector{Int64}, Tuple{Vector{Int64}, Vector{Int64}}, ElementLevel{0.0, Float64, Int64, Vector{Float64}}}})
-    @ Finch ~/Projects/Finch.jl/src/tensors/fibers.jl:44
- [32] top-level scope
-    @ none:1
+12
 ```
 
 Since `A` is filled with `0.0`, adding `1` to the fill value produces `1.0`. However, `B` can only represent a fill value of `0.0`. Instead, we should specify `1.0` for the fill.
@@ -255,83 +180,7 @@ countstored(B)
 
 # output
 
-ERROR: MethodError: no method matching zero(::Type{Any})
-This error has been manually thrown, explicitly, so the method may exist but be intentionally marked as unimplemented.
-
-Closest candidates are:
-  zero(::Type{Union{Missing, T}}) where T
-   @ Base missing.jl:105
-  zero(!Matched::Type{Union{}}, Any...)
-   @ Base number.jl:310
-  zero(!Matched::Type{Dates.Time})
-   @ Dates ~/.julia/juliaup/julia-1.11.1+0.aarch64.apple.darwin14/share/julia/stdlib/v1.11/Dates/src/types.jl:460
-  ...
-
-Stacktrace:
-  [1] zero(::Type{Any})
-    @ Base ./missing.jl:106
-  [2] reduce_empty(::typeof(+), ::Type{Any})
-    @ Base ./reduce.jl:343
-  [3] reduce_empty(::typeof(Base.add_sum), ::Type{Any})
-    @ Base ./reduce.jl:350
-  [4] mapreduce_empty(::typeof(identity), op::Function, T::Type)
-    @ Base ./reduce.jl:369
-  [5] reduce_empty(op::Base.MappingRF{typeof(identity), typeof(Base.add_sum)}, ::Type{Any})
-    @ Base ./reduce.jl:358
-  [6] reduce_empty_iter
-    @ ./reduce.jl:381 [inlined]
-  [7] mapreduce_empty_iter(f::Function, op::Function, itr::Vector{Any}, ItrEltype::Base.HasEltype)
-    @ Base ./reduce.jl:377
-  [8] _mapreduce(f::typeof(identity), op::typeof(Base.add_sum), ::IndexLinear, A::Vector{Any})
-    @ Base ./reduce.jl:429
-  [9] _mapreduce_dim
-    @ ./reducedim.jl:337 [inlined]
- [10] mapreduce
-    @ ./reducedim.jl:329 [inlined]
- [11] _sum
-    @ ./reducedim.jl:987 [inlined]
- [12] _sum
-    @ ./reducedim.jl:986 [inlined]
- [13] sum(a::Vector{Any})
-    @ Base ./reducedim.jl:982
- [14] macro expansion
-    @ ~/Projects/Finch.jl/src/interface/index.jl:116 [inlined]
- [15] var"##setindex_helper_generator#280"(arr::Type, src::Type, inds::Type)
-    @ Finch ~/Projects/Finch.jl/src/util/staging.jl:30
- [16] (::Finch.var"#1800#1806"{DataType, DataType, DataType})()
-    @ Finch ~/Projects/Finch.jl/src/util/staging.jl:54
- [17] #s352#1799
-    @ ~/Projects/Finch.jl/src/util/staging.jl:63 [inlined]
- [18] var"#s352#1799"(::Any, arr::Any, src::Any, inds::Any)
-    @ Finch ./none:0
- [19] (::Core.GeneratedFunctionStub)(::UInt64, ::LineNumberNode, ::Any, ::Vararg{Any})
-    @ Core ./boot.jl:707
- [20] setindex!
-    @ ~/Projects/Finch.jl/src/interface/index.jl:103 [inlined]
- [21] macro expansion
-    @ ~/Projects/Finch.jl/src/execute.jl:78 [inlined]
- [22] macro expansion
-    @ ~/Projects/Finch.jl/src/util/staging.jl:59 [inlined]
- [23] execute_impl(ex::Finch.FinchNotation.BlockInstance{Tuple{Finch.FinchNotation.BlockInstance{Tuple{Finch.FinchNotation.DeclareInstance{Finch.FinchNotation.TagInstance{Finch.FinchNotation.VariableInstance{:dst}, Tensor{DenseLevel{Int64, SparseListLevel{Int64, Vector{Int64}, Vector{Int64}, ElementLevel{0.0, Float64, Int64, Vector{Float64}}}}}}, Finch.FinchNotation.LiteralInstance{0.0}}, Finch.FinchNotation.LoopInstance{Finch.FinchNotation.IndexInstance{:i_2}, Finch.FinchNotation.Dimensionless, Finch.FinchNotation.LoopInstance{Finch.FinchNotation.IndexInstance{:i_1}, Finch.FinchNotation.Dimensionless, Finch.FinchNotation.DefineInstance{Finch.FinchNotation.VariableInstance{:tmp}, Finch.FinchNotation.AccessInstance{Finch.FinchNotation.TagInstance{Finch.FinchNotation.VariableInstance{:src}, Tensor{SparseCOOLevel{2, Tuple{Int64, Int64}, Vector{Int64}, Tuple{Vector{Int64}, Vector{Int64}}, ElementLevel{0.0, Float64, Int64, Vector{Float64}}}}}, Finch.FinchNotation.LiteralInstance{Finch.FinchNotation.Reader()}, Tuple{Finch.FinchNotation.TagInstance{Finch.FinchNotation.VariableInstance{:i_1}, Finch.FinchNotation.IndexInstance{:i_1}}, Finch.FinchNotation.TagInstance{Finch.FinchNotation.VariableInstance{:i_2}, Finch.FinchNotation.IndexInstance{:i_2}}}}, Finch.FinchNotation.SieveInstance{Finch.FinchNotation.CallInstance{Finch.FinchNotation.TagInstance{Finch.FinchNotation.VariableInstance{:!}, Finch.FinchNotation.LiteralInstance{!}}, Tuple{Finch.FinchNotation.CallInstance{Finch.FinchNotation.TagInstance{Finch.FinchNotation.VariableInstance{:isequal}, Finch.FinchNotation.LiteralInstance{isequal}}, Tuple{Finch.FinchNotation.TagInstance{Finch.FinchNotation.VariableInstance{:tmp}, Finch.FinchNotation.VariableInstance{:tmp}}, Finch.FinchNotation.LiteralInstance{0.0}}}}}, Finch.FinchNotation.AssignInstance{Finch.FinchNotation.AccessInstance{Finch.FinchNotation.TagInstance{Finch.FinchNotation.VariableInstance{:dst}, Tensor{DenseLevel{Int64, SparseListLevel{Int64, Vector{Int64}, Vector{Int64}, ElementLevel{0.0, Float64, Int64, Vector{Float64}}}}}}, Finch.FinchNotation.LiteralInstance{Finch.FinchNotation.Updater()}, Tuple{Finch.FinchNotation.TagInstance{Finch.FinchNotation.VariableInstance{:i_1}, Finch.FinchNotation.IndexInstance{:i_1}}, Finch.FinchNotation.TagInstance{Finch.FinchNotation.VariableInstance{:i_2}, Finch.FinchNotation.IndexInstance{:i_2}}}}, Finch.FinchNotation.LiteralInstance{initwrite}, Finch.FinchNotation.TagInstance{Finch.FinchNotation.VariableInstance{:tmp}, Finch.FinchNotation.VariableInstance{:tmp}}}}}}}}}, Finch.FinchNotation.YieldBindInstance{Tuple{Finch.FinchNotation.VariableInstance{:dst}}}}}, algebra::Val{Finch.DefaultAlgebra()}, mode::Val{:fast})
-    @ Finch ~/Projects/Finch.jl/src/util/staging.jl:51
- [24] execute(ex::Finch.FinchNotation.BlockInstance{Tuple{Finch.FinchNotation.BlockInstance{Tuple{Finch.FinchNotation.DeclareInstance{Finch.FinchNotation.TagInstance{Finch.FinchNotation.VariableInstance{:dst}, Tensor{DenseLevel{Int64, SparseListLevel{Int64, Vector{Int64}, Vector{Int64}, ElementLevel{0.0, Float64, Int64, Vector{Float64}}}}}}, Finch.FinchNotation.LiteralInstance{0.0}}, Finch.FinchNotation.LoopInstance{Finch.FinchNotation.IndexInstance{:i_2}, Finch.FinchNotation.Dimensionless, Finch.FinchNotation.LoopInstance{Finch.FinchNotation.IndexInstance{:i_1}, Finch.FinchNotation.Dimensionless, Finch.FinchNotation.DefineInstance{Finch.FinchNotation.VariableInstance{:tmp}, Finch.FinchNotation.AccessInstance{Finch.FinchNotation.TagInstance{Finch.FinchNotation.VariableInstance{:src}, Tensor{SparseCOOLevel{2, Tuple{Int64, Int64}, Vector{Int64}, Tuple{Vector{Int64}, Vector{Int64}}, ElementLevel{0.0, Float64, Int64, Vector{Float64}}}}}, Finch.FinchNotation.LiteralInstance{Finch.FinchNotation.Reader()}, Tuple{Finch.FinchNotation.TagInstance{Finch.FinchNotation.VariableInstance{:i_1}, Finch.FinchNotation.IndexInstance{:i_1}}, Finch.FinchNotation.TagInstance{Finch.FinchNotation.VariableInstance{:i_2}, Finch.FinchNotation.IndexInstance{:i_2}}}}, Finch.FinchNotation.SieveInstance{Finch.FinchNotation.CallInstance{Finch.FinchNotation.TagInstance{Finch.FinchNotation.VariableInstance{:!}, Finch.FinchNotation.LiteralInstance{!}}, Tuple{Finch.FinchNotation.CallInstance{Finch.FinchNotation.TagInstance{Finch.FinchNotation.VariableInstance{:isequal}, Finch.FinchNotation.LiteralInstance{isequal}}, Tuple{Finch.FinchNotation.TagInstance{Finch.FinchNotation.VariableInstance{:tmp}, Finch.FinchNotation.VariableInstance{:tmp}}, Finch.FinchNotation.LiteralInstance{0.0}}}}}, Finch.FinchNotation.AssignInstance{Finch.FinchNotation.AccessInstance{Finch.FinchNotation.TagInstance{Finch.FinchNotation.VariableInstance{:dst}, Tensor{DenseLevel{Int64, SparseListLevel{Int64, Vector{Int64}, Vector{Int64}, ElementLevel{0.0, Float64, Int64, Vector{Float64}}}}}}, Finch.FinchNotation.LiteralInstance{Finch.FinchNotation.Updater()}, Tuple{Finch.FinchNotation.TagInstance{Finch.FinchNotation.VariableInstance{:i_1}, Finch.FinchNotation.IndexInstance{:i_1}}, Finch.FinchNotation.TagInstance{Finch.FinchNotation.VariableInstance{:i_2}, Finch.FinchNotation.IndexInstance{:i_2}}}}, Finch.FinchNotation.LiteralInstance{initwrite}, Finch.FinchNotation.TagInstance{Finch.FinchNotation.VariableInstance{:tmp}, Finch.FinchNotation.VariableInstance{:tmp}}}}}}}}}, Finch.FinchNotation.YieldBindInstance{Tuple{Finch.FinchNotation.VariableInstance{:dst}}}}}; algebra::Finch.DefaultAlgebra, mode::Symbol)
-    @ Finch ~/Projects/Finch.jl/src/execute.jl:56
- [25] execute
-    @ ~/Projects/Finch.jl/src/execute.jl:56 [inlined]
- [26] macro expansion
-    @ ~/Projects/Finch.jl/src/execute.jl:184 [inlined]
- [27] macro expansion
-    @ ~/Projects/Finch.jl/src/interface/copy.jl:77 [inlined]
- [28] macro expansion
-    @ ~/Projects/Finch.jl/src/util/staging.jl:59 [inlined]
- [29] dropfills_helper!(dst::Tensor{DenseLevel{Int64, SparseListLevel{Int64, Vector{Int64}, Vector{Int64}, ElementLevel{0.0, Float64, Int64, Vector{Float64}}}}}, src::Tensor{SparseCOOLevel{2, Tuple{Int64, Int64}, Vector{Int64}, Tuple{Vector{Int64}, Vector{Int64}}, ElementLevel{0.0, Float64, Int64, Vector{Float64}}}})
-    @ Finch ~/Projects/Finch.jl/src/util/staging.jl:51
- [30] dropfills!
-    @ ~/Projects/Finch.jl/src/interface/copy.jl:96 [inlined]
- [31] Tensor(lvl::DenseLevel{Int64, SparseListLevel{Int64, Vector{Int64}, Vector{Int64}, ElementLevel{0.0, Float64, Int64, Vector{Float64}}}}, arr::Tensor{SparseCOOLevel{2, Tuple{Int64, Int64}, Vector{Int64}, Tuple{Vector{Int64}, Vector{Int64}}, ElementLevel{0.0, Float64, Int64, Vector{Float64}}}})
-    @ Finch ~/Projects/Finch.jl/src/tensors/fibers.jl:44
- [32] top-level scope
-    @ none:1
+5
 ```
 
 ## Static Versus Dynamic Values
@@ -349,83 +198,7 @@ countstored(B)
 
 # output
 
-ERROR: MethodError: no method matching zero(::Type{Any})
-This error has been manually thrown, explicitly, so the method may exist but be intentionally marked as unimplemented.
-
-Closest candidates are:
-  zero(::Type{Union{Missing, T}}) where T
-   @ Base missing.jl:105
-  zero(!Matched::Type{Union{}}, Any...)
-   @ Base number.jl:310
-  zero(!Matched::Type{Dates.Time})
-   @ Dates ~/.julia/juliaup/julia-1.11.1+0.aarch64.apple.darwin14/share/julia/stdlib/v1.11/Dates/src/types.jl:460
-  ...
-
-Stacktrace:
-  [1] zero(::Type{Any})
-    @ Base ./missing.jl:106
-  [2] reduce_empty(::typeof(+), ::Type{Any})
-    @ Base ./reduce.jl:343
-  [3] reduce_empty(::typeof(Base.add_sum), ::Type{Any})
-    @ Base ./reduce.jl:350
-  [4] mapreduce_empty(::typeof(identity), op::Function, T::Type)
-    @ Base ./reduce.jl:369
-  [5] reduce_empty(op::Base.MappingRF{typeof(identity), typeof(Base.add_sum)}, ::Type{Any})
-    @ Base ./reduce.jl:358
-  [6] reduce_empty_iter
-    @ ./reduce.jl:381 [inlined]
-  [7] mapreduce_empty_iter(f::Function, op::Function, itr::Vector{Any}, ItrEltype::Base.HasEltype)
-    @ Base ./reduce.jl:377
-  [8] _mapreduce(f::typeof(identity), op::typeof(Base.add_sum), ::IndexLinear, A::Vector{Any})
-    @ Base ./reduce.jl:429
-  [9] _mapreduce_dim
-    @ ./reducedim.jl:337 [inlined]
- [10] mapreduce
-    @ ./reducedim.jl:329 [inlined]
- [11] _sum
-    @ ./reducedim.jl:987 [inlined]
- [12] _sum
-    @ ./reducedim.jl:986 [inlined]
- [13] sum(a::Vector{Any})
-    @ Base ./reducedim.jl:982
- [14] macro expansion
-    @ ~/Projects/Finch.jl/src/interface/index.jl:116 [inlined]
- [15] var"##setindex_helper_generator#280"(arr::Type, src::Type, inds::Type)
-    @ Finch ~/Projects/Finch.jl/src/util/staging.jl:30
- [16] (::Finch.var"#1800#1806"{DataType, DataType, DataType})()
-    @ Finch ~/Projects/Finch.jl/src/util/staging.jl:54
- [17] #s352#1799
-    @ ~/Projects/Finch.jl/src/util/staging.jl:63 [inlined]
- [18] var"#s352#1799"(::Any, arr::Any, src::Any, inds::Any)
-    @ Finch ./none:0
- [19] (::Core.GeneratedFunctionStub)(::UInt64, ::LineNumberNode, ::Any, ::Vararg{Any})
-    @ Core ./boot.jl:707
- [20] setindex!
-    @ ~/Projects/Finch.jl/src/interface/index.jl:103 [inlined]
- [21] macro expansion
-    @ ~/Projects/Finch.jl/src/execute.jl:78 [inlined]
- [22] macro expansion
-    @ ~/Projects/Finch.jl/src/util/staging.jl:59 [inlined]
- [23] execute_impl(ex::Finch.FinchNotation.BlockInstance{Tuple{Finch.FinchNotation.BlockInstance{Tuple{Finch.FinchNotation.DeclareInstance{Finch.FinchNotation.TagInstance{Finch.FinchNotation.VariableInstance{:dst}, Tensor{DenseLevel{Int64, SparseListLevel{Int64, Vector{Int64}, Vector{Int64}, ElementLevel{0.0, Float64, Int64, Vector{Float64}}}}}}, Finch.FinchNotation.LiteralInstance{0.0}}, Finch.FinchNotation.LoopInstance{Finch.FinchNotation.IndexInstance{:i_2}, Finch.FinchNotation.Dimensionless, Finch.FinchNotation.LoopInstance{Finch.FinchNotation.IndexInstance{:i_1}, Finch.FinchNotation.Dimensionless, Finch.FinchNotation.DefineInstance{Finch.FinchNotation.VariableInstance{:tmp}, Finch.FinchNotation.AccessInstance{Finch.FinchNotation.TagInstance{Finch.FinchNotation.VariableInstance{:src}, Tensor{SparseCOOLevel{2, Tuple{Int64, Int64}, Vector{Int64}, Tuple{Vector{Int64}, Vector{Int64}}, ElementLevel{0.0, Float64, Int64, Vector{Float64}}}}}, Finch.FinchNotation.LiteralInstance{Finch.FinchNotation.Reader()}, Tuple{Finch.FinchNotation.TagInstance{Finch.FinchNotation.VariableInstance{:i_1}, Finch.FinchNotation.IndexInstance{:i_1}}, Finch.FinchNotation.TagInstance{Finch.FinchNotation.VariableInstance{:i_2}, Finch.FinchNotation.IndexInstance{:i_2}}}}, Finch.FinchNotation.SieveInstance{Finch.FinchNotation.CallInstance{Finch.FinchNotation.TagInstance{Finch.FinchNotation.VariableInstance{:!}, Finch.FinchNotation.LiteralInstance{!}}, Tuple{Finch.FinchNotation.CallInstance{Finch.FinchNotation.TagInstance{Finch.FinchNotation.VariableInstance{:isequal}, Finch.FinchNotation.LiteralInstance{isequal}}, Tuple{Finch.FinchNotation.TagInstance{Finch.FinchNotation.VariableInstance{:tmp}, Finch.FinchNotation.VariableInstance{:tmp}}, Finch.FinchNotation.LiteralInstance{0.0}}}}}, Finch.FinchNotation.AssignInstance{Finch.FinchNotation.AccessInstance{Finch.FinchNotation.TagInstance{Finch.FinchNotation.VariableInstance{:dst}, Tensor{DenseLevel{Int64, SparseListLevel{Int64, Vector{Int64}, Vector{Int64}, ElementLevel{0.0, Float64, Int64, Vector{Float64}}}}}}, Finch.FinchNotation.LiteralInstance{Finch.FinchNotation.Updater()}, Tuple{Finch.FinchNotation.TagInstance{Finch.FinchNotation.VariableInstance{:i_1}, Finch.FinchNotation.IndexInstance{:i_1}}, Finch.FinchNotation.TagInstance{Finch.FinchNotation.VariableInstance{:i_2}, Finch.FinchNotation.IndexInstance{:i_2}}}}, Finch.FinchNotation.LiteralInstance{initwrite}, Finch.FinchNotation.TagInstance{Finch.FinchNotation.VariableInstance{:tmp}, Finch.FinchNotation.VariableInstance{:tmp}}}}}}}}}, Finch.FinchNotation.YieldBindInstance{Tuple{Finch.FinchNotation.VariableInstance{:dst}}}}}, algebra::Val{Finch.DefaultAlgebra()}, mode::Val{:fast})
-    @ Finch ~/Projects/Finch.jl/src/util/staging.jl:51
- [24] execute(ex::Finch.FinchNotation.BlockInstance{Tuple{Finch.FinchNotation.BlockInstance{Tuple{Finch.FinchNotation.DeclareInstance{Finch.FinchNotation.TagInstance{Finch.FinchNotation.VariableInstance{:dst}, Tensor{DenseLevel{Int64, SparseListLevel{Int64, Vector{Int64}, Vector{Int64}, ElementLevel{0.0, Float64, Int64, Vector{Float64}}}}}}, Finch.FinchNotation.LiteralInstance{0.0}}, Finch.FinchNotation.LoopInstance{Finch.FinchNotation.IndexInstance{:i_2}, Finch.FinchNotation.Dimensionless, Finch.FinchNotation.LoopInstance{Finch.FinchNotation.IndexInstance{:i_1}, Finch.FinchNotation.Dimensionless, Finch.FinchNotation.DefineInstance{Finch.FinchNotation.VariableInstance{:tmp}, Finch.FinchNotation.AccessInstance{Finch.FinchNotation.TagInstance{Finch.FinchNotation.VariableInstance{:src}, Tensor{SparseCOOLevel{2, Tuple{Int64, Int64}, Vector{Int64}, Tuple{Vector{Int64}, Vector{Int64}}, ElementLevel{0.0, Float64, Int64, Vector{Float64}}}}}, Finch.FinchNotation.LiteralInstance{Finch.FinchNotation.Reader()}, Tuple{Finch.FinchNotation.TagInstance{Finch.FinchNotation.VariableInstance{:i_1}, Finch.FinchNotation.IndexInstance{:i_1}}, Finch.FinchNotation.TagInstance{Finch.FinchNotation.VariableInstance{:i_2}, Finch.FinchNotation.IndexInstance{:i_2}}}}, Finch.FinchNotation.SieveInstance{Finch.FinchNotation.CallInstance{Finch.FinchNotation.TagInstance{Finch.FinchNotation.VariableInstance{:!}, Finch.FinchNotation.LiteralInstance{!}}, Tuple{Finch.FinchNotation.CallInstance{Finch.FinchNotation.TagInstance{Finch.FinchNotation.VariableInstance{:isequal}, Finch.FinchNotation.LiteralInstance{isequal}}, Tuple{Finch.FinchNotation.TagInstance{Finch.FinchNotation.VariableInstance{:tmp}, Finch.FinchNotation.VariableInstance{:tmp}}, Finch.FinchNotation.LiteralInstance{0.0}}}}}, Finch.FinchNotation.AssignInstance{Finch.FinchNotation.AccessInstance{Finch.FinchNotation.TagInstance{Finch.FinchNotation.VariableInstance{:dst}, Tensor{DenseLevel{Int64, SparseListLevel{Int64, Vector{Int64}, Vector{Int64}, ElementLevel{0.0, Float64, Int64, Vector{Float64}}}}}}, Finch.FinchNotation.LiteralInstance{Finch.FinchNotation.Updater()}, Tuple{Finch.FinchNotation.TagInstance{Finch.FinchNotation.VariableInstance{:i_1}, Finch.FinchNotation.IndexInstance{:i_1}}, Finch.FinchNotation.TagInstance{Finch.FinchNotation.VariableInstance{:i_2}, Finch.FinchNotation.IndexInstance{:i_2}}}}, Finch.FinchNotation.LiteralInstance{initwrite}, Finch.FinchNotation.TagInstance{Finch.FinchNotation.VariableInstance{:tmp}, Finch.FinchNotation.VariableInstance{:tmp}}}}}}}}}, Finch.FinchNotation.YieldBindInstance{Tuple{Finch.FinchNotation.VariableInstance{:dst}}}}}; algebra::Finch.DefaultAlgebra, mode::Symbol)
-    @ Finch ~/Projects/Finch.jl/src/execute.jl:56
- [25] execute
-    @ ~/Projects/Finch.jl/src/execute.jl:56 [inlined]
- [26] macro expansion
-    @ ~/Projects/Finch.jl/src/execute.jl:184 [inlined]
- [27] macro expansion
-    @ ~/Projects/Finch.jl/src/interface/copy.jl:77 [inlined]
- [28] macro expansion
-    @ ~/Projects/Finch.jl/src/util/staging.jl:59 [inlined]
- [29] dropfills_helper!(dst::Tensor{DenseLevel{Int64, SparseListLevel{Int64, Vector{Int64}, Vector{Int64}, ElementLevel{0.0, Float64, Int64, Vector{Float64}}}}}, src::Tensor{SparseCOOLevel{2, Tuple{Int64, Int64}, Vector{Int64}, Tuple{Vector{Int64}, Vector{Int64}}, ElementLevel{0.0, Float64, Int64, Vector{Float64}}}})
-    @ Finch ~/Projects/Finch.jl/src/util/staging.jl:51
- [30] dropfills!
-    @ ~/Projects/Finch.jl/src/interface/copy.jl:96 [inlined]
- [31] Tensor(lvl::DenseLevel{Int64, SparseListLevel{Int64, Vector{Int64}, Vector{Int64}, ElementLevel{0.0, Float64, Int64, Vector{Float64}}}}, arr::Tensor{SparseCOOLevel{2, Tuple{Int64, Int64}, Vector{Int64}, Tuple{Vector{Int64}, Vector{Int64}}, ElementLevel{0.0, Float64, Int64, Vector{Float64}}}})
-    @ Finch ~/Projects/Finch.jl/src/tensors/fibers.jl:44
- [32] top-level scope
-    @ none:1
+12
 ```
 
 However, there are some situations where you may want a value to be dynamic. For example, consider the function `saxpy(x, a, y) = x .* a .+ y`. Because we do not know the value of `a` until we run the function, we should treat it as dynamic, and the following implementation is reasonable:
@@ -451,83 +224,7 @@ f(x, y) = x * y # DO NOT DO THIS, Obscures *
 
 # output
 
-ERROR: MethodError: no method matching zero(::Type{Any})
-This error has been manually thrown, explicitly, so the method may exist but be intentionally marked as unimplemented.
-
-Closest candidates are:
-  zero(::Type{Union{Missing, T}}) where T
-   @ Base missing.jl:105
-  zero(!Matched::Type{Union{}}, Any...)
-   @ Base number.jl:310
-  zero(!Matched::Type{Dates.Time})
-   @ Dates ~/.julia/juliaup/julia-1.11.1+0.aarch64.apple.darwin14/share/julia/stdlib/v1.11/Dates/src/types.jl:460
-  ...
-
-Stacktrace:
-  [1] zero(::Type{Any})
-    @ Base ./missing.jl:106
-  [2] reduce_empty(::typeof(+), ::Type{Any})
-    @ Base ./reduce.jl:343
-  [3] reduce_empty(::typeof(Base.add_sum), ::Type{Any})
-    @ Base ./reduce.jl:350
-  [4] mapreduce_empty(::typeof(identity), op::Function, T::Type)
-    @ Base ./reduce.jl:369
-  [5] reduce_empty(op::Base.MappingRF{typeof(identity), typeof(Base.add_sum)}, ::Type{Any})
-    @ Base ./reduce.jl:358
-  [6] reduce_empty_iter
-    @ ./reduce.jl:381 [inlined]
-  [7] mapreduce_empty_iter(f::Function, op::Function, itr::Vector{Any}, ItrEltype::Base.HasEltype)
-    @ Base ./reduce.jl:377
-  [8] _mapreduce(f::typeof(identity), op::typeof(Base.add_sum), ::IndexLinear, A::Vector{Any})
-    @ Base ./reduce.jl:429
-  [9] _mapreduce_dim
-    @ ./reducedim.jl:337 [inlined]
- [10] mapreduce
-    @ ./reducedim.jl:329 [inlined]
- [11] _sum
-    @ ./reducedim.jl:987 [inlined]
- [12] _sum
-    @ ./reducedim.jl:986 [inlined]
- [13] sum(a::Vector{Any})
-    @ Base ./reducedim.jl:982
- [14] macro expansion
-    @ ~/Projects/Finch.jl/src/interface/index.jl:116 [inlined]
- [15] var"##setindex_helper_generator#280"(arr::Type, src::Type, inds::Type)
-    @ Finch ~/Projects/Finch.jl/src/util/staging.jl:30
- [16] (::Finch.var"#1800#1806"{DataType, DataType, DataType})()
-    @ Finch ~/Projects/Finch.jl/src/util/staging.jl:54
- [17] #s352#1799
-    @ ~/Projects/Finch.jl/src/util/staging.jl:63 [inlined]
- [18] var"#s352#1799"(::Any, arr::Any, src::Any, inds::Any)
-    @ Finch ./none:0
- [19] (::Core.GeneratedFunctionStub)(::UInt64, ::LineNumberNode, ::Any, ::Vararg{Any})
-    @ Core ./boot.jl:707
- [20] setindex!
-    @ ~/Projects/Finch.jl/src/interface/index.jl:103 [inlined]
- [21] macro expansion
-    @ ~/Projects/Finch.jl/src/execute.jl:78 [inlined]
- [22] macro expansion
-    @ ~/Projects/Finch.jl/src/util/staging.jl:59 [inlined]
- [23] execute_impl(ex::Finch.FinchNotation.BlockInstance{Tuple{Finch.FinchNotation.BlockInstance{Tuple{Finch.FinchNotation.DeclareInstance{Finch.FinchNotation.TagInstance{Finch.FinchNotation.VariableInstance{:dst}, Tensor{DenseLevel{Int64, SparseListLevel{Int64, Vector{Int64}, Vector{Int64}, ElementLevel{0.0, Float64, Int64, Vector{Float64}}}}}}, Finch.FinchNotation.LiteralInstance{0.0}}, Finch.FinchNotation.LoopInstance{Finch.FinchNotation.IndexInstance{:i_2}, Finch.FinchNotation.Dimensionless, Finch.FinchNotation.LoopInstance{Finch.FinchNotation.IndexInstance{:i_1}, Finch.FinchNotation.Dimensionless, Finch.FinchNotation.DefineInstance{Finch.FinchNotation.VariableInstance{:tmp}, Finch.FinchNotation.AccessInstance{Finch.FinchNotation.TagInstance{Finch.FinchNotation.VariableInstance{:src}, Tensor{SparseCOOLevel{2, Tuple{Int64, Int64}, Vector{Int64}, Tuple{Vector{Int64}, Vector{Int64}}, ElementLevel{0.0, Float64, Int64, Vector{Float64}}}}}, Finch.FinchNotation.LiteralInstance{Finch.FinchNotation.Reader()}, Tuple{Finch.FinchNotation.TagInstance{Finch.FinchNotation.VariableInstance{:i_1}, Finch.FinchNotation.IndexInstance{:i_1}}, Finch.FinchNotation.TagInstance{Finch.FinchNotation.VariableInstance{:i_2}, Finch.FinchNotation.IndexInstance{:i_2}}}}, Finch.FinchNotation.SieveInstance{Finch.FinchNotation.CallInstance{Finch.FinchNotation.TagInstance{Finch.FinchNotation.VariableInstance{:!}, Finch.FinchNotation.LiteralInstance{!}}, Tuple{Finch.FinchNotation.CallInstance{Finch.FinchNotation.TagInstance{Finch.FinchNotation.VariableInstance{:isequal}, Finch.FinchNotation.LiteralInstance{isequal}}, Tuple{Finch.FinchNotation.TagInstance{Finch.FinchNotation.VariableInstance{:tmp}, Finch.FinchNotation.VariableInstance{:tmp}}, Finch.FinchNotation.LiteralInstance{0.0}}}}}, Finch.FinchNotation.AssignInstance{Finch.FinchNotation.AccessInstance{Finch.FinchNotation.TagInstance{Finch.FinchNotation.VariableInstance{:dst}, Tensor{DenseLevel{Int64, SparseListLevel{Int64, Vector{Int64}, Vector{Int64}, ElementLevel{0.0, Float64, Int64, Vector{Float64}}}}}}, Finch.FinchNotation.LiteralInstance{Finch.FinchNotation.Updater()}, Tuple{Finch.FinchNotation.TagInstance{Finch.FinchNotation.VariableInstance{:i_1}, Finch.FinchNotation.IndexInstance{:i_1}}, Finch.FinchNotation.TagInstance{Finch.FinchNotation.VariableInstance{:i_2}, Finch.FinchNotation.IndexInstance{:i_2}}}}, Finch.FinchNotation.LiteralInstance{initwrite}, Finch.FinchNotation.TagInstance{Finch.FinchNotation.VariableInstance{:tmp}, Finch.FinchNotation.VariableInstance{:tmp}}}}}}}}}, Finch.FinchNotation.YieldBindInstance{Tuple{Finch.FinchNotation.VariableInstance{:dst}}}}}, algebra::Val{Finch.DefaultAlgebra()}, mode::Val{:fast})
-    @ Finch ~/Projects/Finch.jl/src/util/staging.jl:51
- [24] execute(ex::Finch.FinchNotation.BlockInstance{Tuple{Finch.FinchNotation.BlockInstance{Tuple{Finch.FinchNotation.DeclareInstance{Finch.FinchNotation.TagInstance{Finch.FinchNotation.VariableInstance{:dst}, Tensor{DenseLevel{Int64, SparseListLevel{Int64, Vector{Int64}, Vector{Int64}, ElementLevel{0.0, Float64, Int64, Vector{Float64}}}}}}, Finch.FinchNotation.LiteralInstance{0.0}}, Finch.FinchNotation.LoopInstance{Finch.FinchNotation.IndexInstance{:i_2}, Finch.FinchNotation.Dimensionless, Finch.FinchNotation.LoopInstance{Finch.FinchNotation.IndexInstance{:i_1}, Finch.FinchNotation.Dimensionless, Finch.FinchNotation.DefineInstance{Finch.FinchNotation.VariableInstance{:tmp}, Finch.FinchNotation.AccessInstance{Finch.FinchNotation.TagInstance{Finch.FinchNotation.VariableInstance{:src}, Tensor{SparseCOOLevel{2, Tuple{Int64, Int64}, Vector{Int64}, Tuple{Vector{Int64}, Vector{Int64}}, ElementLevel{0.0, Float64, Int64, Vector{Float64}}}}}, Finch.FinchNotation.LiteralInstance{Finch.FinchNotation.Reader()}, Tuple{Finch.FinchNotation.TagInstance{Finch.FinchNotation.VariableInstance{:i_1}, Finch.FinchNotation.IndexInstance{:i_1}}, Finch.FinchNotation.TagInstance{Finch.FinchNotation.VariableInstance{:i_2}, Finch.FinchNotation.IndexInstance{:i_2}}}}, Finch.FinchNotation.SieveInstance{Finch.FinchNotation.CallInstance{Finch.FinchNotation.TagInstance{Finch.FinchNotation.VariableInstance{:!}, Finch.FinchNotation.LiteralInstance{!}}, Tuple{Finch.FinchNotation.CallInstance{Finch.FinchNotation.TagInstance{Finch.FinchNotation.VariableInstance{:isequal}, Finch.FinchNotation.LiteralInstance{isequal}}, Tuple{Finch.FinchNotation.TagInstance{Finch.FinchNotation.VariableInstance{:tmp}, Finch.FinchNotation.VariableInstance{:tmp}}, Finch.FinchNotation.LiteralInstance{0.0}}}}}, Finch.FinchNotation.AssignInstance{Finch.FinchNotation.AccessInstance{Finch.FinchNotation.TagInstance{Finch.FinchNotation.VariableInstance{:dst}, Tensor{DenseLevel{Int64, SparseListLevel{Int64, Vector{Int64}, Vector{Int64}, ElementLevel{0.0, Float64, Int64, Vector{Float64}}}}}}, Finch.FinchNotation.LiteralInstance{Finch.FinchNotation.Updater()}, Tuple{Finch.FinchNotation.TagInstance{Finch.FinchNotation.VariableInstance{:i_1}, Finch.FinchNotation.IndexInstance{:i_1}}, Finch.FinchNotation.TagInstance{Finch.FinchNotation.VariableInstance{:i_2}, Finch.FinchNotation.IndexInstance{:i_2}}}}, Finch.FinchNotation.LiteralInstance{initwrite}, Finch.FinchNotation.TagInstance{Finch.FinchNotation.VariableInstance{:tmp}, Finch.FinchNotation.VariableInstance{:tmp}}}}}}}}}, Finch.FinchNotation.YieldBindInstance{Tuple{Finch.FinchNotation.VariableInstance{:dst}}}}}; algebra::Finch.DefaultAlgebra, mode::Symbol)
-    @ Finch ~/Projects/Finch.jl/src/execute.jl:56
- [25] execute
-    @ ~/Projects/Finch.jl/src/execute.jl:56 [inlined]
- [26] macro expansion
-    @ ~/Projects/Finch.jl/src/execute.jl:184 [inlined]
- [27] macro expansion
-    @ ~/Projects/Finch.jl/src/interface/copy.jl:77 [inlined]
- [28] macro expansion
-    @ ~/Projects/Finch.jl/src/util/staging.jl:59 [inlined]
- [29] dropfills_helper!(dst::Tensor{DenseLevel{Int64, SparseListLevel{Int64, Vector{Int64}, Vector{Int64}, ElementLevel{0.0, Float64, Int64, Vector{Float64}}}}}, src::Tensor{SparseCOOLevel{2, Tuple{Int64, Int64}, Vector{Int64}, Tuple{Vector{Int64}, Vector{Int64}}, ElementLevel{0.0, Float64, Int64, Vector{Float64}}}})
-    @ Finch ~/Projects/Finch.jl/src/util/staging.jl:51
- [30] dropfills!
-    @ ~/Projects/Finch.jl/src/interface/copy.jl:96 [inlined]
- [31] Tensor(lvl::DenseLevel{Int64, SparseListLevel{Int64, Vector{Int64}, Vector{Int64}, ElementLevel{0.0, Float64, Int64, Vector{Float64}}}}, arr::Tensor{SparseCOOLevel{2, Tuple{Int64, Int64}, Vector{Int64}, Tuple{Vector{Int64}, Vector{Int64}}, ElementLevel{0.0, Float64, Int64, Vector{Float64}}}})
-    @ Finch ~/Projects/Finch.jl/src/tensors/fibers.jl:44
- [32] top-level scope
-    @ none:1
+(C = Scalar{0.0, Float64}(16.5),)
 ```
 
 Checking the generated code, we see that this code is indeed densifying (notice the for-loop which repeatedly evaluates `f(B[i, j], 0.0)`).
@@ -537,11 +234,80 @@ Checking the generated code, we see that this code is indeed densifying (notice 
 
 # output
 
-ERROR: UndefVarError: `C` not defined in `Main`
-Suggestion: check for spelling errors or missing imports.
-Stacktrace:
- [1] top-level scope
-   @ none:217
+quote
+    C = ((ex.bodies[1]).bodies[1]).tns.bind
+    A_lvl = (((ex.bodies[1]).bodies[2]).body.body.rhs.args[1]).tns.bind.lvl
+    A_lvl_2 = A_lvl.lvl
+    A_lvl_ptr = A_lvl_2.ptr
+    A_lvl_idx = A_lvl_2.idx
+    A_lvl_2_val = A_lvl_2.lvl.val
+    B = (((ex.bodies[1]).bodies[2]).body.body.rhs.args[2]).tns.bind
+    sugar_1 = size((((ex.bodies[1]).bodies[2]).body.body.rhs.args[2]).tns.bind)
+    B_mode1_stop = sugar_1[1]
+    B_mode2_stop = sugar_1[2]
+    B_mode1_stop == A_lvl_2.shape || throw(DimensionMismatch("mismatched dimension limits ($(B_mode1_stop) != $(A_lvl_2.shape))"))
+    B_mode2_stop == A_lvl.shape || throw(DimensionMismatch("mismatched dimension limits ($(B_mode2_stop) != $(A_lvl.shape))"))
+    C_val = 0
+    for j_4 = 1:B_mode2_stop
+        A_lvl_q = (1 - 1) * A_lvl.shape + j_4
+        A_lvl_2_q = A_lvl_ptr[A_lvl_q]
+        A_lvl_2_q_stop = A_lvl_ptr[A_lvl_q + 1]
+        if A_lvl_2_q < A_lvl_2_q_stop
+            A_lvl_2_i1 = A_lvl_idx[A_lvl_2_q_stop - 1]
+        else
+            A_lvl_2_i1 = 0
+        end
+        phase_stop = min(B_mode1_stop, A_lvl_2_i1)
+        if phase_stop >= 1
+            i = 1
+            if A_lvl_idx[A_lvl_2_q] < 1
+                A_lvl_2_q = Finch.scansearch(A_lvl_idx, 1, A_lvl_2_q, A_lvl_2_q_stop - 1)
+            end
+            while true
+                A_lvl_2_i = A_lvl_idx[A_lvl_2_q]
+                if A_lvl_2_i < phase_stop
+                    for i_6 = i:-1 + A_lvl_2_i
+                        val = B[i_6, j_4]
+                        C_val = (Main).f(0.0, val) + C_val
+                    end
+                    A_lvl_3_val = A_lvl_2_val[A_lvl_2_q]
+                    val_2 = B[A_lvl_2_i, j_4]
+                    C_val += (Main).f(A_lvl_3_val, val_2)
+                    A_lvl_2_q += 1
+                    i = A_lvl_2_i + 1
+                else
+                    phase_stop_3 = min(phase_stop, A_lvl_2_i)
+                    if A_lvl_2_i == phase_stop_3
+                        for i_8 = i:-1 + phase_stop_3
+                            val_3 = B[i_8, j_4]
+                            C_val += (Main).f(0.0, val_3)
+                        end
+                        A_lvl_3_val = A_lvl_2_val[A_lvl_2_q]
+                        val_4 = B[phase_stop_3, j_4]
+                        C_val += (Main).f(A_lvl_3_val, val_4)
+                        A_lvl_2_q += 1
+                    else
+                        for i_10 = i:phase_stop_3
+                            val_5 = B[i_10, j_4]
+                            C_val += (Main).f(0.0, val_5)
+                        end
+                    end
+                    i = phase_stop_3 + 1
+                    break
+                end
+            end
+        end
+        phase_start_3 = max(1, 1 + A_lvl_2_i1)
+        if B_mode1_stop >= phase_start_3
+            for i_12 = phase_start_3:B_mode1_stop
+                val_6 = B[i_12, j_4]
+                C_val += (Main).f(0.0, val_6)
+            end
+        end
+    end
+    C.val = C_val
+    (C = C,)
+end
 
 ```
 

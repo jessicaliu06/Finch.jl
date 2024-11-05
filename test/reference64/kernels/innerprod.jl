@@ -9,7 +9,7 @@ begin
     A_lvl_2 = A_lvl.lvl
     A_lvl_ptr = A_lvl_2.ptr
     A_lvl_idx = A_lvl_2.idx
-    A_lvl_3 = A_lvl_2.lvl
+    A_lvl_2_val = A_lvl_2.lvl.val
     B_lvl_2_qos_fill = 0
     B_lvl_2_qos_stop = 0
     B_lvl_2_prev_pos = 0
@@ -28,6 +28,7 @@ begin
                 Finch.resize_if_smaller!(B_lvl_2_val, B_lvl_2_qos_stop)
                 Finch.fill_range!(B_lvl_2_val, 0.0, B_lvl_2_qos, B_lvl_2_qos_stop)
             end
+            B_lvl_2dirty = false
             A_lvl_q_2 = (1 - 1) * A_lvl.shape + i_4
             A_lvl_2_q = A_lvl_ptr[A_lvl_q]
             A_lvl_2_q_stop = A_lvl_ptr[A_lvl_q + 1]
@@ -57,7 +58,10 @@ begin
                     A_lvl_2_i_2 = A_lvl_idx[A_lvl_2_q_2]
                     phase_stop_2 = min(A_lvl_2_i_2, phase_stop, A_lvl_2_i)
                     if A_lvl_2_i == phase_stop_2 && A_lvl_2_i_2 == phase_stop_2
-                        (HollowSubFiber(B_lvl_3, B_lvl_2_qos, false))[] = (SubFiber(A_lvl_3, A_lvl_2_q))[] * (SubFiber(A_lvl_3, A_lvl_2_q_2))[] + (HollowSubFiber(B_lvl_3, B_lvl_2_qos, false))[]
+                        A_lvl_3_val = A_lvl_2_val[A_lvl_2_q]
+                        A_lvl_3_val_2 = A_lvl_2_val[A_lvl_2_q_2]
+                        B_lvl_2dirty = true
+                        B_lvl_2_val[B_lvl_2_qos] += A_lvl_3_val_2 * A_lvl_3_val
                         A_lvl_2_q += 1
                         A_lvl_2_q_2 += 1
                     elseif A_lvl_2_i_2 == phase_stop_2
@@ -67,6 +71,11 @@ begin
                     end
                     k = phase_stop_2 + 1
                 end
+            end
+            if B_lvl_2dirty
+                B_lvl_idx[B_lvl_2_qos] = i_4
+                B_lvl_2_qos += 1
+                B_lvl_2_prev_pos = B_lvl_q
             end
         end
         B_lvl_ptr[B_lvl_q + 1] += (B_lvl_2_qos - B_lvl_2_qos_fill) - 1

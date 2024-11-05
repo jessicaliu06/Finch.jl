@@ -13,13 +13,13 @@ begin
     @warn "Performance Warning: non-concordant traversal of A[i, j] (hint: most arrays prefer column major or first index fast, run in fast mode to ignore this warning)"
     for i_6 = 1:y_lvl.shape
         y_lvl_q = (1 - 1) * y_lvl.shape + i_6
-        x_lvl_q_2 = (1 - 1) * x_lvl.shape + i_6
-        x_lvl_2_val = x_lvl_val[x_lvl_q_2]
+        x_lvl_q = (1 - 1) * x_lvl.shape + i_6
+        x_lvl_2_val = x_lvl_val[x_lvl_q]
         for j_6 = 1:y_lvl.shape
             A_lvl_q = (1 - 1) * A_lvl.shape + j_6
-            x_lvl_q = (1 - 1) * x_lvl.shape + j_6
+            x_lvl_q_2 = (1 - 1) * x_lvl.shape + j_6
             y_lvl_q_2 = (1 - 1) * y_lvl.shape + j_6
-            x_lvl_2_val_2 = x_lvl_val[x_lvl_q]
+            x_lvl_2_val_2 = x_lvl_val[x_lvl_q_2]
             A_lvl_2_q = (A_lvl_q - 1) * A_lvl_2.shape + i_6
             A_lvl_3_val = A_lvl_2_val[A_lvl_2_q]
             y_lvl_val[y_lvl_q] += A_lvl_3_val * x_lvl_2_val_2

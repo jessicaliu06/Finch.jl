@@ -21,7 +21,7 @@ function lower(ctx::AbstractCompiler, node, ::ThunkStyle)
     contain(ctx) do ctx_2
         node_2 = unwrap_thunk(ctx_2, node)
         contain(ctx_2) do ctx_3
-            (ctx_3)(node_2)
+            (ctx_3)(unfurl_posthook!(ctx_3, node_2))
         end
     end
 end

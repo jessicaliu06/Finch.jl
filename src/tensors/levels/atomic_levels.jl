@@ -191,12 +191,12 @@ function virtual_moveto_level(ctx::AbstractCompiler, lvl::VirtualAtomicLevel, ar
     virtual_moveto_level(ctx, lvl.lvl, arch)
 end
 
-function unfurl_prehook(ctx, fbr::VirtualSubFiber{VirtualAtomicLevel}, mode::Reader)
+function unfurl(ctx, fbr::VirtualSubFiber{VirtualAtomicLevel}, ext, mode::Reader, proto)
     (lvl, pos) = (fbr.lvl, fbr.pos)
-    unfurl_prehook(ctx, VirtualSubFiber(lvl.lvl, pos), mode)
+    unfurl(ctx, VirtualSubFiber(lvl.lvl, pos), ext, mode, proto)
 end
 
-function unfurl_prehook(ctx, fbr::VirtualSubFiber{VirtualAtomicLevel}, mode::Updater)
+function unfurl(ctx, fbr::VirtualSubFiber{VirtualAtomicLevel}, ext, mode::Updater, proto)
     (lvl, pos) = (fbr.lvl, fbr.pos)
     sym = freshen(ctx, lvl.ex, :after_atomic_lvl)
     atomicData = freshen(ctx, lvl.ex, :atomicArraysAcc)
@@ -209,10 +209,10 @@ function unfurl_prehook(ctx, fbr::VirtualSubFiber{VirtualAtomicLevel}, mode::Upd
     push_epilogue!(ctx, quote
         Finch.release_lock!($dev, $atomicData)
     end)
-    return unfurl_prehook(ctx, VirtualSubFiber(lvl.lvl, pos), mode)
+    return unfurl(ctx, VirtualSubFiber(lvl.lvl, pos), ext, mode, proto)
 end
 
-function unfurl_prehook(ctx, fbr::VirtualHollowSubFiber{VirtualAtomicLevel}, mode::Updater)
+function unfurl(ctx, fbr::VirtualHollowSubFiber{VirtualAtomicLevel}, ext, mode::Updater, proto)
     (lvl, pos) = (fbr.lvl, fbr.pos)
     sym = freshen(ctx, lvl.ex, :after_atomic_lvl)
     atomicData = freshen(ctx, lvl.ex, :atomicArraysAcc)
@@ -225,5 +225,5 @@ function unfurl_prehook(ctx, fbr::VirtualHollowSubFiber{VirtualAtomicLevel}, mod
     push_epilogue!(ctx, quote
         Finch.release_lock!($dev, $atomicData)
     end)
-    return unfurl_prehook(ctx, VirtualHollowSubFiber(lvl.lvl, pos, fbr.dirty), mode)
+    return unfurl(ctx, VirtualHollowSubFiber(lvl.lvl, pos, fbr.dirty), ext, mode, proto)
 end

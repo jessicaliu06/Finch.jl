@@ -18,14 +18,6 @@ declared, or thawed. The earliest opportunity to process `tns`.
 unfurl_posthook(ctx, tns, mode) = tns
 
 """
-    unfurl_prehook(ctx, tns, mode)
-
-Process the tensor `tns` in the context `ctx`, just before it is unfurled,
-or just before it is accessed.  The latest opportunity to process `tns`.
-"""
-unfurl_prehook(ctx, tns, mode) = tns
-
-"""
     freeze!(ctx, tns)
 
 Freeze the update-only virtual tensor `tns` in the context `ctx` and return it.

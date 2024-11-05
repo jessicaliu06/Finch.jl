@@ -261,9 +261,8 @@ function lower_loop(ctx, root, ext)
     contain(ctx) do ctx_2
         root_2 = Rewrite(Postwalk(@rule access(~tns, ~mode, ~idxs...) => begin
             if !isempty(idxs) && root.idx == idxs[end]
-                tns_2 = unfurl_prehook(ctx_2, tns, mode.val)
-                tns_3 = unfurl(ctx_2, tns_2, root.ext.val, mode.val, (mode.val === reader ? defaultread : defaultupdate))
-                access(Unfurled(resolve(ctx_2, tns), tns_3), mode, idxs...)
+                tns_2 = unfurl(ctx_2, tns, root.ext.val, mode.val, (mode.val === reader ? defaultread : defaultupdate))
+                access(Unfurled(resolve(ctx_2, tns), tns_2), mode, idxs...)
             end
         end))(root)
         return ctx_2(root_2, result_style(LookupStyle(), get_style(ctx_2, root_2)))

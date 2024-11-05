@@ -81,9 +81,8 @@ function virtual_resize!(ctx::AbstractCompiler, arr::VirtualProductArray, dims..
     virtual_resize!(ctx, arr.body, dims[1:arr.dim - 1]..., dimless, dims[arr.dim + 2:end]...)
 end
 
-function unfurl_posthook(arr::VirtualProductArray, ctx, mode)
+unfurl_posthook(arr::VirtualProductArray, ctx, mode) =
     VirtualProductArray(unfurl_posthook(arr.body, ctx, mode), arr.dim)
-end
 
 get_style(ctx, node::VirtualProductArray, root) = get_style(ctx, node.body, root)
 

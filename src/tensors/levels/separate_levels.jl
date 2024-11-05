@@ -229,6 +229,7 @@ function unfurl_posthook(ctx, fbr::VirtualSubFiber{VirtualSeparateLevel}, mode::
             :($(lvl.val)[$(ctx_2(pos))] = $(ctx_2(lvl_2)))
         end
     )
+    res
 end
 function unfurl_posthook(ctx, fbr::VirtualHollowSubFiber{VirtualSeparateLevel}, mode::Updater)
     (lvl, pos) = (fbr.lvl, fbr.pos)

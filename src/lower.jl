@@ -260,6 +260,9 @@ function lower_access(ctx, tns::Number, mode)
     tns
 end
 
+unfurl(ctx, tns, ext, mode, proto) = 
+    throw(FinchProtocolError("$tns does not support $mode with protocol $proto"))
+
 function lower_loop(ctx, root, ext)
     contain(ctx) do ctx_2
         root_2 = Rewrite(Postwalk(@rule access(~tns, ~mode, ~idxs...) => begin

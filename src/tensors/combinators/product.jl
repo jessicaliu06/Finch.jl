@@ -71,7 +71,6 @@ lower(ctx::AbstractCompiler, tns::VirtualProductArray, ::DefaultStyle) = :(Produ
 
 #virtual_size(ctx::AbstractCompiler, arr::FillLeaf) = (dimless,) # this is needed for multidimensional convolution..
 #virtual_size(ctx::AbstractCompiler, arr::Simplify) = (dimless,)
-#virtual_size(ctx::AbstractCompiler, arr::Furlable) = (dimless,)
 
 function virtual_size(ctx::AbstractCompiler, arr::VirtualProductArray)
     dims = virtual_size(ctx, arr.body)

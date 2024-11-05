@@ -1,3 +1,5 @@
+truncate(ctx, node, ext, ext_2) = node
+
 @kwdef struct Phase
     body
     start = (ctx, ext) -> nothing

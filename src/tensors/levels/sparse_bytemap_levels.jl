@@ -428,7 +428,7 @@ function unfurl(ctx, fbr::VirtualSubFiber{VirtualSparseByteMapLevel}, ext, mode:
 
     Unfurled(
         arr = fbr,
-        body = (ctx, ext) -> Lookup(
+        body = Lookup(
             body = (ctx, i) -> Thunk(
                 preamble = quote
                     $my_q = ($(ctx(q)) - $(Ti(1))) * $(ctx(lvl.shape)) + $(ctx(i))

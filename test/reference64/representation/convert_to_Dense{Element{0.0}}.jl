@@ -6,7 +6,6 @@ quote
     ref_lvl_ptr = ref_lvl.ptr
     ref_lvl_idx = ref_lvl.idx
     ref_lvl_val = ref_lvl.lvl.val
-    result = nothing
     Finch.resize_if_smaller!(tmp_lvl_val, ref_lvl.shape)
     Finch.fill_range!(tmp_lvl_val, 0.0, 1, ref_lvl.shape)
     ref_lvl_q = ref_lvl_ptr[1]
@@ -29,7 +28,7 @@ quote
                 tmp_lvl_val[tmp_lvl_q] = ref_lvl_2_val
                 ref_lvl_q += 1
             else
-                phase_stop_3 = min(ref_lvl_i, phase_stop)
+                phase_stop_3 = min(phase_stop, ref_lvl_i)
                 if ref_lvl_i == phase_stop_3
                     ref_lvl_2_val = ref_lvl_val[ref_lvl_q]
                     tmp_lvl_q = (1 - 1) * ref_lvl.shape + phase_stop_3
@@ -41,6 +40,5 @@ quote
         end
     end
     resize!(tmp_lvl_val, ref_lvl.shape)
-    result = (tmp = Tensor((DenseLevel){Int64}(tmp_lvl_2, ref_lvl.shape)),)
-    result
+    (tmp = Tensor((DenseLevel){Int64}(tmp_lvl_2, ref_lvl.shape)),)
 end

@@ -9,7 +9,6 @@ quote
     ref_lvl_ptr = ref_lvl.ptr
     ref_lvl_idx = ref_lvl.idx
     ref_lvl_val = ref_lvl.lvl.val
-    result = nothing
     tmp_lvl_qos_stop = 0
     Finch.resize_if_smaller!(tmp_lvl_ptr, 1 + 1)
     Finch.fill_range!(tmp_lvl_ptr, 0, 1 + 1, 1 + 1)
@@ -45,7 +44,7 @@ quote
                 tmp_lvl_qos += 1
                 ref_lvl_q += 1
             else
-                phase_stop_3 = min(ref_lvl_i, phase_stop)
+                phase_stop_3 = min(phase_stop, ref_lvl_i)
                 if ref_lvl_i == phase_stop_3
                     ref_lvl_2_val = ref_lvl_val[ref_lvl_q]
                     if tmp_lvl_qos > tmp_lvl_qos_stop
@@ -75,6 +74,5 @@ quote
     resize!(tmp_lvl_left, qos_stop)
     resize!(tmp_lvl_right, qos_stop)
     resize!(tmp_lvl_val, qos_stop)
-    result = (tmp = Tensor((SparseIntervalLevel){Int32}(tmp_lvl_2, ref_lvl.shape, tmp_lvl.ptr, tmp_lvl.left, tmp_lvl.right)),)
-    result
+    (tmp = Tensor((SparseIntervalLevel){Int32}(tmp_lvl_2, ref_lvl.shape, tmp_lvl.ptr, tmp_lvl.left, tmp_lvl.right)),)
 end

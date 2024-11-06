@@ -16,21 +16,24 @@ using Compat
 using DataStructures
 using JSON
 using Distributions: Binomial, Normal, Poisson
+using TOML
+using UUIDs
+using Preferences
 
 export @finch, @finch_program, @finch_code, @finch_kernel, value
 
 export Tensor
-export SparseRLE, SparseRLELevel
-export DenseRLE, DenseRLELevel
+export SparseRunList, SparseRunListLevel
+export RunList, RunListLevel
 export SparseInterval, SparseIntervalLevel
-export Sparse, SparseLevel, SparseDict
+export Sparse, SparseLevel
 export SparseList, SparseListLevel
+export SparseDict, SparseDictLevel
 export SparsePoint, SparsePointLevel
 export SparseBand, SparseBandLevel
-export SparseHash, SparseHashLevel
 export SparseCOO, SparseCOOLevel
 export SparseByteMap, SparseByteMapLevel
-export SparseVBL, SparseVBLLevel
+export SparseBlockList, SparseBlockListLevel
 export Dense, DenseLevel
 export Element, ElementLevel
 export Separate, SeparateLevel
@@ -38,7 +41,7 @@ export Atomic, AtomicLevel
 export Pattern, PatternLevel
 export Scalar, SparseScalar, ShortCircuitScalar, SparseShortCircuitScalar
 export walk, gallop, follow, extrude, laminate
-export Tensor, pattern!, dropdefaults, dropdefaults!, redefault!
+export Tensor, pattern!, dropfills, dropfills!, set_fill_value!
 export diagmask, lotrimask, uptrimask, bandmask, chunkmask
 export scale, products, offset, permissive, protocolize, swizzle, toeplitz, window
 export PlusOneVector
@@ -47,7 +50,7 @@ export lazy, compute, tensordot, @einsum
 
 export choose, minby, maxby, overwrite, initwrite, filterop, d
 
-export default, AsArray
+export fill_value, AsArray, expanddims
 
 export parallelAnalysis, ParallelAnalysisResults
 export parallel, realextent, extent, dimless
@@ -63,7 +66,14 @@ struct FinchExtensionError <: Exception
     msg::String
 end
 
+struct NotImplementedError <: Exception
+    msg::String
+end
+
+const FINCH_VERSION = VersionNumber(TOML.parsefile(joinpath(dirname(@__DIR__), "Project.toml"))["version"])
+
 include("util/convenience.jl")
+include("util/special_functions.jl")
 include("util/shims.jl")
 include("util/limits.jl")
 include("util/staging.jl")
@@ -75,15 +85,18 @@ include("environment.jl")
 include("FinchNotation/FinchNotation.jl")
 using .FinchNotation
 using .FinchNotation: and, or, InitWriter
-include("tensors/abstract_tensor.jl")
+
+include("abstract_tensor.jl")
 include("dimensions.jl")
 include("architecture.jl")
+include("scopes.jl")
 include("lower.jl")
 
+include("transforms/exit_on_yieldbind.jl")
+include("transforms/enforce_scopes.jl")
+include("transforms/enforce_lifecycles.jl")
 include("transforms/concordize.jl")
 include("transforms/wrapperize.jl")
-include("transforms/scopes.jl")
-include("transforms/lifecycle.jl")
 include("transforms/dimensionalize.jl")
 include("transforms/evaluate.jl")
 include("transforms/concurrent.jl")
@@ -96,7 +109,6 @@ include("looplets/thunks.jl")
 include("looplets/short_circuits.jl")
 include("looplets/lookups.jl")
 include("looplets/nulls.jl")
-include("looplets/unfurl.jl")
 include("looplets/runs.jl")
 include("looplets/spikes.jl")
 include("looplets/switches.jl")
@@ -107,26 +119,25 @@ include("looplets/steppers.jl")
 include("looplets/fills.jl")
 
 include("tensors/scalars.jl")
-include("tensors/levels/abstractlevel.jl")
+include("tensors/abstract_level.jl")
 include("tensors/fibers.jl")
-include("tensors/levels/sparserlelevels.jl")
-include("tensors/levels/sparseintervallevels.jl")
-include("tensors/levels/sparselistlevels.jl")
-include("tensors/levels/sparsepointlevels.jl")
-include("tensors/levels/sparsehashlevels.jl")
-include("tensors/levels/sparsecoolevels.jl")
-include("tensors/levels/sparsebandlevels.jl")
-include("tensors/levels/sparselevels.jl")
-include("tensors/levels/sparsebytemaplevels.jl")
-include("tensors/levels/sparsevbllevels.jl")
-include("tensors/levels/denselevels.jl")
-include("tensors/levels/denserlelevels.jl")
-include("tensors/levels/elementlevels.jl")
-include("tensors/levels/separatelevels.jl")
-include("tensors/levels/atomiclevels.jl")
-include("tensors/levels/patternlevels.jl")
+include("tensors/levels/sparse_rle_levels.jl")
+include("tensors/levels/sparse_interval_levels.jl")
+include("tensors/levels/sparse_list_levels.jl")
+include("tensors/levels/sparse_point_levels.jl")
+include("tensors/levels/sparse_coo_levels.jl")
+include("tensors/levels/sparse_band_levels.jl")
+include("tensors/levels/sparse_dict_levels.jl")
+include("tensors/levels/sparse_bytemap_levels.jl")
+include("tensors/levels/sparse_vbl_levels.jl")
+include("tensors/levels/dense_levels.jl")
+include("tensors/levels/dense_rle_levels.jl")
+include("tensors/levels/element_levels.jl")
+include("tensors/levels/separate_levels.jl")
+include("tensors/levels/atomic_levels.jl")
+include("tensors/levels/pattern_levels.jl")
 include("tensors/masks.jl")
-include("tensors/combinators/abstractCombinator.jl")
+include("tensors/abstract_combinator.jl")
 include("tensors/combinators/unfurled.jl")
 include("tensors/combinators/protocolized.jl")
 include("tensors/combinators/roots.jl")
@@ -137,6 +148,9 @@ include("tensors/combinators/windowed.jl")
 include("tensors/combinators/swizzle.jl")
 include("tensors/combinators/scale.jl")
 include("tensors/combinators/product.jl")
+
+const Sparse = SparseDictLevel
+const SparseLevel = SparseDictLevel
 
 include("postprocess.jl")
 
@@ -156,8 +170,8 @@ include("scheduler/LogicInterpreter.jl")
 include("scheduler/optimize.jl")
 
 include("interface/traits.jl")
-include("interface/abstractarrays.jl")
-include("interface/abstractunitranges.jl")
+include("interface/abstract_arrays.jl")
+include("interface/abstract_unit_ranges.jl")
 include("interface/index.jl")
 include("interface/compare.jl")
 include("interface/copy.jl")
@@ -167,6 +181,17 @@ include("interface/lazy.jl")
 include("interface/eager.jl")
 include("interface/einsum.jl")
 
+@deprecate default fill_value
+@deprecate redefault! set_fill_value!
+@deprecate dropdefaults dropfills
+@deprecate dropdefaults! dropfills!
+
+@deprecate SparseRLE SparseRunList
+@deprecate SparseRLELevel SparseRunListLevel
+@deprecate DenseRLE RunList
+@deprecate DenseRLELevel RunListLevel
+@deprecate SparseVBL SparseBlockList
+@deprecate SparseVBLLevel SparseBlockListLevel
 
 @static if !isdefined(Base, :get_extension)
     function __init__()
@@ -191,6 +216,10 @@ end
             end
         ))
 
+        if @load_preference("precompile", true)
+            @info "Running enhanced precompilation... (to disable, run `using Preferences; Preferences.set_preferences!(\"Finch\", \"precompile\"=>false)`"
+            include("../test/precompile.jl")
+        end
     end
 end
 

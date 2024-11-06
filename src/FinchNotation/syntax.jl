@@ -54,12 +54,12 @@ or() = false
 or(x) = x
 or(x, y, tail...) = x || or(y, tail...)
 
-struct InitWriter{D} end
+struct InitWriter{Vf} end
 
-(f::InitWriter{D})(x) where {D} = x
-function (f::InitWriter{D})(x, y) where {D}
+(f::InitWriter{Vf})(x) where {Vf} = x
+function (f::InitWriter{Vf})(x, y) where {Vf}
     @debug begin
-        @assert isequal(x, D)
+        @assert isequal(x, Vf)
     end
     y
 end
@@ -70,7 +70,7 @@ end
 `initwrite(z)` is a function which may assert that `a`
 [`isequal`](https://docs.julialang.org/en/v1/base/base/#Base.isequal) to `z`,
 and `returns `b`.  By default, `lhs[] = rhs` is equivalent to `lhs[]
-<<initwrite(default(lhs))>>= rhs`.
+<<initwrite(fill_value(lhs))>>= rhs`.
 """
 initwrite(z) = InitWriter{z}()
 
@@ -82,9 +82,10 @@ initwrite(z) = InitWriter{z}()
 
 ```jldoctest setup=:(using Finch)
 julia> a = Tensor(SparseList(Element(0.0)), [0, 1.1, 0, 4.4, 0])
-SparseList (0.0) [1:5]
-├─ [2]: 1.1
-└─ [4]: 4.4
+5-Tensor
+└─ SparseList (0.0) [1:5]
+   ├─ [2]: 1.1
+   └─ [4]: 4.4
 
 julia> x = Scalar(0.0); @finch for i=_; x[] <<overwrite>>= a[i] end;
 
@@ -114,7 +115,7 @@ end
 function (ctx::FinchParserVisitor)(ex::Symbol)
     if ex == :_ || ex == :(:)
         return :($dimless)
-    elseif ex in evaluable_exprs 
+    elseif ex in evaluable_exprs
         return ctx.nodes.literal(@eval($ex))
     else
         ctx.nodes.tag(ex)

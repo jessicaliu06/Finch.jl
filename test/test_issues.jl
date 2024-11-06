@@ -3,8 +3,100 @@ using SparseArrays
 @testset "issues" begin
     @info "Testing Github Issues"
 
+    #https://github.com/finch-tensor/Finch.jl/issues/579
+    for fmt in [
+        Tensor(Dense(SparseDict(Element(0.0))))
+        Tensor(Dense(SparseByteMap(Element(0.0))))
+    ]
+        arr_1 = fsprand(10, 10, 0.5)
+        fmt = copyto!(fmt, arr_1)
+        arr_2 = fsprand(10, 10, 0.5)
+        check_output("representation/increment_to_$(summary(fmt)).jl", @finch_code begin
+            for j = _
+                for i = _
+                    fmt[i, j] += arr_2[i, j]
+                end
+            end
+        end)
+        @finch begin
+            for j = _
+                for i = _
+                    fmt[i, j] += arr_2[i, j]
+                end
+            end
+        end
+        ref = arr_1 .+ arr_2
+        @test size(fmt) == size(ref)
+        @test axes(fmt) == axes(ref)
+        @test ndims(fmt) == ndims(ref)
+        @test eltype(fmt) == eltype(ref)
+        @test fmt == ref
+        @test isequal(fmt, ref)
 
-    #https://github.com/willow-ahrens/Finch.jl/issues/500
+        arr_1 = fsprand(1, 10, 10, 0.5)
+        arr_2 = fsprand(1, 10, 10, 0.5)
+
+        @finch begin
+            fmt .= 0
+            for i = _
+                for j = _
+                    for k = _
+                        fmt[j, i] += arr_1[k, j, i]
+                        fmt[j, i] += arr_2[k, j, i]
+                    end
+                end
+            end
+        end
+
+        ref = sum(arr_1 .+ arr_2, dims=1)
+        @test size(fmt) == size(ref)
+        @test axes(fmt) == axes(ref)
+        @test ndims(fmt) == ndims(ref)
+        @test eltype(fmt) == eltype(ref)
+        @test fmt == ref
+        @test isequal(fmt, ref)
+    end
+
+    #https://github.com/finch-tensor/Finch.jl/issues/320
+    let
+        A = sprand(4, 4, 0.9)
+        B = sprand(5, 5, 0.9)
+        check_output("issues/SparseMatrixCSC_copy.jl", @finch_code begin
+            B .= 0
+            for j=_, i=_
+                B[i, j] = A[i, j]
+            end
+        end)
+
+        A = sprand(4, 0.9)
+        B = sprand(5, 0.9)
+        check_output("issues/SparseVector_copy.jl", @finch_code begin
+            B .= 0
+            for i=_
+                B[i] = A[i]
+            end
+        end)
+    end
+
+    #https://github.com/finch-tensor/Finch.jl/issues/290
+    let
+        A = Tensor(Dense(SparseList(Element(0.0))))
+        B = Tensor(Dense(SparseList(Element(0.0))))
+        C = Tensor(Dense(SparseList(Element(0.0))))
+        w = Tensor(SparseByteMap(Element(0.0)))
+        @test_throws Finch.FinchNotation.FinchSyntaxError begin
+            @finch_kernel function foo(A, B, C)
+                C .= 0
+                for j=_
+                    w .= 0
+                    for k=_, i=_; w[i] += A[i, k] * B[k, j] end
+                    for i=_; C[i, j] = w[i] end
+                end
+            end
+        end
+    end
+
+    #https://github.com/finch-tensor/Finch.jl/issues/500
     let
         using NPZ
         f = mktempdir(;prefix="finch-issue-500")
@@ -16,7 +108,7 @@ using SparseArrays
         end
     end
 
-    #https://github.com/willow-ahrens/Finch.jl/issues/358
+    #https://github.com/finch-tensor/Finch.jl/issues/358
     let
         A = Tensor(Dense(SparseList(Element(0))), [
           0 0 0 0 0;
@@ -37,8 +129,8 @@ using SparseArrays
         E_ref = D_ref .+ C
         for D in [
             Tensor(Dense(SparseList(Element(0)))),
-            Tensor(Dense(SparseHash{1}(Element(0)))),
             Tensor(Dense(SparseDict(Element(0)))),
+            Tensor(Dense(SparseByteMap(Element(0)))),
             Tensor(Dense(Dense(Element(0)))),
         ]
             E = deepcopy(D)
@@ -63,7 +155,7 @@ using SparseArrays
         end
     end
 
-    #https://github.com/willow-ahrens/Finch.jl/issues/51
+    #https://github.com/finch-tensor/Finch.jl/issues/51
     let
         x = Tensor(Dense(Element(0.0)), [1, 2, 3])
         y = Scalar{0.0}()
@@ -71,7 +163,7 @@ using SparseArrays
         @test y[] == 14
     end
 
-    #https://github.com/willow-ahrens/Finch.jl/issues/53
+    #https://github.com/finch-tensor/Finch.jl/issues/53
     let
         x = Tensor(SparseList(Pattern()), fsparse([1, 3, 7, 8], [true, true, true, true], (10,)))
         y = Scalar{0.0}()
@@ -81,15 +173,15 @@ using SparseArrays
         b = -1
     end
 
-    #https://github.com/willow-ahrens/Finch.jl/issues/59
+    #https://github.com/finch-tensor/Finch.jl/issues/59
     let
         B = Tensor(Dense(Element(0)), [2, 4, 5])
         A = Tensor(Dense(Element(0)), 6)
         @finch (A .= 0; for i=_; A[B[i]] = i end)
         @test reference_isequal(A, [0, 1, 0, 2, 3, 0])
     end
-    #https://github.com/willow-ahrens/Finch.jl/issues/61
-    I = copyto!(Tensor(DenseRLE(Element(0))), [1, 1, 9, 3, 3])
+    #https://github.com/finch-tensor/Finch.jl/issues/61
+    I = copyto!(Tensor(RunList(Element(0))), [1, 1, 9, 3, 3])
     A = [
         11 12 13 14 15;
         21 22 23 24 25;
@@ -108,7 +200,7 @@ using SparseArrays
 
     @test B == [11, 12, 93, 34, 35]
 
-    #https://github.com/willow-ahrens/Finch.jl/issues/101
+    #https://github.com/finch-tensor/Finch.jl/issues/101
     let
         t = Tensor(SparseList(SparseList(Element(0.0))))
         X = Tensor(SparseList(SparseList(Element(0.0))))
@@ -119,7 +211,7 @@ using SparseArrays
         @test t == A
     end
 
-    #https://github.com/willow-ahrens/Finch.jl/issues/115
+    #https://github.com/finch-tensor/Finch.jl/issues/115
 
     let
         function f(a::Float64, b::Float64, c::Float64)
@@ -128,28 +220,28 @@ using SparseArrays
         struct MyAlgebra115 <: Finch.AbstractAlgebra end
         t = Tensor(SparseList(SparseList(Element(0.0))))
         B = SparseMatrixCSC([0 0 0 0; -1 -1 -1 -1; -2 -2 -2 -2; -3 -3 -3 -3])
-        A = dropdefaults(copyto!(Tensor(SparseList(SparseList(Element(0.0)))), B))
+        A = dropfills(copyto!(Tensor(SparseList(SparseList(Element(0.0)))), B))
         @finch algebra=MyAlgebra115() (t .= 0; for j=_, i=_; t[i, j] = f(A[i,j], A[i,j], A[i,j]) end)
         @test t == B .* 3
     end
 
-    #https://github.com/willow-ahrens/Finch.jl/issues/115
+    #https://github.com/finch-tensor/Finch.jl/issues/115
 
     let
         t = Tensor(SparseList(SparseList(Element(0.0))))
         B = SparseMatrixCSC([0 0 0 0; -1 -1 -1 -1; -2 -2 -2 -2; -3 -3 -3 -3])
-        A = dropdefaults(copyto!(Tensor(SparseList(SparseList(Element(0.0)))), B))
+        A = dropfills(copyto!(Tensor(SparseList(SparseList(Element(0.0)))), B))
         @test_logs (:warn, "Performance Warning: non-concordant traversal of t[i, j] (hint: most arrays prefer column major or first index fast, run in fast mode to ignore this warning)") match_mode=:any @test_throws Finch.FinchProtocolError @finch (t .= 0; for i=_, j=_; t[i, j] = A[i, j] end)
     end
 
     let
         t = Tensor(Dense(SparseList(Element(0.0))))
         B = SparseMatrixCSC([0 0 0 0; -1 -1 -1 -1; -2 -2 -2 -2; -3 -3 -3 -3])
-        A = dropdefaults(copyto!(Tensor(Dense(SparseList(Element(0.0)))), B))
+        A = dropfills(copyto!(Tensor(Dense(SparseList(Element(0.0)))), B))
         @test_logs (:warn, "Performance Warning: non-concordant traversal of t[i, j] (hint: most arrays prefer column major or first index fast, run in fast mode to ignore this warning)") match_mode=:any @test_throws Finch.FinchProtocolError @finch (t .= 0; for i=_, j=_; t[i, j] = A[i, j] end)
     end
 
-    #https://github.com/willow-ahrens/Finch.jl/issues/129
+    #https://github.com/finch-tensor/Finch.jl/issues/129
 
     let
         a = Tensor(Dense(Element(0)), [1, 3, 7, 2])
@@ -163,7 +255,7 @@ using SparseArrays
         @test y[][2] == 3
     end
 
-    #https://github.com/willow-ahrens/Finch.jl/issues/124
+    #https://github.com/finch-tensor/Finch.jl/issues/124
 
     let
         A = sparse([3, 4, 3, 4], [1, 2, 3, 3], [1.1, 2.2, 3.3, 4.4], 4, 3)
@@ -183,7 +275,7 @@ using SparseArrays
         @test Structure(w) == Structure(Tensor(v))
     end
 
-    #https://github.com/willow-ahrens/Finch.jl/issues/99
+    #https://github.com/finch-tensor/Finch.jl/issues/99
     let
         m = 4; n = 3; ptr_c = [0, 3, 3, 5]; idx_c = [1, 2, 3, 0, 2]; val_c = [1.1, 2.2, 3.3, 4.4, 5.5];
 
@@ -194,7 +286,7 @@ using SparseArrays
         @test A == [0.0 0.0 4.4; 1.1 0.0 0.0; 2.2 0.0 5.5; 3.3 0.0 0.0]
     end
 
-    #https://github.com/willow-ahrens/Finch.jl/issues/121
+    #https://github.com/finch-tensor/Finch.jl/issues/121
     let
         io = IOBuffer()
         y = [2.0, Inf, Inf, 1.0, 3.0, Inf]
@@ -253,7 +345,7 @@ using SparseArrays
         @test check_output("issues/specialvals_repr_nothing.txt", String(take!(io)))
     end
 
-    #https://github.com/willow-ahrens/Finch.jl/issues/118
+    #https://github.com/finch-tensor/Finch.jl/issues/118
 
     let
         io = IOBuffer()
@@ -264,14 +356,14 @@ using SparseArrays
 
         println(io, "A :", A)
         println(io, "C :", C)
-        println(io, "redefault!(B, Inf) :", redefault!(B, Inf))
-        println(io, redefault!(B, Inf))
+        println(io, "set_fill_value!(B, Inf) :", set_fill_value!(B, Inf))
+        println(io, set_fill_value!(B, Inf))
         println(io, C)
-        @test Structure(C) == Structure(redefault!(B, Inf))
+        @test Structure(C) == Structure(set_fill_value!(B, Inf))
         @test check_output("issues/issue118.txt", String(take!(io)))
     end
 
-    #https://github.com/willow-ahrens/Finch.jl/issues/97
+    #https://github.com/finch-tensor/Finch.jl/issues/97
 
     let
         @test_throws DimensionMismatch A = Tensor(Dense(SparseList(Element(0.0))), [0, 1])
@@ -282,17 +374,16 @@ using SparseArrays
         @test_throws DimensionMismatch @finch (A .= 0; for j=_, i=_; A[i] = B[i, j] end)
         @test_throws DimensionMismatch @finch (A .= 0; for j=_, i=_; A[i, j] = B[i, j] + C[i, j] end)
         @test_throws DimensionMismatch copyto!(Tensor(SparseList(Element(0.0))), A)
-        @test_throws DimensionMismatch dropdefaults!(Tensor(SparseList(Element(0.0))), A)
+        @test_throws DimensionMismatch dropfills!(Tensor(SparseList(Element(0.0))), A)
 
         A = fsprand(10, 11, 0.5)
         B = fsprand(10, 10, 0.5)
         @test_throws Finch.FinchProtocolError @finch for j=_, i=_; A[i, j] = B[i, follow(j)] end
         @test_throws ArgumentError Tensor(SparseCOO(Element(0.0)))
-        @test_throws ArgumentError Tensor(SparseHash(Element(0.0)))
         @test_throws ArgumentError Tensor(SparseList(Element("hello")))
     end
 
-    #https://github.com/willow-ahrens/Finch.jl/issues/70
+    #https://github.com/finch-tensor/Finch.jl/issues/70
 
     let
         A = Tensor(Dense(SparseList(Element(0.0))))
@@ -310,7 +401,7 @@ using SparseArrays
         @test C == D
     end
 
-        #https://github.com/willow-ahrens/Finch.jl/issues/243
+        #https://github.com/finch-tensor/Finch.jl/issues/243
 
     let
         @test_throws Finch.ScopeError (@finch begin
@@ -322,7 +413,7 @@ using SparseArrays
 
     end
 
-    #https://github.com/willow-ahrens/Finch.jl/issues/278
+    #https://github.com/finch-tensor/Finch.jl/issues/278
 
     let
         A = [1.0 2.0 3.0; 4.0 5.0 6.0; 7.0 8.0 9.0]
@@ -331,7 +422,7 @@ using SparseArrays
         @test x[] == 15.0
     end
 
-    #https://github.com/willow-ahrens/Finch.jl/issues/267
+    #https://github.com/finch-tensor/Finch.jl/issues/267
     let
         A = ones(3, 3)
         B = ones(3, 3)
@@ -354,7 +445,7 @@ using SparseArrays
         @test C == A * B
     end
 
-    #https://github.com/willow-ahrens/Finch.jl/issues/284
+    #https://github.com/finch-tensor/Finch.jl/issues/284
     let
         C = Tensor(Dense(Dense(Element(0.0))), [1 0; 0 1])
         w = Tensor(Dense(Dense(Element(0.0))), [0 0; 0 0])
@@ -372,7 +463,7 @@ using SparseArrays
         @test C == [2.0 1.0; 1.0 2.0]
     end
 
-    #https://github.com/willow-ahrens/Finch.jl/issues/291
+    #https://github.com/finch-tensor/Finch.jl/issues/291
     let
         A = [1 2 3; 4 5 6; 7 8 9]
         x = Scalar(0.0)
@@ -413,14 +504,14 @@ using SparseArrays
         @test x[] == 30.0
     end
 
-    #https://github.com/willow-ahrens/Finch.jl/issues/286
+    #https://github.com/finch-tensor/Finch.jl/issues/286
     let
         A = [1 0; 0 1]
         #note that A[i, j] is ignored here, as the temp local is never used
         @finch (for j=_, i=_; let temp = A[i, j]; end end)
     end
 
-    #https://github.com/willow-ahrens/Finch.jl/issues/288
+    #https://github.com/finch-tensor/Finch.jl/issues/288
     let
         A = zeros(3, 3, 3)
         C = zeros(3, 3, 3)
@@ -481,7 +572,7 @@ using SparseArrays
         end
     end
 
-    #https://github.com/willow-ahrens/Finch.jl/issues/52
+    #https://github.com/finch-tensor/Finch.jl/issues/52
     let
         s = ShortCircuitScalar(false)
         x = Tensor(SparseList(Element(false)), [false, true, true, false])
@@ -519,7 +610,7 @@ using SparseArrays
         end)
     end
 
-    #https://github.com/willow-ahrens/Finch.jl/issues/313
+    #https://github.com/finch-tensor/Finch.jl/issues/313
     let
         edge_matrix = Tensor(SparseList(SparseList(Element(0.0))), 254, 254)
         edge_values = fsprand(254, 254, .001)
@@ -538,13 +629,7 @@ using SparseArrays
         @finch (output_tensor .=0; for j=_,i=_,k=_; output_tensor[i,k] += a_fiber[i,j] * b_fiber[k,j]; end)
     end
 
-    #https://github.com/willow-ahrens/Finch.jl/issues/319
-    let
-        x = SparseMatrixCSC(spzeros(2,2))
-        @test_throws Finch.FinchProtocolError @finch x .= 0
-    end
-
-    #https://github.com/willow-ahrens/Finch.jl/issues/321
+    #https://github.com/finch-tensor/Finch.jl/issues/321
     let
         A = fsprand(10, 10, 0.1)
         B = sparse(A)
@@ -566,7 +651,7 @@ using SparseArrays
         @test B == A
     end
 
-    #https://github.com/willow-ahrens/Finch.jl/issues/339
+    #https://github.com/finch-tensor/Finch.jl/issues/339
     let
         Output = Tensor(SparseList(Dense(Element(0),1),10))
         Point = Tensor(SparseList(Element{0}([1]), 10, [1,2], [1]))
@@ -588,14 +673,14 @@ using SparseArrays
         @test Ans == Output
     end
 
-    #https://github.com/willow-ahrens/Finch.jl/issues/385
+    #https://github.com/finch-tensor/Finch.jl/issues/385
     let
         c = Scalar(0)
         @finch let a=1, b=2; c[] += a + b end
         @test c[] == 3
     end
 
-    #https://github.com/willow-ahrens/Finch.jl/issues/387
+    #https://github.com/finch-tensor/Finch.jl/issues/387
 
     A = zeros(2, 4, 3)
     A[1,:,:] = [0.0 0.0 4.4; 1.1 0.0 0.0; 0.0 0.0 0.0; 3.3 0.0 0.0]
@@ -614,7 +699,7 @@ using SparseArrays
 
     @test swizzle(swizzle(zeros(3, 3, 3), 3, 1, 2), 3, 2, 1) isa Finch.SwizzleArray{(2, 1, 3), <:Array}
 
-    #https://github.com/willow-ahrens/Finch.jl/issues/134
+    #https://github.com/finch-tensor/Finch.jl/issues/134
     let
         A = Tensor(Dense(Dense(Element(0.0))), rand(3, 3))
         x = Tensor(Dense(Element(0.0)), rand(3))
@@ -628,13 +713,13 @@ using SparseArrays
         end)
     end
 
-    #https://github.com/willow-ahrens/Finch.jl/issues/397
+    #https://github.com/finch-tensor/Finch.jl/issues/397
     let
         A = AsArray(swizzle(Tensor(Dense(Dense(Element(0.0))), [1 2 3; 4 5 6; 7 8 9]), 2, 1))
         @test check_output("issues/print_swizzle_as_array.txt", sprint(show, MIME"text/plain"(), A))
     end
 
-    #https://github.com/willow-ahrens/Finch.jl/issues/427
+    #https://github.com/finch-tensor/Finch.jl/issues/427
     let
         a = [1, 2, 0, 0, 1]
         a_fbr = Tensor(Dense(Element(0)), a)
@@ -645,7 +730,7 @@ using SparseArrays
         @test a[idx] == a_sw[idx]
     end
 
-    #https://github.com/willow-ahrens/Finch.jl/pull/433
+    #https://github.com/finch-tensor/Finch.jl/pull/433
     input = Tensor(Dense(Dense(Element(Float64(0)))))
     output = Tensor(Dense(Dense(Element(Float64(0)))))
 
@@ -658,7 +743,7 @@ using SparseArrays
         end
     end)
 
-    #https://github.com/willow-ahrens/Finch.jl/pull/442
+    #https://github.com/finch-tensor/Finch.jl/pull/442
     let
         I = [6, 6, 6, 9]
         J = [1, 3, 10, 5]
@@ -666,7 +751,7 @@ using SparseArrays
         fsparse(I, J, V) == sparse(I, J, V)
     end
 
-    #https://github.com/willow-ahrens/Finch.jl/pull/450
+    #https://github.com/finch-tensor/Finch.jl/pull/450
     let
         #there was a bug with let statements and scoping
         input = Tensor(Dense(Dense(Element(UInt(0)))))
@@ -691,16 +776,18 @@ using SparseArrays
         end)
     end
 
+    #=
     let
         A_COO = fsprand(10, 10, .5)
-        A_hash = Tensor(SparseHash{1}(SparseHash{1}(Element(0.0))))
+        A_hash = Tensor(SparseDict(SparseDict(Element(0.0))))
         @finch (A_hash .= 0; for i=_, j=_ A_hash[i,j]= A_COO[i,j] end)
         B_COO = fsprand(10, 10, .5)
-        B_hash = Tensor(SparseHash{1}(SparseHash{1}(Element(0.0))))
+        B_hash = Tensor(SparseDict(SparseDict(Element(0.0))))
         @finch (B_hash .= 0; for i=_, j=_ B_hash[i,j]= B_COO[i,j] end)
         output = Scalar(0)
         @finch (output .= 0; for i=_, j=_ output[] += A_hash[j,i] * B_hash[follow(j), i] end)
     end
+    =#
 
     let
         A = zeros(2, 3, 3)
@@ -716,14 +803,14 @@ using SparseArrays
         expected = broadcast(.*, A_sw, A_sw)
 
         @test actual == expected
-        
+
         B = zeros(size(A_sw)...)
         copyto!(B, A_sw)
 
         @test B == A_t
     end
 
-    #https://github.com/willow-ahrens/Finch.jl/issues/474
+    #https://github.com/finch-tensor/Finch.jl/issues/474
     let
         A = [1 2 3; 4 5 6; 7 8 9]
         A_t = permutedims(A, (2, 1))
@@ -737,13 +824,13 @@ using SparseArrays
         @test tensordot(A_sw, A_sw, (2, 1)) == transpose(A * A)
     end
 
-    #https://github.com/willow-ahrens/Finch.jl/issues/483
+    #https://github.com/finch-tensor/Finch.jl/issues/483
     let
-        D = Tensor(Dense{Int64}(Sparse{Int64}(Element{0.0, Float64, Int64}([0.4550140005294436, 0.6850107897370502, 0.4426087218562376, 0.24735950954269276, 0.05888493126676229, 0.5646016165775413, 0.0316029017824437]), 5, Finch.DictTable{Int64, Int64, Vector{Int64}, Vector{Int64}, Vector{Int64}, Dict{Tuple{Int64, Int64}, Int64}}([1, 3, 5, 8, 8, 8], [2, 5, 2, 3, 1, 2, 3], [1, 2, 3, 4, 5, 6, 7], Dict((3, 2) => 6, (1, 2) => 1, (3, 1) => 5, (3, 3) => 7, (2, 2) => 3, (2, 3) => 4, (1, 5) => 2))), 5))
+        D = Tensor(Dense{Int64}(SparseDict{Int64}(Element{0.0, Float64, Int64}([0.4550140005294436, 0.6850107897370502, 0.4426087218562376, 0.24735950954269276, 0.05888493126676229, 0.5646016165775413, 0.0316029017824437]), 5, [1, 3, 5, 8, 8, 8], [2, 5, 2, 3, 1, 2, 3], [1, 2, 3, 4, 5, 6, 7], Dict((3, 2) => 6, (1, 2) => 1, (3, 1) => 5, (3, 3) => 7, (2, 2) => 3, (2, 3) => 4, (1, 5) => 2), []), 5))
         @test countstored(D) == 7
     end
 
-    #https://github.com/willow-ahrens/Finch.jl/issues/488
+    #https://github.com/finch-tensor/Finch.jl/issues/488
     let
         M = Tensor(Dense(SparseList(Element(0.0))), fsprand(1_000_000, 1_000_000, 1e-05));
 
@@ -762,7 +849,7 @@ using SparseArrays
         @test countstored(fsprand(t, t, t, t, 100)) == 100
     end
 
-    #https://github.com/willow-ahrens/Finch.jl/issues/480
+    #https://github.com/finch-tensor/Finch.jl/issues/480
     let
         A = fsprand(10, 10, 0.5)
         @test size(A[:, nothing, :]) == (10, 1, 10)
@@ -770,7 +857,7 @@ using SparseArrays
         copyto!(Tensor(Element(0.0)), swizzle(Tensor(Element(0.0, [1.0]))))
     end
 
-    #https://github.com/willow-ahrens/Finch.jl/issues/485
+    #https://github.com/finch-tensor/Finch.jl/issues/485
     let
         a = zeros(1,1,1)
         a_tns = Tensor(Dense(SparseList(SparseList(Element(0.0)))), a)
@@ -778,4 +865,109 @@ using SparseArrays
         sum(a, dims=(1, 2))
         sum(a_tns, dims=(1, 2))
     end
+
+    #https://github.com/finch-tensor/Finch.jl/issues/546
+    let
+        n = 100
+        A = Tensor(Dense(SparseList(Element(0.0))), fsprand(n, n, .001))
+        B = Tensor(Dense(SparseList(Element(0.0))), fsprand(n, n,  .001))
+        C = Tensor(SparseList(Element(0.0)), fsprand(n, .1))
+        D = Scalar(0.0)
+
+        check_output("issues/protocol_issue.jl",
+        @finch_code begin
+            D .= 0
+            for i=_
+                for j=_
+                    for k=_
+                        D[] += C[gallop(j)] * B[walk(k), follow(j)] * A[gallop(j), follow(i)]
+                    end
+                end
+            end
+        end)
+    end
+
+
+
+    #https://github.com/finch-tensor/Finch.jl/issues/580
+    let
+        n = 100
+        data =  fsprand(Int, n, n, .01) .% 100
+        A_sbm = Tensor(Dense(SparseByteMap(Element(0))), data)
+        A_d = Tensor(Dense(Dense(Element(0))), data)
+        C1 = Scalar(0)
+        C2 = Scalar(0)
+        @finch begin
+            C1 .= 0
+            for i=_
+                for j=_
+                    for k=_
+                        C1[] += A_sbm[follow(j),i] * A_sbm[k,j]
+                    end
+                end
+            end
+
+            C2 .= 0
+            for i=_
+                for j=_
+                    for k=_
+                        C2[] += A_d[j,i] * A_d[k,j]
+                    end
+                end
+            end
+        end
+        @test C1 == C2
+    end
+
+
+    # Basic Sparse Follow Test
+    let
+
+        n = 1000
+        A = Tensor(SparseList(Element(0.0)), fsprand(n, 100))
+        B = Tensor(SparseList(Element(0.0)), fsprand(n, 100))
+        C_follow = Tensor(SparseList(Element(0.0)))
+        @finch begin
+            C_follow .= 0
+            for i=_
+                C_follow[i] = A[follow(i)] * B[i]
+            end
+        end
+        C_walk = Tensor(SparseList(Element(0.0)))
+        @finch begin
+            C_walk .= 0
+            for i=_
+                C_walk[i] = A[i] * B[i]
+            end
+        end
+        @test C_follow == C_walk
+    end
+
+    #https://github.com/finch-tensor/Finch.jl/issues/615
+
+    let
+        A = Tensor(Dense(Dense(Element(0.0))), 10, 10)
+        res = sum(tensordot(A, A, ((1,), (2,))))
+
+        A_lazy = Finch.LazyTensor(A)
+        res = sum(tensordot(A_lazy, A_lazy, ((1,), (2,))))  # fails
+    end
+
+    #https://github.com/finch-tensor/Finch.jl/issues/614
+
+    let
+        A = sprand(5, 5, 0.5)
+        B = sprand(5, 5, 0.5)
+        x = rand(5)
+        C = Tensor(Dense(SparseList(Element(0.0))), A)
+        D = Tensor(Dense(SparseList(Element(0.0))), B)
+
+        @test A * B == C * D
+        @test A * B == compute(lazy(C) * D)
+        @test A * B == compute(C * lazy(D))
+        @test A * x == C * x
+        @test A * x == compute(lazy(C) * x)
+    end
+
+
 end

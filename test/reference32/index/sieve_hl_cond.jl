@@ -4,7 +4,6 @@ begin
     A_lvl_ptr = A_lvl.ptr
     A_lvl_idx = A_lvl.idx
     A_lvl_val = A_lvl.lvl.val
-    result = nothing
     B_val = 0
     A_lvl_q = A_lvl_ptr[1]
     A_lvl_q_stop = A_lvl_ptr[1 + 1]
@@ -26,7 +25,7 @@ begin
                 B_val = A_lvl_2_val_2 + B_val
                 A_lvl_q += 1
             else
-                phase_stop_4 = min(A_lvl_i, phase_stop_2)
+                phase_stop_4 = min(phase_stop_2, A_lvl_i)
                 if A_lvl_i == phase_stop_4
                     A_lvl_2_val_2 = A_lvl_val[A_lvl_q]
                     B_val += A_lvl_2_val_2
@@ -37,6 +36,5 @@ begin
         end
     end
     B.val = B_val
-    result = (B = B,)
-    result
+    (B = B,)
 end

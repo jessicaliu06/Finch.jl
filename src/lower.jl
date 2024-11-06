@@ -1,51 +1,69 @@
-@kwdef mutable struct LowerJulia <: AbstractCompiler
+"""
+    FinchCompiler
+
+The core compiler for Finch, lowering canonicalized Finch IR to Julia code.
+"""
+@kwdef mutable struct FinchCompiler <: AbstractCompiler
     code = JuliaContext()
-    needs_return = freshen(code, :needs_return)
-    result = freshen(code, :result)
     algebra = DefaultAlgebra()
-    bindings::Dict{FinchNode, FinchNode} = Dict{FinchNode, FinchNode}()
     mode = :fast
-    modes::Dict{Any, Any} = Dict()
-    scope = Set()
-    shash = StaticHash()
-    program_rules = get_program_rules(algebra, shash)
-    bounds_rules = get_bounds_rules(algebra, shash)
+    result = freshen(code, :result)
+    symbolic = SymbolicContext(algebra = algebra)
+    scope = ScopeContext()
 end
 
-function contain(f, ctx::LowerJulia; bindings = ctx.bindings, kwargs...)
-    contain(ctx.code; kwargs...) do code_2
-        f(LowerJulia(code_2, ctx.needs_return, ctx.result, ctx.algebra, bindings, ctx.mode, ctx.modes, ctx.scope, ctx.shash, ctx.program_rules, ctx.bounds_rules))
+"""
+    get_result(ctx)
+
+Return a variable which evaluates to the result of the program which should be
+returned to the user.
+"""
+get_result(ctx::FinchCompiler) = ctx.result
+"""
+    get_mode_flag(ctx)
+
+Return the mode flag given in `@finch mode = ?`.
+"""
+get_mode_flag(ctx::FinchCompiler) = ctx.mode
+
+get_binding(ctx::FinchCompiler, var) = get_binding(ctx.scope, var)
+has_binding(ctx::FinchCompiler, var) = has_binding(ctx.scope, var)
+set_binding!(ctx::FinchCompiler, var, val) = set_binding!(ctx.scope, var, val)
+set_declared!(ctx::FinchCompiler, var, val) = set_declared!(ctx.scope, var, val)
+set_frozen!(ctx::FinchCompiler, var, val) = set_frozen!(ctx.scope, var, val)
+set_thawed!(ctx::FinchCompiler, var, val) = set_thawed!(ctx.scope, var, val)
+get_tensor_mode(ctx::FinchCompiler, var) = get_tensor_mode(ctx.scope, var)
+function open_scope(f::F, ctx::FinchCompiler) where {F}
+    open_scope(ctx.scope) do scope_2
+        f(FinchCompiler(ctx.code, ctx.algebra, ctx.mode, ctx.result, ctx.symbolic, scope_2))
     end
 end
 
-struct StaticHash
-    counts::Dict{Tuple{Any, DataType}, UInt}
+push_preamble!(ctx::FinchCompiler, thunk) = push_preamble!(ctx.code, thunk)
+push_epilogue!(ctx::FinchCompiler, thunk) = push_epilogue!(ctx.code, thunk)
+get_task(ctx::FinchCompiler) = get_task(ctx.code)
+freshen(ctx::FinchCompiler, tags...) = freshen(ctx.code, tags...)
+
+get_algebra(ctx::FinchCompiler) = ctx.algebra
+get_static_hash(ctx::FinchCompiler) = get_static_hash(ctx.symbolic)
+prove(ctx::FinchCompiler, root) = prove(ctx.symbolic, root)
+simplify(ctx::FinchCompiler, root) = simplify(ctx.symbolic, root)
+
+function contain(f, ctx::FinchCompiler; kwargs...)
+    contain(ctx.code; kwargs...) do code_2
+        f(FinchCompiler(code_2, ctx.algebra, ctx.mode, ctx.result, ctx.symbolic, ctx.scope))
+    end
 end
-StaticHash() = StaticHash(Dict{Tuple{Any, DataType}, UInt}())
 
-(h::StaticHash)(x) = get!(h.counts, (x, typeof(x)), UInt(length(h.counts)))
-
-(ctx::AbstractCompiler)(root) = ctx(root, Stylize(ctx, root)(root))
+(ctx::AbstractCompiler)(root) = ctx(root, get_style(ctx, root))
 (ctx::AbstractCompiler)(root, style) = lower(ctx, root, style)
 #(ctx::AbstractCompiler)(root, style) = (println(); println(); display(root); display(style); lower(ctx, root, style))
-
-function open_scope(ctx::AbstractCompiler, prgm)
-    ctx_2 = shallowcopy(ctx)
-    ctx_2.scope = Set()
-    res = ctx_2(prgm)
-    for tns in ctx_2.scope
-        pop!(ctx_2.modes, tns, nothing)
-    end
-    ctx.bindings = copy(ctx.bindings)
-    res
-end
-
 function cache!(ctx::AbstractCompiler, var, val)
     val = finch_leaf(val)
     isconstant(val) && return val
-    var = freshen(ctx.code,var)
+    var = freshen(ctx,var)
     val = simplify(ctx, val)
-    push!(ctx.code.preamble, quote
+    push_preamble!(ctx, quote
         $var = $(contain(ctx_2 -> ctx_2(val), ctx))
     end)
     return cached(value(var, Any), literal(val))
@@ -56,9 +74,9 @@ function resolve(ctx::AbstractCompiler, node::FinchNode)
     if node.kind === virtual
         return node.val
     elseif node.kind === variable
-        return resolve(ctx, ctx.bindings[node])
+        return resolve(ctx, get_binding(ctx, node))
     elseif node.kind === index
-        return resolve(ctx, ctx.bindings[node])
+        return resolve(ctx, get_binding(ctx, node))
     else
         error("unimplemented $node")
     end
@@ -66,32 +84,27 @@ end
 
 (ctx::AbstractCompiler)(root::Union{Symbol, Expr}, ::DefaultStyle) = root
 
-@kwdef struct Stylize{Ctx}
-    ctx::Ctx
-    root
-end
+"""
+    get_style(ctx, root)
 
-function (ctx::Stylize)(node)
-    if istree(node)
-        return mapreduce(ctx, result_style, arguments(node); init=DefaultStyle())
-    end
-    return DefaultStyle()
-end
+return the style to use for lowering `root` in `ctx`. This method is used to
+determine which pass should be used to lower a given node. The default
+implementation returns `DefaultStyle()`. Overload the three argument form
+of this method, `get_style(ctx, node, root)` and specialize on `node`.
+"""
+get_style(ctx, root)  = get_style(ctx, root, root)
 
-function (ctx::Stylize)(node::FinchNode)
+get_style(ctx, node, root) = DefaultStyle()
+
+function get_style(ctx, node::FinchNode, root)
     if node.kind === virtual
-        return ctx(node.val)
-    elseif node.kind === access
-        return mapreduce(ctx, result_style, arguments(node); init=stylize_access(ctx, node, node.tns))
+        return get_style(ctx, node.val, root)
     elseif istree(node)
-        return mapreduce(ctx, result_style, arguments(node); init=DefaultStyle())
+        return mapreduce(arg -> get_style(ctx, arg, root), result_style, arguments(node); init=DefaultStyle())
     else
         return DefaultStyle()
     end
 end
-
-stylize_access(ctx, node, @nospecialize tns) = DefaultStyle()
-stylize_access(ctx, node, tns::FinchNode) = stylize_access(ctx, node, resolve(ctx, tns))
 
 function lower(ctx::AbstractCompiler, root, ::DefaultStyle)
     node = finch_leaf(root)
@@ -105,8 +118,7 @@ function lower(ctx::AbstractCompiler, root::FinchNode, ::DefaultStyle)
     if root.kind === value
         return root.val
     elseif root.kind === index
-        @assert haskey(ctx.bindings, root) "index $(root) unbound"
-        return ctx(ctx.bindings[root]) #This unwraps indices that are virtuals. Arguably these virtuals should be precomputed, but whatevs.
+        return ctx(get_binding(ctx, root)) #This unwraps indices that are virtuals. Arguably these virtuals should be precomputed, but whatevs.
     elseif root.kind === literal
         if typeof(root.val) === Symbol ||
           typeof(root.val) === Expr ||
@@ -130,19 +142,14 @@ function lower(ctx::AbstractCompiler, root::FinchNode, ::DefaultStyle)
             if head.kind === block
                 ctx(block(head.bodies..., body))
             elseif head.kind === declare
-                @assert head.tns.kind === variable
-                @assert get(ctx.modes, head.tns, reader) === reader
-                ctx.bindings[head.tns] = declare!(ctx, ctx.bindings[head.tns], head.init) #TODO should ctx.bindings be scoped?
-                push!(ctx.scope, head.tns)
-                ctx.modes[head.tns] = updater
+                val_2 = declare!(ctx, get_binding(ctx, head.tns), head.init)
+                set_declared!(ctx, head.tns, val_2)
             elseif head.kind === freeze
-                @assert ctx.modes[head.tns] === updater
-                ctx.bindings[head.tns] = freeze!(ctx, ctx.bindings[head.tns])
-                ctx.modes[head.tns] = reader
+                val_2 = freeze!(ctx, get_binding(ctx, head.tns))
+                set_frozen!(ctx, head.tns, val_2)
             elseif head.kind === thaw
-                @assert get(ctx.modes, head.tns, reader) === reader
-                ctx.bindings[head.tns] = thaw!(ctx, ctx.bindings[head.tns])
-                ctx.modes[head.tns] = updater
+                val_2 = thaw!(ctx, get_binding(ctx, head.tns))
+                set_thawed!(ctx, head.tns, val_2)
             else
                 preamble = contain(ctx) do ctx_2
                     ctx_2(instantiate!(ctx_2, head))
@@ -158,10 +165,11 @@ function lower(ctx::AbstractCompiler, root::FinchNode, ::DefaultStyle)
         end
     elseif root.kind === define
         @assert root.lhs.kind === variable
-        ctx.bindings[root.lhs] = cache!(ctx, root.lhs.name, root.rhs)
-        push!(ctx.scope, root.lhs)
+        set_binding!(ctx, root.lhs, cache!(ctx, root.lhs.name, root.rhs))
         contain(ctx) do ctx_2
-            open_scope(ctx_2, root.body)
+            open_scope(ctx_2) do ctx_3
+                ctx_3(root.body)
+            end
         end
     elseif (root.kind === declare || root.kind === freeze || root.kind === thaw)
         #these statements only apply to subsequent statements in a block
@@ -169,10 +177,15 @@ function lower(ctx::AbstractCompiler, root::FinchNode, ::DefaultStyle)
         #arguably, the declare, freeze, or thaw nodes should never reach this case but we'll leave that alone for now
         quote end
     elseif root.kind === access
-        return lower_access(ctx, root, resolve(ctx, root.tns))
+        tns = resolve(ctx, root.tns)
+        if length(root.idxs) > 0
+            throw(FinchCompileError("Finch failed to completely lower an access to $tns"))
+        end
+        @assert root.mode.kind === literal
+        return lower_access(ctx, tns, root.mode.val)
     elseif root.kind === call
         root = simplify(ctx, root)
-        if root.kind === call 
+        if root.kind === call
             if root.op == literal(and)
                 if isempty(root.args)
                     return true
@@ -188,8 +201,8 @@ function lower(ctx::AbstractCompiler, root::FinchNode, ::DefaultStyle)
             else
                 :($(ctx(root.op))($(map(ctx, root.args)...)))
             end
-         else 
-           return ctx(root) 
+         else
+           return ctx(root)
          end
     elseif root.kind === cached
         return ctx(root.arg)
@@ -198,13 +211,15 @@ function lower(ctx::AbstractCompiler, root::FinchNode, ::DefaultStyle)
         @assert root.ext.kind === virtual
         lower_loop(ctx, root, root.ext.val)
     elseif root.kind === sieve
-        cond = freshen(ctx.code,:cond)
-        push!(ctx.code.preamble, :($cond = $(ctx(root.cond))))
-    
+        cond = freshen(ctx,:cond)
+        push_preamble!(ctx, :($cond = $(ctx(root.cond))))
+
         return quote
             if $cond
                 $(contain(ctx) do ctx_2
-                    open_scope(ctx_2, root.body)
+                    open_scope(ctx_2) do ctx_3
+                        ctx_3(root.body)
+                    end
                 end)
             end
         end
@@ -220,17 +235,14 @@ function lower(ctx::AbstractCompiler, root::FinchNode, ::DefaultStyle)
         lhs = ctx(root.lhs)
         return :($lhs = $rhs)
     elseif root.kind === variable
-        return ctx(ctx.bindings[root])
+        return ctx(get_binding(ctx, root))
     elseif root.kind === yieldbind
         contain(ctx) do ctx_2
             quote
-                if $(ctx.needs_return)
-                    $(ctx.result) = (; $(map(root.args) do tns
-                        name = getroot(tns).name
-                        Expr(:kw, name, ctx_2(tns))
-                    end...), )
-                    $(ctx.needs_return) = false
-                end
+                $(get_result(ctx)) = (; $(map(root.args) do tns
+                    name = getroot(tns).name
+                    Expr(:kw, name, ctx_2(tns))
+                end...), )
             end
         end
     else
@@ -238,39 +250,49 @@ function lower(ctx::AbstractCompiler, root::FinchNode, ::DefaultStyle)
     end
 end
 
-function lower_access(ctx, node, tns)
+function lower_access(ctx, tns, mode)
     tns = ctx(tns)
-    idxs = map(ctx, node.idxs)
-    :($(ctx(tns))[$(idxs...)])
+    :($(ctx(tns))[])
 end
 
-function lower_access(ctx, node, tns::Number)
+function lower_access(ctx, tns::Number, mode)
     @assert node.mode.val === reader
     tns
 end
 
+"""
+    unfurl(ctx, tns, ext, proto)
+Return an array object (usually a looplet nest) for lowering the outermost
+dimension of virtual tensor `tns`. `ext` is the extent of the looplet. `proto`
+is the protocol that should be used for this index, but one doesn't need to
+unfurl all the indices at once.
+"""
+unfurl(ctx, tns, ext, mode, proto) = 
+    throw(FinchProtocolError("$tns does not support $mode with protocol $proto"))
+
 function lower_loop(ctx, root, ext)
-    root_2 = Rewrite(Postwalk(@rule access(~tns, ~mode, ~idxs...) => begin
-        if !isempty(idxs) && root.idx == idxs[end]
-            protos = [(mode.val === reader ? defaultread : defaultupdate) for _ in idxs]
-            tns_2 = unfurl(ctx, tns, root.ext.val, mode.val, protos...)
-            access(tns_2, mode, idxs...)
-        end
-    end))(root)
-    return ctx(root_2, result_style(LookupStyle(), Stylize(ctx, root_2)(root_2)))
+    contain(ctx) do ctx_2
+        root_2 = Rewrite(Postwalk(@rule access(~tns, ~mode, ~idxs...) => begin
+            if !isempty(idxs) && root.idx == idxs[end]
+                tns_2 = unfurl(ctx_2, tns, root.ext.val, mode.val, (mode.val === reader ? defaultread : defaultupdate))
+                access(Unfurled(resolve(ctx_2, tns), tns_2), mode, idxs...)
+            end
+        end))(root)
+        return ctx_2(root_2, result_style(LookupStyle(), get_style(ctx_2, root_2)))
+    end
 end
 
-lower_loop(ctx, root, ext::ParallelDimension) = 
+lower_loop(ctx, root, ext::ParallelDimension) =
     lower_parallel_loop(ctx, root, ext, ext.device)
 function lower_parallel_loop(ctx, root, ext::ParallelDimension, device::VirtualCPU)
     root = ensure_concurrent(root, ctx)
-    
-    tid = index(freshen(ctx.code, :tid))
-    i = freshen(ctx.code, :i)
+
+    tid = index(freshen(ctx, :tid))
+    i = freshen(ctx, :i)
 
     decl_in_scope = unique(filter(!isnothing, map(node-> begin
         if @capture(node, declare(~tns, ~init))
-            tns 
+            tns
         end
     end, PostOrderDFS(root.body))))
 
@@ -288,25 +310,32 @@ function lower_parallel_loop(ctx, root, ext::ParallelDimension, device::VirtualC
         )
     )
 
-    bindings_2 = copy(ctx.bindings)
     for tns in setdiff(used_in_scope, decl_in_scope)
         virtual_moveto(ctx, resolve(ctx, tns), device)
     end
 
+    code = contain(ctx) do ctx_2
+        subtask = VirtualCPUThread(value(i, Int), device, ctx_2.code.task)
+        contain(ctx_2, task=subtask) do ctx_3
+            for tns in intersect(used_in_scope, decl_in_scope)
+                virtual_moveto(ctx_3, resolve(ctx_3, tns), subtask)
+            end
+            contain(ctx_3) do ctx_4
+                open_scope(ctx_4) do ctx_5
+                    ctx_5(instantiate!(ctx_5, root_2))
+                end
+            end
+        end
+    end
+
     return quote
         Threads.@threads for $i = 1:$(ctx(device.n))
-            $(contain(ctx, bindings=bindings_2) do ctx_2
-                subtask = VirtualCPUThread(value(i, Int), device, ctx_2.code.task)
-                contain(ctx_2, task=subtask) do ctx_3
-                    bindings_2 = copy(ctx_3.bindings)
-                    for tns in intersect(used_in_scope, decl_in_scope)
-                        virtual_moveto(ctx_3, resolve(ctx_3, tns), subtask)
-                    end
-                    contain(ctx_3, bindings=bindings_2) do ctx_4
-                        ctx_4(instantiate!(ctx_4, root_2))
-                    end
+            Finch.@barrier begin
+                @inbounds @fastmath begin
+                    $code
                 end
-            end)
+                nothing
+            end
         end
     end
 end

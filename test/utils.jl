@@ -18,13 +18,13 @@ Base.:(==)(a::Structure, b::Structure) = isstructequal(a.t, b.t)
 
 isstructequal(a, b) = a === b
 
-isstructequal(a::T, b::T) where {T <: Finch.SwizzleArray} = 
+isstructequal(a::T, b::T) where {T <: Finch.SwizzleArray} =
     isstructequal(a.body, b.body)
 
-isstructequal(a::T, b::T) where {T <: Tensor} = 
+isstructequal(a::T, b::T) where {T <: Tensor} =
     isstructequal(a.lvl, b.lvl)
 
-isstructequal(a::T, b::T) where {T <: Finch.SubFiber} = 
+isstructequal(a::T, b::T) where {T <: Finch.SubFiber} =
     isstructequal(a.lvl, b.lvl) &&
     isstructequal(a.ptr, b.ptr)
 
@@ -62,14 +62,7 @@ isstructequal(a::T, b::T) where {T <: SparseCOO} =
     a.tbl == b.tbl &&
     isstructequal(a.lvl, b.lvl)
 
-isstructequal(a::T, b::T) where {T <: SparseHash} =
-    a.shape == b.shape &&
-    a.ptr == b.ptr &&
-    a.tbl == b.tbl &&
-    a.srt == b.srt &&
-    isstructequal(a.lvl, b.lvl)
-
-isstructequal(a::T, b::T) where {T <: SparseVBL} =
+isstructequal(a::T, b::T) where {T <: SparseBlockList} =
     a.shape == b.shape &&
     a.ptr == b.ptr &&
     a.idx == b.idx &&
@@ -90,14 +83,14 @@ isstructequal(a::T, b::T) where {T <: SparseByteMap} =
     a.srt == b.srt &&
     isstructequal(a.lvl, b.lvl)
 
-isstructequal(a::T, b::T) where {T <: SparseRLE} =
+isstructequal(a::T, b::T) where {T <: SparseRunList} =
     a.shape == b.shape &&
     a.ptr == b.ptr &&
     a.left == b.left &&
     a.right == b.right &&
     isstructequal(a.lvl, b.lvl)
 
-isstructequal(a::T, b::T) where {T <: DenseRLE} =
+isstructequal(a::T, b::T) where {T <: RunList} =
     a.shape == b.shape &&
     a.ptr == b.ptr &&
     a.right == b.right &&

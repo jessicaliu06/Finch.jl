@@ -3,12 +3,13 @@ struct ScaleArray{Scale<:Tuple, Body} <: AbstractCombinator
     scale::Scale
 end
 
-Base.show(io::IO, ex::ScaleArray) = Base.show(io, MIME"text/plain"(), ex)
-function Base.show(io::IO, mime::MIME"text/plain", ex::ScaleArray)
+Base.show(io::IO, ex::ScaleArray) =
 	print(io, "ScaleArray($(ex.body), $(ex.scale))")
-end
 
-Base.getindex(arr::ScaleArray, i...) = arr.body[(i .* arr.scale)...]
+labelled_show(io::IO, ex::ScaleArray) =
+    print(io, "ScaleArray [$(join(map(s -> ":*$s", ex.scale), ", "))]")
+
+labelled_children(ex::ScaleArray) = [LabelledTree(ex.body)]
 
 struct VirtualScaleArray <: AbstractVirtualCombinator
     body
@@ -17,6 +18,7 @@ end
 
 is_injective(ctx, lvl::VirtualScaleArray) = is_injective(ctx, lvl.body)
 is_atomic(ctx, lvl::VirtualScaleArray) = is_atomic(ctx, lvl.body)
+is_concurrent(ctx, lvl::VirtualScaleArray) = is_concurrent(ctx, lvl.body)
 
 Base.show(io::IO, ex::VirtualScaleArray) = Base.show(io, MIME"text/plain"(), ex)
 function Base.show(io::IO, mime::MIME"text/plain", ex::VirtualScaleArray)
@@ -43,18 +45,16 @@ delta...]`.  The dimensions declared by an OffsetArray are shifted, so that
 tensors with real-valued dimensions.
 """
 scale(body, delta...) = ScaleArray(body, delta)
-function virtual_call(ctx, ::typeof(scale), body, scale...)
-    VirtualScaleArray(body, scale)
-end
+virtual_call(ctx, ::typeof(scale), body, scale...) = VirtualScaleArray(body, scale)
 unwrap(arr::VirtualScaleArray) = call(scale, unwrap(ctx, arr.body, var), arr.scale...)
 
 lower(ctx::AbstractCompiler, tns::VirtualScaleArray, ::DefaultStyle) = :(ScaleArray($(ctx(tns.body)), $(ctx(tns.scale))))
 
-function virtual_size(ctx::AbstractCompiler, arr::VirtualScaleArray)
+virtual_size(ctx::AbstractCompiler, arr::VirtualScaleArray) =
     map(zip(virtual_size(ctx, arr.body), arr.scale)) do (dim, scale)
         scaledim(dim, call(/, 1.0f0, scale))
     end
-end
+
 function virtual_resize!(ctx::AbstractCompiler, arr::VirtualScaleArray, dims...)
     dims_2 = map(zip(dims, arr.scale)) do (dim, scale)
         scaledim(dim, scale)
@@ -62,16 +62,12 @@ function virtual_resize!(ctx::AbstractCompiler, arr::VirtualScaleArray, dims...)
     virtual_resize!(ctx, arr.body, dims_2...)
 end
 
-virtual_default(ctx::AbstractCompiler, arr::VirtualScaleArray) = virtual_default(ctx, arr.body)
+virtual_fill_value(ctx::AbstractCompiler, arr::VirtualScaleArray) = virtual_fill_value(ctx, arr.body)
 
-function instantiate(ctx, arr::VirtualScaleArray, mode, protos)
-    VirtualScaleArray(instantiate(ctx, arr.body, mode, protos), arr.scale)
-end
+instantiate(ctx, arr::VirtualScaleArray, mode) =
+    VirtualScaleArray(instantiate(ctx, arr.body, mode), arr.scale)
 
-(ctx::Stylize{<:AbstractCompiler})(node::VirtualScaleArray) = ctx(node.body)
-function stylize_access(ctx::Stylize{<:AbstractCompiler}, node, tns::VirtualScaleArray)
-    stylize_access(ctx, node, tns.body)
-end
+get_style(ctx, node::VirtualScaleArray, root) = get_style(ctx, node.body, root)
 
 function popdim(node::VirtualScaleArray)
     if length(node.scale) == 1
@@ -83,40 +79,27 @@ end
 
 truncate(ctx, node::VirtualScaleArray, ext, ext_2) = VirtualScaleArray(truncate(ctx, node.body, scaledim(ext, node.scale[end]), scaledim(ext_2, node.scale[end])), node.scale)
 
-function get_point_body(ctx, node::VirtualScaleArray, ext, idx)
-    body_2 = get_point_body(ctx, node.body, scaledim(ext, node.scale[end]), call(*, idx, node.scale[end]))
-    if body_2 === nothing
-        return nothing
-    else
-        return popdim(VirtualScaleArray(body_2, node.scale))
+get_point_body(ctx, node::VirtualScaleArray, ext, idx) =
+    pass_nothing(get_point_body(ctx, node.body, scaledim(ext, node.scale[end]), call(*, idx, node.scale[end]))) do body_2
+        popdim(VirtualScaleArray(body_2, node.scale))
     end
-end
 
-(ctx::ThunkVisitor)(node::VirtualScaleArray) = VirtualScaleArray(ctx(node.body), node.scale)
+unwrap_thunk(ctx, node::VirtualScaleArray) = VirtualScaleArray(unwrap_thunk(ctx, node.body), node.scale)
 
-function get_run_body(ctx, node::VirtualScaleArray, ext)
-    body_2 = get_run_body(ctx, node.body, scaledim(ext, node.scale[end]))
-    if body_2 === nothing
-        return nothing
-    else
-        return popdim(VirtualScaleArray(body_2, node.scale))
+get_run_body(ctx, node::VirtualScaleArray, ext) =
+    pass_nothing(get_run_body(ctx, node.body, scaledim(ext, node.scale[end]))) do body_2
+        popdim(VirtualScaleArray(body_2, node.scale))
     end
-end
 
-function get_acceptrun_body(ctx, node::VirtualScaleArray, ext)
-    body_2 = get_acceptrun_body(ctx, node.body, scaledim(ext, node.scale[end]))
-    if body_2 === nothing
-        return nothing
-    else
-        return popdim(VirtualScaleArray(body_2, node.scale))
+get_acceptrun_body(ctx, node::VirtualScaleArray, ext) =
+    pass_nothing(get_acceptrun_body(ctx, node.body, scaledim(ext, node.scale[end]))) do body_2
+        popdim(VirtualScaleArray(body_2, node.scale))
     end
-end
 
-function (ctx::SequenceVisitor)(node::VirtualScaleArray)
-    map(SequenceVisitor(; kwfields(ctx)..., ext = scaledim(ctx.ext, node.scale[end]))(node.body)) do (keys, body)
+get_sequence_phases(ctx, node::VirtualScaleArray, ext) =
+    map(get_sequence_phases(ctx, node.body, scaledim(ext, node.scale[end]))) do (keys, body)
         return keys => VirtualScaleArray(body, node.scale)
     end
-end
 
 phase_body(ctx, node::VirtualScaleArray, ext, ext_2) = VirtualScaleArray(phase_body(ctx, node.body, scaledim(ext, node.scale[end]), scaledim(ext_2, node.scale[end])), node.scale)
 phase_range(ctx, node::VirtualScaleArray, ext) = scaledim(phase_range(ctx, node.body, scaledim(ext, node.scale[end])), call(/, 1.0f0, node.scale[end]))
@@ -124,10 +107,10 @@ phase_range(ctx, node::VirtualScaleArray, ext) = scaledim(phase_range(ctx, node.
 get_spike_body(ctx, node::VirtualScaleArray, ext, ext_2) = VirtualScaleArray(get_spike_body(ctx, node.body, scaledim(ext, node.scale[end]), scaledim(ext_2, node.scale[end])), node.scale)
 get_spike_tail(ctx, node::VirtualScaleArray, ext, ext_2) = VirtualScaleArray(get_spike_tail(ctx, node.body, scaledim(ext, node.scale[end]), scaledim(ext_2, node.scale[end])), node.scale)
 
-visit_fill(node, tns::VirtualScaleArray) = visit_fill(node, tns.body)
+visit_fill_leaf_leaf(node, tns::VirtualScaleArray) = visit_fill_leaf_leaf(node, tns.body)
 visit_simplify(node::VirtualScaleArray) = VirtualScaleArray(visit_simplify(node.body), node.scale)
 
-(ctx::SwitchVisitor)(node::VirtualScaleArray) = map(ctx(node.body)) do (guard, body)
+get_switch_cases(ctx, node::VirtualScaleArray) = map(get_switch_cases(ctx, node.body)) do (guard, body)
     guard => VirtualScaleArray(body, node.scale)
 end
 
@@ -147,13 +130,9 @@ end
 
 getroot(tns::VirtualScaleArray) = getroot(tns.body)
 
-function unfurl(ctx, tns::VirtualScaleArray, ext, mode, protos...)
-    VirtualScaleArray(unfurl(ctx, tns.body, scaledim(ext, tns.scale[end]), mode, protos...), tns.scale)
-end
+unfurl(ctx, tns::VirtualScaleArray, ext, mode, proto) =
+    VirtualScaleArray(unfurl(ctx, tns.body, scaledim(ext, tns.scale[end]), mode, proto), tns.scale)
 
-function lower_access(ctx::AbstractCompiler, node, tns::VirtualScaleArray)
-    if !isempty(node.idxs)
-        error("oh no!")
-    end
-    lower_access(ctx, node, tns.body)
+function lower_access(ctx::AbstractCompiler, tns::VirtualScaleArray, mode)
+    lower_access(ctx, tns.body, mode)
 end

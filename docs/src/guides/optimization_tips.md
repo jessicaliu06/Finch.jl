@@ -44,7 +44,6 @@ quote
     A_lvl_ptr = A_lvl_2.ptr
     A_lvl_idx = A_lvl_2.idx
     A_lvl_2_val = A_lvl_2.lvl.val
-    result = nothing
     for j_3 = 1:A_lvl.shape
         A_lvl_q = (1 - 1) * A_lvl.shape + j_3
         A_lvl_2_q = A_lvl_ptr[A_lvl_q]
@@ -66,7 +65,7 @@ quote
                     s_val = A_lvl_3_val + s_val
                     A_lvl_2_q += 1
                 else
-                    phase_stop_3 = min(A_lvl_2_i, phase_stop)
+                    phase_stop_3 = min(phase_stop, A_lvl_2_i)
                     if A_lvl_2_i == phase_stop_3
                         A_lvl_3_val = A_lvl_2_val[A_lvl_2_q]
                         s_val += A_lvl_3_val
@@ -108,7 +107,6 @@ quote
     A_lvl_idx = A_lvl_2.idx
     A_lvl_2_val = A_lvl_2.lvl.val
     @warn "Performance Warning: non-concordant traversal of A[i, j] (hint: most arrays prefer column major or first index fast, run in fast mode to ignore this warning)"
-    result = nothing
     for i_3 = 1:A_lvl_2.shape
         for j_3 = 1:A_lvl.shape
             A_lvl_q = (1 - 1) * A_lvl.shape + j_3
@@ -131,7 +129,7 @@ quote
                         s_val = A_lvl_3_val + s_val
                         A_lvl_2_q += 1
                     else
-                        phase_stop_3 = min(A_lvl_2_i, phase_stop)
+                        phase_stop_3 = min(phase_stop, A_lvl_2_i)
                         if A_lvl_2_i == phase_stop_3
                             A_lvl_3_val = A_lvl_2_val[A_lvl_2_q]
                             s_val += A_lvl_3_val
@@ -214,7 +212,7 @@ end
 
 ## Use Known Functions
 
-Unless you declare the properties of your functions using Finch's [Custom Operators](@ref) interface, Finch doesn't know how they work. For example, using a lambda obscures
+Unless you declare the properties of your functions using Finch's [User-Defined Functions](@ref) interface, Finch doesn't know how they work. For example, using a lambda obscures
 the meaning of `*`.
 
 ```jldoctest example1
@@ -249,8 +247,6 @@ quote
     B_mode2_stop = sugar_1[2]
     B_mode1_stop == A_lvl_2.shape || throw(DimensionMismatch("mismatched dimension limits ($(B_mode1_stop) != $(A_lvl_2.shape))"))
     B_mode2_stop == A_lvl.shape || throw(DimensionMismatch("mismatched dimension limits ($(B_mode2_stop) != $(A_lvl.shape))"))
-    needs_return = true
-    result = nothing
     C_val = 0
     for j_4 = 1:B_mode2_stop
         A_lvl_q = (1 - 1) * A_lvl.shape + j_4
@@ -275,25 +271,25 @@ quote
                         C_val = (Main).f(0.0, val) + C_val
                     end
                     A_lvl_3_val = A_lvl_2_val[A_lvl_2_q]
-                    val = B[A_lvl_2_i, j_4]
-                    C_val += (Main).f(A_lvl_3_val, val)
+                    val_2 = B[A_lvl_2_i, j_4]
+                    C_val += (Main).f(A_lvl_3_val, val_2)
                     A_lvl_2_q += 1
                     i = A_lvl_2_i + 1
                 else
-                    phase_stop_3 = min(A_lvl_2_i, phase_stop)
+                    phase_stop_3 = min(phase_stop, A_lvl_2_i)
                     if A_lvl_2_i == phase_stop_3
                         for i_8 = i:-1 + phase_stop_3
-                            val = B[i_8, j_4]
-                            C_val += (Main).f(0.0, val)
+                            val_3 = B[i_8, j_4]
+                            C_val += (Main).f(0.0, val_3)
                         end
                         A_lvl_3_val = A_lvl_2_val[A_lvl_2_q]
-                        val = B[phase_stop_3, j_4]
-                        C_val += (Main).f(A_lvl_3_val, val)
+                        val_4 = B[phase_stop_3, j_4]
+                        C_val += (Main).f(A_lvl_3_val, val_4)
                         A_lvl_2_q += 1
                     else
                         for i_10 = i:phase_stop_3
-                            val = B[i_10, j_4]
-                            C_val += (Main).f(0.0, val)
+                            val_5 = B[i_10, j_4]
+                            C_val += (Main).f(0.0, val_5)
                         end
                     end
                     i = phase_stop_3 + 1
@@ -304,18 +300,13 @@ quote
         phase_start_3 = max(1, 1 + A_lvl_2_i1)
         if B_mode1_stop >= phase_start_3
             for i_12 = phase_start_3:B_mode1_stop
-                val = B[i_12, j_4]
-                C_val += (Main).f(0.0, val)
+                val_6 = B[i_12, j_4]
+                C_val += (Main).f(0.0, val_6)
             end
         end
     end
     C.val = C_val
-    result = (C = C,)
-    needs_return = false
-    if needs_return
-        result = (C = C,)
-    end
-    result
+    (C = C,)
 end
 
 ```

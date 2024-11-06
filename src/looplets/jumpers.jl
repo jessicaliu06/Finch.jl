@@ -5,7 +5,7 @@ struct JumperStyle end
     stop = (ctx, ext) -> nothing
     chunk = nothing
     next = (ctx, ext) -> nothing
-    body = (ctx, ext) -> chunk 
+    body = (ctx, ext) -> chunk
     seek = (ctx, start) -> error("seek not implemented error")
 end
 
@@ -16,8 +16,7 @@ end
 
 FinchNotation.finch_leaf(x::Jumper) = virtual(x)
 
-(ctx::Stylize{<:AbstractCompiler})(node::Jumper) = ctx.root.kind === loop ? JumperStyle() : DefaultStyle()
-instantiate(ctx, tns::Jumper, mode, protos) = tns
+get_style(ctx, ::Jumper, root) = root.kind === loop ? JumperStyle() : DefaultStyle()
 
 combine_style(a::DefaultStyle, b::JumperStyle) = JumperStyle()
 combine_style(a::LookupStyle, b::JumperStyle) = JumperStyle()
@@ -45,8 +44,8 @@ function jumper_range(ctx, node::FinchNode, ext)
 end
 
 function jumper_range(ctx, node::Jumper, ext)
-    push!(ctx.code.preamble, node.seek !== nothing ? node.seek(ctx, ext) : quote end)
-    push!(ctx.code.preamble, node.preamble !== nothing ? node.preamble : quote end)
+    push_preamble!(ctx, node.seek !== nothing ? node.seek(ctx, ext) : quote end)
+    push_preamble!(ctx, node.preamble !== nothing ? node.preamble : quote end)
     ext_2 = similar_extent(ext, getstart(ext), node.stop(ctx, ext))
     bound_measure_below!(ext_2, get_smallest_measure(ext))
 end
@@ -87,22 +86,22 @@ end
 
 function lower(ctx::AbstractCompiler, root::FinchNode, style::JumperStyle)
     root.kind === loop || error("unimplemented")
-    
+
     i = getname(root.idx)
-    i0 = freshen(ctx.code, i, :_start)
-    push!(ctx.code.preamble, quote
+    i0 = freshen(ctx, i, :_start)
+    push_preamble!(ctx, quote
         $i = $(ctx(getstart(root.ext)))
     end)
 
     guard = :($i <= $(ctx(getstop(root.ext))))
 
     #foreach(filter(isvirtual, collect(PostOrderDFS(root.body)))) do node
-    #    push!(ctx.code.preamble, jumper_seek(ctx, node.val, root.ext))
+    #    push_preamble!(ctx, jumper_seek(ctx, node.val, root.ext))
     #end
 
     body_2 = contain(ctx) do ctx_2
-        push!(ctx_2.code.preamble, :($i0 = $i))
-        i1 = freshen(ctx_2.code, i)
+        push_preamble!(ctx_2, :($i0 = $i))
+        i1 = freshen(ctx_2, i)
 
         ext_1 = bound_measure_below!(similar_extent(root.ext, value(i0), getstop(root.ext)), get_smallest_measure(root.ext))
         ext_2 = mapreduce((node)->jumper_range(ctx_2, node, ext_1), (a, b) -> virtual_union(ctx_2, a, b), PostOrderDFS(root.body))
@@ -115,11 +114,11 @@ function lower(ctx::AbstractCompiler, root::FinchNode, style::JumperStyle)
             $(contain(ctx_2) do ctx_3
                 ctx_3(loop(root.idx, ext_4, body))
             end)
-            
+
             $i = $(ctx_2(getstop(ext_4))) + $(ctx_2(getunit(ext_4)))
         end
 
-        if prove(ctx_2, call(>=, measure(ext_4), 0))  
+        if prove(ctx_2, call(>=, measure(ext_4), 0))
             body
         else
             quote

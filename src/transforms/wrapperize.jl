@@ -1,5 +1,5 @@
 """
-    get_wrapper_rules(shash, alg)
+    get_wrapper_rules(ctx, depth, alg)
 
 Return the wrapperizing rule set for Finch, which converts expressions like `A[i
 + 1]` to array combinator expressions like `OffsetArray(A, (1,))`. The rules have
@@ -15,7 +15,7 @@ function get_wrapper_rules(ctx, depth, alg)
         end),
         (@rule call(protocolize, call(protocolize, ~A, ~protos_1...), ~protos_2...) => begin
             protos_3 = map(protos_1, protos_2) do proto_1, proto_2
-                something(proto_1, proto_2, Some(nothing)) 
+                something(getval(proto_1), getval(proto_2), Some(nothing))
             end
             call(protocolize, A, protos_3...)
         end),
@@ -28,7 +28,7 @@ function get_wrapper_rules(ctx, depth, alg)
         (@rule call(permissive, call(permissive, ~A, ~dims_1...), ~dims_2...) => begin
             union_dims = getval.(dims_1) .| getval.(dims_2)
             call(permissive, A, union_dims...)
-        end), 
+        end),
         (@rule call(permissive, call(swizzle, ~A, ~sigma...), ~dims...) =>
             call(swizzle, call(permissive, A, dims[invperm(getval.(sigma))]...), sigma...)),
         (@rule access(~A, ~m, ~i1..., call(-, ~j, ~k), ~i2...) =>
@@ -51,7 +51,7 @@ function get_wrapper_rules(ctx, depth, alg)
             end
         end),
         (@rule access(~A, ~m, ~i1..., call(*, ~j1..., ~k, ~j2...), ~i2...) => begin
-            if !isempty(j1) || !isempty(j2) 
+            if !isempty(j1) || !isempty(j2)
                 if length(j1) == 1 && isempty(j2)
                     k_2 = j1[1]
                 elseif isempty(j1) && length(j2) == 1
@@ -60,17 +60,17 @@ function get_wrapper_rules(ctx, depth, alg)
                     k_2 = call(*, ~j1..., ~j2...)
                 end
 
-                if depth(k_2) == 0 
+                if depth(k_2) == 0
                     s1 = ([1 for _ in i1]..., k_2, [1 for _ in i2]...)
                     access(call(scale, A, s1...), m, i1..., k, i2...)
                 end
             end
         end),
-        (@rule call(scale, call(scale, ~A, ~s1...), ~s2...) => begin
-            s3 = map(s1, s2) do proto_1, proto_2
-                call(*, s1, s2) 
+        (@rule call(scale, call(scale, ~A, ~factors_1...), ~factors_2...) => begin
+            factors_3 = map(factors_1, factors_2) do factor_1, factor_2
+                call(*, factor_1, factor_2)
             end
-            call(scale, A, s3...)
+            call(scale, A, factors_3...)
         end),
         (@rule access(~A, ~m, ~i1::(All(isindex))..., call(+, ~j1..., ~k, ~j2...), ~i2...) => begin
             if (!isempty(j1) || !isempty(j2))
@@ -82,62 +82,62 @@ function get_wrapper_rules(ctx, depth, alg)
         end),
         (@rule call(<, ~i, ~j::isindex) => begin
             if depth(i) < depth(j)
-                access(LoTriMask(), reader, j, call(+, i, 1))
+                access(VirtualLoTriMask(), reader, j, call(+, i, 1))
             end
         end),
         (@rule call(<, ~i::isindex, ~j) => begin
             if depth(i) > depth(j)
-                access(UpTriMask(), reader, i, call(-, j, 1))
+                access(VirtualUpTriMask(), reader, i, call(-, j, 1))
             end
         end),
         (@rule call(<=, ~i, ~j::isindex) => begin
             if depth(i) < depth(j)
-                access(LoTriMask(), reader, j, i)
+                access(VirtualLoTriMask(), reader, j, i)
             end
         end),
         (@rule call(<=, ~i::isindex, ~j) => begin
             if depth(i) > depth(j)
-                access(UpTriMask(), reader, i, j)
+                access(VirtualUpTriMask(), reader, i, j)
             end
         end),
         (@rule call(>, ~i, ~j::isindex) => begin
             if depth(i) < depth(j)
-                access(UpTriMask(), reader, j, call(-, i, 1))
+                access(VirtualUpTriMask(), reader, j, call(-, i, 1))
             end
         end),
         (@rule call(>, ~i::isindex, ~j) => begin
             if depth(i) > depth(j)
-                access(LoTriMask(), reader, i, call(+, j, 1))
+                access(VirtualLoTriMask(), reader, i, call(+, j, 1))
             end
         end),
         (@rule call(>=, ~i, ~j::isindex) => begin
             if depth(i) < depth(j)
-                access(UpTriMask(), reader, j, i)
+                access(VirtualUpTriMask(), reader, j, i)
             end
         end),
         (@rule call(>=, ~i::isindex, ~j) => begin
             if depth(i) > depth(j)
-                access(LoTriMask(), reader, i, j)
+                access(VirtualLoTriMask(), reader, i, j)
             end
         end),
         (@rule call(==, ~i, ~j::isindex) => begin
             if depth(i) < depth(j)
-                access(DiagMask(), reader, j, i)
+                access(VirtualDiagMask(), reader, j, i)
             end
         end),
         (@rule call(==, ~i::isindex, ~j) => begin
             if depth(i) > depth(j)
-                access(DiagMask(), reader, i, j)
+                access(VirtualDiagMask(), reader, i, j)
             end
         end),
         (@rule call(!=, ~i, ~j::isindex) => begin
             if depth(i) < depth(j)
-                call(!, access(DiagMask(), reader, j, i))
+                call(!, access(VirtualDiagMask(), reader, j, i))
             end
         end),
         (@rule call(!=, ~i::isindex, ~j) => begin
             if depth(i) > depth(j)
-                call(!, access(DiagMask(), reader, i, j))
+                call(!, access(VirtualDiagMask(), reader, i, j))
             end
         end),
         (@rule call(toeplitz, call(swizzle, ~A, ~sigma...), ~dim...) => begin
@@ -146,7 +146,7 @@ function get_wrapper_rules(ctx, depth, alg)
             call(swizzle, call(toeplitz, A, idim), sigma[1:idim-1]..., sigma[idim], sigma[idim], sigma[idim+1:end]...)
         end),
         (@rule access(~A, ~m, ~i1..., call(+, ~j1..., ~k, ~j2...), ~i2...) => begin
-            if !isempty(j1) || !isempty(j2) 
+            if !isempty(j1) || !isempty(j2)
                 k_2 = call(+, ~j1..., ~j2...)
                 if depth(k_2) == 0
                     delta = ([0 for _ in i1]..., k_2, [0 for _ in i2]...)
@@ -154,11 +154,11 @@ function get_wrapper_rules(ctx, depth, alg)
                 end
             end
         end),
-        (@rule call(offset, call(offset, ~A, ~delta_1...), ~delta_2...) => begin
-            delta_3 = map(delta_1, delta_2) do proto_1, proto_2
-                call(+, proto_1, proto_2) 
+        (@rule call(offset, call(offset, ~A, ~deltas_1...), ~deltas_2...) => begin
+            deltas_3 = map(deltas_1, deltas_2) do delta_1, delta_2
+                call(+, delta_1, delta_2)
             end
-            call(offset, A, delta_3...)
+            call(offset, A, deltas_3...)
         end),
         (@rule call(offset, call(swizzle, ~A, ~sigma...), ~delta...) =>
             call(swizzle, call(offset, A, delta[invperm(getval.(sigma))]...), sigma...)),
@@ -173,7 +173,7 @@ function get_wrapper_rules(ctx, depth, alg)
             access(A_3, m, i1..., k, i2...)
         end),
         (@rule assign(access(~a, updater, ~i...), initwrite, ~rhs) => begin
-            assign(access(a, updater, i...), call(initwrite, call(default, a)), rhs)
+            assign(access(a, updater, i...), call(initwrite, call(fill_value, a)), rhs)
         end),
         (@rule call(swizzle, call(swizzle, ~A, ~sigma_1...), ~sigma_2...) =>
             call(swizzle, A, sigma_1[getval.(sigma_2)]...)),
@@ -220,7 +220,7 @@ function wrapperize(ctx::AbstractCompiler, root)
             for (node, count) in counts
                 if depth(idx) == depth(node)
                     if @capture(node, access(~tn, reader, ~idxs...)) && count > 1
-                        var = variable(Symbol(freshen(ctx.code, tn.val), "_", join([idx.val for idx in idxs])))
+                        var = variable(Symbol(freshen(ctx, tn.val), "_", join([idx.val for idx in idxs])))
                         body = Postwalk(@rule node => var)(body)
                         body = define(var, access(tn, reader, idxs...), body)
                         applied = true
@@ -243,15 +243,13 @@ function unwrap(ctx, x, var)
         finch_leaf(unwrap(ctx, x.val, var))
     else
         if var != x
-            ctx.bindings[var] = finch_leaf(x)
+            set_binding!(ctx, var, finch_leaf(x))
         end
         var
     end
 end
 
 function unwrap_roots(ctx, root)
-    #display(root)
-    #display(ctx.bindings)
     tnss = unique(filter(!isnothing, map(PostOrderDFS(root)) do node
         if @capture(node, access(~A, ~m, ~i...))
             if getroot(A) === nothing
@@ -264,13 +262,13 @@ function unwrap_roots(ctx, root)
             A
         elseif @capture(node, thaw(~A))
             A
-        end 
+        end
     end))
     root = Rewrite(Postwalk(@rule access(~A, ~m, ~i...) => access(unwrap(ctx, A, getroot(A)), m, i...)))(root)
     for tns in tnss
         @assert isvariable(tns)
-        @assert haskey(ctx.bindings, tns) "root tensor variable $tns is not defined as a global binding"
-        val = ctx.bindings[tns]
+        @assert has_binding(ctx, tns) "root tensor variable $tns is not defined as a global binding"
+        val = get_binding(ctx, tns)
         val_2 = unwrap(ctx, val, tns)
         if val_2 != tns
             #@info "Unwrapping" tns val val_2
@@ -282,7 +280,5 @@ function unwrap_roots(ctx, root)
             ])))(root)
         end
     end
-    #display(root)
-    #display(ctx.bindings)
     root
 end

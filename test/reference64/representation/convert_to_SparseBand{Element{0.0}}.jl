@@ -9,7 +9,6 @@ quote
     ref_lvl_ptr = ref_lvl.ptr
     ref_lvl_idx = ref_lvl.idx
     ref_lvl_val = ref_lvl.lvl.val
-    result = nothing
     tmp_lvl_qos_stop = 0
     Finch.resize_if_smaller!(tmp_lvl_ofs, 1)
     tmp_lvl_ofs[1] = 1
@@ -59,7 +58,7 @@ quote
                 tmp_lvl_qos_set = tmp_lvl_qos
                 ref_lvl_q += 1
             else
-                phase_stop_3 = min(ref_lvl_i, phase_stop)
+                phase_stop_3 = min(phase_stop, ref_lvl_i)
                 if ref_lvl_i == phase_stop_3
                     ref_lvl_2_val = ref_lvl_val[ref_lvl_q]
                     if tmp_lvl_i_prev > 0
@@ -108,6 +107,5 @@ quote
     resize!(tmp_lvl_ofs, ros_stop + 1)
     qos_stop = tmp_lvl_ofs[ros_stop + 1] - 1
     resize!(tmp_lvl_val, qos_stop)
-    result = (tmp = Tensor((SparseBandLevel){Int64}(tmp_lvl_2, ref_lvl.shape, tmp_lvl_ptr, tmp_lvl_idx, tmp_lvl_ofs)),)
-    result
+    (tmp = Tensor((SparseBandLevel){Int64}(tmp_lvl_2, ref_lvl.shape, tmp_lvl_ptr, tmp_lvl_idx, tmp_lvl_ofs)),)
 end

@@ -4,7 +4,7 @@ CurrentModule = Finch
 
 # Finch
 
-[Finch](https://github.com/willow-ahrens/Finch.jl) is an adaptable compiler for
+[Finch](https://github.com/finch-tensor/Finch.jl) is an adaptable compiler for
 loop nests over sparse or otherwise structured arrays. Finch supports general
 sparsity as well as many specialized sparsity patterns, like clustered nonzeros,
 diagonals, or triangles.  In addition to zero, Finch supports optimizations over
@@ -68,7 +68,6 @@ quote
     A_mode1_stop = sugar_1[1]
     A_mode2_stop = sugar_1[2]
     @warn "Performance Warning: non-concordant traversal of A[i, j] (hint: most arrays prefer column major or first index fast, run in fast mode to ignore this warning)"
-    result = nothing
     for i_3 = 1:A_mode1_stop
         for j_3 = 1:A_mode2_stop
             val = A[i_3, j_3]
@@ -82,4 +81,4 @@ end
 ```
 
 We're working on adding more documentation, for now take a look at the
-[examples](https://github.com/willow-ahrens/Finch.jl/blob/main/docs/examples)!
+[examples](https://github.com/finch-tensor/Finch.jl/blob/main/docs/examples)!

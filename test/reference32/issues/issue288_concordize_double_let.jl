@@ -18,7 +18,6 @@ begin
     C_mode2_stop == X_mode2_stop || throw(DimensionMismatch("mismatched dimension limits ($(C_mode2_stop) != $(X_mode2_stop))"))
     C_mode3_stop == A_mode3_stop || throw(DimensionMismatch("mismatched dimension limits ($(C_mode3_stop) != $(A_mode3_stop))"))
     A_mode1_stop == C_mode1_stop || throw(DimensionMismatch("mismatched dimension limits ($(A_mode1_stop) != $(C_mode1_stop))"))
-    result = nothing
     for k_6 = 1:C_mode3_stop
         for j_5 = 1:C_mode2_stop
             for i_9 = 1:A_mode1_stop
@@ -27,15 +26,14 @@ begin
                     phase_stop = min(i_9, l_6 + -1)
                     if phase_stop >= i_9
                         for s_4 = i_9:phase_stop
-                            val_2 = A[i_9, l_6, k_6]
-                            C[i_9, j_5, k_6] = val_2 * val + C[i_9, j_5, k_6]
-                            C[i_9, j_5, k_6] = val * val_2 + C[i_9, j_5, k_6]
+                            val_4 = A[i_9, l_6, k_6]
+                            C[i_9, j_5, k_6] = val_4 * val + C[i_9, j_5, k_6]
+                            C[i_9, j_5, k_6] = val * val_4 + C[i_9, j_5, k_6]
                         end
                     end
                 end
             end
         end
     end
-    result = ()
-    result
+    ()
 end

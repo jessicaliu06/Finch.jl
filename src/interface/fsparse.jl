@@ -1,5 +1,5 @@
 """
-    fsparse(I::Tuple, V,[ M::Tuple, combine]; default=zero(eltype(V)))
+    fsparse(I::Tuple, V,[ M::Tuple, combine]; fill_value=zero(eltype(V)))
 
 Create a sparse COO tensor `S` such that `size(S) == M` and `S[(i[q] for i =
 I)...] = V[q]`. The combine function is used to combine duplicates. If `M` is
@@ -31,7 +31,7 @@ fsparse_parse(I, i::AbstractVector, args...; kwargs...) = fsparse_parse((I..., i
 fsparse_parse(I, V::AbstractVector; kwargs...) = fsparse_impl(I, V; kwargs...)
 fsparse_parse(I, V::AbstractVector, m::Tuple; kwargs...) = fsparse_impl(I, V, m; kwargs...)
 fsparse_parse(I, V::AbstractVector, m::Tuple, combine; kwargs...) = fsparse_impl(I, V, m, combine; kwargs...)
-function fsparse_impl(I::Tuple, V::Vector, shape = map(maximum, I), combine = eltype(V) isa Bool ? (|) : (+); default = zero(eltype(V)))
+function fsparse_impl(I::Tuple, V::Vector, shape = map(maximum, I), combine = eltype(V) isa Bool ? (|) : (+); fill_value = zero(eltype(V)))
     C = map(tuple, reverse(I)...)
     updater = false
     if !issorted(C)
@@ -54,7 +54,7 @@ function fsparse_impl(I::Tuple, V::Vector, shape = map(maximum, I), combine = el
     else
         I = map(copy, I)
     end
-    return fsparse!(I..., V, shape; default=default)
+    return fsparse!(I..., V, shape; fill_value=fill_value)
 end
 
 """
@@ -67,8 +67,8 @@ fsparse!(args...; kwargs...) = fsparse!_parse((), args...; kwargs...)
 fsparse!_parse(I, i::AbstractVector, args...; kwargs...) = fsparse!_parse((I..., i), args...; kwargs...)
 fsparse!_parse(I, V::AbstractVector; kwargs...) = fsparse!_impl(I, V; kwargs...)
 fsparse!_parse(I, V::AbstractVector, M::Tuple; kwargs...) = fsparse!_impl(I, V, M; kwargs...)
-function fsparse!_impl(I::Tuple, V, shape = map(maximum, I); default = zero(eltype(V)))
-    return Tensor(SparseCOO{length(I), Tuple{map(eltype, I)...}}(Element{default, eltype(V), Int}(V), shape, [1, length(V) + 1], I))
+function fsparse!_impl(I::Tuple, V, shape = map(maximum, I); fill_value = zero(eltype(V)))
+    return Tensor(SparseCOO{length(I), Tuple{map(eltype, I)...}}(Element{fill_value, eltype(V), Int}(V), shape, [1, length(V) + 1], I))
 end
 
 """
@@ -132,7 +132,7 @@ function fsprand_erdos_renyi_sample_knuth(r::AbstractRNG, M::Tuple, nnz::Int)
                 for m = 1:N
                     I[m][k] = i[m]
                 end
-            elseif rand(r) * p < k 
+            elseif rand(r) * p < k
                 l = rand(r, 1:nnz)
                 for m = 1:N
                     I[m][l] = i[m]
@@ -161,7 +161,7 @@ function fsprand_erdos_renyi_sample_self_avoid(r::AbstractRNG, M::Tuple, nnz::In
     k = 0
     while length(S) < nnz
         i = ntuple(n -> rand(r, 1:M[n]), N)
-        push!(S, i)       
+        push!(S, i)
         if length(S) > k
             k += 1
             for m = 1:N
@@ -216,13 +216,13 @@ function fsprand_erdos_renyi_gilbert(r::AbstractRNG, T, M::Tuple, p::AbstractFlo
         # poisson would work in that case
     end
     #now we generate exactly nnz nonzeros:
-    return fsprand_erdos_renyi(r, T, M, nnz, rfn) 
+    return fsprand_erdos_renyi(r, T, M, nnz, rfn)
 end
 
 fsprandn(args...) = fsprand(args..., randn)
 
 """
-    fspzeros([type], M::Tuple)
+    fspzeros([type], M...)
 
 Create a random zero tensor of size `M`, with elements of type `type`. The
 tensor is in COO format.
@@ -232,10 +232,12 @@ See also: (`spzeros`)(https://docs.julialang.org/en/v1/stdlib/SparseArrays/#Spar
 # Examples
 ```jldoctest
 julia> fspzeros(Bool, 3, 3)
-SparseCOO{2} (false) [:,1:3]
+3×3-Tensor
+└─ SparseCOO{2} (false) [:,1:3]
 
 julia> fspzeros(Float64, 2, 2, 2)
-SparseCOO{3} (0.0) [:,:,1:2]
+2×2×2-Tensor
+└─ SparseCOO{3} (0.0) [:,:,1:2]
 ```
 """
 fspzeros(M...) = fspzeros(Float64, M...)

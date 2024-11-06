@@ -42,7 +42,7 @@ CPU() = CPU(Threads.nthreads())
 end
 function virtualize(ctx, ex, ::Type{CPU})
     sym = freshen(ctx, :cpu)
-    push!(ctx.preamble, quote
+    push_preamble!(ctx, quote
         $sym = $ex
     end)
     VirtualCPU(sym, virtualize(ctx, :($sym.n), Int))
@@ -64,7 +64,6 @@ virtual_get_device(::VirtualSerial) = VirtualCPU(nothing, 1)
 virtual_get_task(::VirtualSerial) = nothing
 
 
-
 struct CPUThread{Parent} <: AbstractTask
     tid::Int
     dev::CPU
@@ -84,7 +83,7 @@ end
 @inline function aquire_lock!(dev:: CPU, val::Threads.Atomic{T}) where {T}
     # Keep trying to catch x === false so we can set it to true.
     while (Threads.atomic_cas!(x, zero(T), one(T)) === one(T))
-        
+
     end
     # when it is true because we did it, we leave, but let's make sure it is true in debug mode.
     @assert x === one(T)
@@ -97,7 +96,7 @@ end
 
 @inline function release_lock!(dev:: CPU, val::Threads.Atomic{T}) where {T}
     # set the atomic to false so someone else can grab it.
-    Threads.atomic_cas!(x, one(T), zero(T)) 
+    Threads.atomic_cas!(x, one(T), zero(T))
 end
 
 @inline function release_lock!(dev:: CPU, val::Base.Threads.SpinLock)
@@ -157,5 +156,6 @@ function moveto(vec::Vector, task::CPUThread)
 end
 
 function moveto(vec::CPULocalVector, task::CPUThread)
-    return vec.data[task.tid]
+    temp = vec.data[task.tid]
+    return temp
 end

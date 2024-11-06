@@ -10,7 +10,6 @@ quote
     ref_lvl_ptr = ref_lvl.ptr
     ref_lvl_idx = ref_lvl.idx
     ref_lvl_val = ref_lvl.lvl.val
-    result = nothing
     for tmp_lvl_r = 1:tmp_lvl_qos_fill
         tmp_lvl_p = first(tmp_lvl_srt[tmp_lvl_r])
         tmp_lvl_ptr[tmp_lvl_p] = 0
@@ -60,7 +59,7 @@ quote
                 end
                 ref_lvl_q += 1
             else
-                phase_stop_3 = min(ref_lvl_i, phase_stop)
+                phase_stop_3 = min(phase_stop, ref_lvl_i)
                 if ref_lvl_i == phase_stop_3
                     ref_lvl_2_val = ref_lvl_val[ref_lvl_q]
                     tmp_lvl_q_2 = (1 - 1) * ref_lvl.shape + phase_stop_3
@@ -95,6 +94,5 @@ quote
     end
     tmp_lvl_ptr[tmp_lvl_p_prev + 1] = tmp_lvl_qos_fill + 1
     resize!(tmp_lvl_val, ref_lvl.shape)
-    result = (tmp = Tensor((SparseByteMapLevel){Int64}(tmp_lvl_2, ref_lvl.shape, tmp_lvl_ptr, tmp_lvl_tbl, tmp_lvl_srt)),)
-    result
+    (tmp = Tensor((SparseByteMapLevel){Int64}(tmp_lvl_2, ref_lvl.shape, tmp_lvl_ptr, tmp_lvl_tbl, tmp_lvl_srt)),)
 end

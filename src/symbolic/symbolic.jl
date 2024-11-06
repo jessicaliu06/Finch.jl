@@ -1,99 +1,6 @@
 abstract type AbstractAlgebra end
 struct DefaultAlgebra<:AbstractAlgebra end
 
-struct Chooser{D} end
-
-(f::Chooser{D})(x) where {D} = x
-function (f::Chooser{D})(x, y, tail...) where {D}
-    if isequal(x, D)
-        return f(y, tail...)
-    else
-        return x
-    end
-end
-"""
-    choose(z)(a, b)
-
-`choose(z)` is a function which returns whichever of `a` or `b` is not
-[isequal](https://docs.julialang.org/en/v1/base/base/#Base.isequal) to `z`. If
-neither are `z`, then return `a`. Useful for getting the first nonfill value in
-a sparse array.
-```jldoctest setup=:(using Finch)
-julia> a = Tensor(SparseList(Element(0.0)), [0, 1.1, 0, 4.4, 0])
-SparseList (0.0) [1:5]
-├─ [2]: 1.1
-└─ [4]: 4.4
-
-julia> x = Scalar(0.0); @finch for i=_; x[] <<choose(1.1)>>= a[i] end;
-
-julia> x[]
-0.0
-```
-"""
-choose(d) = Chooser{d}()
-
-struct FilterOp{D} end
-
-(f::FilterOp{D})(cond, arg) where {D} = ifelse(cond, arg, D)
-
-"""
-    filterop(z)(cond, arg)
-
-`filterop(z)` is a function which returns `ifelse(cond, arg, z)`. This operation
-is handy for filtering out values based on a mask or a predicate.
-`map(filterop(0), cond, arg)` is analogous to `filter(x -> cond ? x: z, arg)`.
-
-```jldoctest setup=:(using Finch)
-julia> a = Tensor(SparseList(Element(0.0)), [0, 1.1, 0, 4.4, 0])
-SparseList (0.0) [1:5]
-├─ [2]: 1.1
-└─ [4]: 4.4
-
-julia> x = Tensor(SparseList(Element(0.0)));
-
-julia> c = Tensor(SparseList(Element(false)), [false, false, false, true, false]);
-
-julia> @finch (x .= 0; for i=_; x[i] = filterop(0)(c[i], a[i]) end)
-(x = Tensor(SparseList{Int64}(Element{0.0, Float64, Int64}([4.4]), 5, [1, 2], [4])),)
-
-julia> x
-SparseList (0.0) [1:5]
-└─ [4]: 4.4
-```
-"""
-filterop(d) = FilterOp{d}()
-
-"""
-    minby(a, b)
-
-Return the min of `a` or `b`, comparing them by `a[1]` and `b[1]`, and breaking
-ties to the left. Useful for implementing argmin operations:
-```jldoctest setup=:(using Finch)
-julia> a = [7.7, 3.3, 9.9, 3.3, 9.9]; x = Scalar(Inf => 0);
-
-julia> @finch for i=_; x[] <<minby>>= a[i] => i end;
-
-julia> x[]
-3.3 => 2
-```
-"""
-minby(a, b) = a[1] > b[1] ? b : a
-
-"""
-    maxby(a, b)
-
-Return the max of `a` or `b`, comparing them by `a[1]` and `b[1]`, and breaking
-ties to the left. Useful for implementing argmax operations:
-```jldoctest setup=:(using Finch)
-julia> a = [7.7, 3.3, 9.9, 3.3, 9.9]; x = Scalar(-Inf => 0);
-
-julia> @finch for i=_; x[] <<maxby>>= a[i] => i end;
-
-julia> x[]
-9.9 => 3
-```
-"""
-maxby(a, b) = a[1] < b[1] ? b : a
 
 isassociative(alg) = (f) -> isassociative(alg, f)
 isassociative(alg, f::FinchNode) = f.kind === literal && isassociative(alg, f.val)
@@ -199,8 +106,8 @@ function isidentity_by_fn(alg::AbstractAlgebra, ::typeof(maxby), x::FinchNode)
     end
     return false
 end
-isidentity(::AbstractAlgebra, ::Chooser{D}, x) where {D} = isequal(x, D)
-isidentity(::AbstractAlgebra, ::InitWriter{D}, x) where {D} = isequal(x, D)
+isidentity(::AbstractAlgebra, ::Chooser{Vf}, x) where {Vf} = isequal(x, Vf)
+isidentity(::AbstractAlgebra, ::InitWriter{Vf}, x) where {Vf} = isequal(x, Vf)
 
 isannihilator(alg) = (f, x) -> isannihilator(alg, f, x)
 isannihilator(alg, f::FinchNode, x::FinchNode) = isliteral(f) && isannihilator_by_fn(alg, f.val, x)
@@ -235,8 +142,8 @@ function isannihilator_by_fn(alg::AbstractAlgebra, ::typeof(maxby), x::FinchNode
     end
     return false
 end
-isannihilator(::AbstractAlgebra, ::Chooser{D}, x) where {D} = !isequal(x, D)
-#isannihilator(::AbstractAlgebra, ::InitWriter{D}, x) where {D} = !isequal(x, D)
+isannihilator(::AbstractAlgebra, ::Chooser{Vf}, x) where {Vf} = !isequal(x, Vf)
+#isannihilator(::AbstractAlgebra, ::InitWriter{Vf}, x) where {Vf} = !isequal(x, Vf)
 
 isinverse(alg) = (f, g) -> isinverse(alg, f, g)
 isinverse(alg, f::FinchNode, g::FinchNode) = isliteral(f) && isliteral(g) && isinverse(alg, f.val, g.val)
@@ -260,7 +167,15 @@ isinvolution(::Any, f) = false
 isinvolution(::AbstractAlgebra, ::typeof(-)) = true
 isinvolution(::AbstractAlgebra, ::typeof(inv)) = true
 
+return_type(alg) = (f, args...) -> return_type(alg, f, args...)
+"""
+    return_type(algebra, f, arg_types...)
 
+Give the return type of `f` when applied to arguments of types `arg_types...` in `algebra`.
+Used to determine output types of functions in the high-level interface.
+This function falls back to [`Base.promote_op`](https://github.com/JuliaLang/julia/blob/46933b8a708453f9caecb8abce88770c4bff675d/base/promotion.jl#L508-L619).
+"""
+return_type(alg, f, arg_types...) = Base.promote_op(f, arg_types...)
 
 collapsed(alg, idx, ext, lhs, f::FinchNode, rhs) = collapsed(alg, idx, ext, lhs, f.val, rhs)
 """
@@ -273,18 +188,18 @@ collapsed(alg, idx, ext, lhs, f::Any, rhs) = isidempotent(alg, f) ? sieve(call(>
 collapsed(alg, idx, ext, lhs, f::typeof(-), rhs) = assign(lhs, f, call(*, measure(ext), rhs))
 collapsed(alg, idx, ext, lhs, f::typeof(*), rhs) = assign(lhs, f, call(^, rhs, measure(ext)))
 collapsed(alg, idx, ext::Extent, lhs, f::typeof(+), rhs) = assign(lhs, f, call(*, measure(ext), rhs))
-collapsed(alg, idx, ext::ContinuousExtent, lhs, f::typeof(+), rhs) = begin 
+collapsed(alg, idx, ext::ContinuousExtent, lhs, f::typeof(+), rhs) = begin
     if (@capture rhs call(*, ~a1..., call(d, ~i1..., idx, ~i2...), ~a2...)) # Lebesgue
-        if prove(LowerJulia(), call(==, measure(ext), 0))
+        if prove(FinchCompiler(), call(==, measure(ext), 0))
             assign(lhs, f, literal(0))
         else
             assign(lhs, f, call(*, call(drop_eps, measure(ext)), a1..., a2..., call(d, i1..., i2...)))
         end
     else # Counting
-        if prove(LowerJulia(), call(==, measure(ext), 0))
+        if prove(FinchCompiler(), call(==, measure(ext), 0))
             assign(lhs, f, rhs)
         else
-            sieve(call(==, measure(ext), 0), assign(lhs, f, rhs)) # Undefined if measure != 0 
+            sieve(call(==, measure(ext), 0), assign(lhs, f, rhs)) # Undefined if measure != 0
             #block(sieve(call(==, measure(ext), 0), assign(lhs, f, rhs)),
             #      sieve(call(!=, measure(ext), 0), assign(lhs, f, Inf))) #TODO : add "else" in sieve
         end
@@ -294,7 +209,7 @@ end
 getvars(arr::AbstractArray) = mapreduce(getvars, vcat, arr, init=[])
 getvars(arr) = getroot(arr) === nothing ? [] : [getroot(arr)]
 getroot(arr) = nothing
-function getvars(node::FinchNode) 
+function getvars(node::FinchNode)
     if node.kind == variable
         return [node]
     elseif node.kind == virtual
@@ -306,8 +221,48 @@ function getvars(node::FinchNode)
     end
 end
 
-
 ortho(var, stmt) = !(var in getvars(stmt))
 
-include("simplify_program.jl")
-include("analyze_bounds.jl")
+"""
+    StaticHash
+
+A hash function which is static, i.e. the hashes are the same when objects are hashed in the same order.
+The hash is used to memoize the results of simplification and proof rules.
+"""
+struct StaticHash
+    counts::Dict{Tuple{Any, DataType}, UInt}
+end
+StaticHash() = StaticHash(Dict{Tuple{Any, DataType}, UInt}())
+
+(h::StaticHash)(x) = get!(h.counts, (x, typeof(x)), UInt(length(h.counts)))
+
+"""
+    SymbolicContext
+
+A compiler context for symbolic computation, defined on an algebra.
+"""
+@kwdef struct SymbolicContext
+    algebra
+    shash = StaticHash()
+    simplify_rules = get_simplify_rules(algebra, shash)
+    prove_rules = get_prove_rules(algebra, shash)
+    prove_cache = Dict()
+end
+
+"""
+    get_algebra(ctx)
+
+get the algebra used in the current context
+"""
+get_algebra(ctx::SymbolicContext) = ctx.algebra
+
+"""
+    get_static_hash(ctx)
+
+Return an object which can be called as a hash function. The hashes
+are the same when objects are hashed in the same order.
+"""
+get_static_hash(ctx::SymbolicContext) = ctx.shash
+
+include("simplify.jl")
+include("prove.jl")

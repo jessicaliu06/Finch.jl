@@ -1,3 +1,5 @@
+truncate(ctx, node, ext, ext_2) = node
+
 @kwdef struct Phase
     body
     start = (ctx, ext) -> nothing
@@ -5,7 +7,6 @@
     range = (ctx, ext) -> similar_extent(ext, something(start(ctx, ext), getstart(ext)), something(stop(ctx, ext), getstop(ext)))
 end
 FinchNotation.finch_leaf(x::Phase) = virtual(x)
-instantiate(ctx, tns::Phase, mode, protos) = tns
 
 Base.show(io::IO, ex::Phase) = Base.show(io, MIME"text/plain"(), ex)
 function Base.show(io::IO, mime::MIME"text/plain", ex::Phase)
@@ -42,7 +43,7 @@ phase_op(::SequencePhaseStyle) = virtual_intersect
 phase_op(::StepperPhaseStyle) = virtual_intersect
 phase_op(::JumperPhaseStyle) = virtual_union
 
-(ctx::Stylize{<:AbstractCompiler})(node::Phase) = ctx.root.kind === loop ? SequencePhaseStyle() : DefaultStyle()
+get_style(ctx, ::Phase, root) = root.kind === loop ? SequencePhaseStyle() : DefaultStyle()
 
 combine_style(a::DefaultStyle, b::PhaseStyle) = b
 combine_style(a::LookupStyle, b::PhaseStyle) = b
@@ -57,7 +58,7 @@ combine_style(a::ThunkStyle, b::PhaseStyle) = a
 function lower(ctx::AbstractCompiler, root::FinchNode, style::PhaseStyle)
     if root.kind === loop
         i = getname(root.idx)
-        i0=freshen(ctx.code, i)
+        i0=freshen(ctx, i)
 
         body = root.body
 
@@ -77,12 +78,12 @@ function lower(ctx::AbstractCompiler, root::FinchNode, style::PhaseStyle)
                     body
                 ))
             end)
-            
+
             $i = $(ctx(getstop(ext_4))) + $(ctx(getunit(ext_4)))
         end
 
 
-        if prove(ctx, call(>=, measure(ext_4), 0))  
+        if prove(ctx, call(>=, measure(ext_4), 0))
             return body
         else
             return quote

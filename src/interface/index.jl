@@ -2,6 +2,10 @@ struct Drop{Idx}
     idx::Idx
 end
 
+Base.to_indices(A::AbstractTensor, I::Tuple{AbstractVector}) = Base.to_indices(A, axes(A), I)
+
+Base.IndexStyle(::Type{<:AbstractTensor}) = Base.IndexCartesian()
+
 """
     getindex_rep(tns, idxs...)
 
@@ -19,18 +23,35 @@ getindex_rep_def(lvl::SparseData, idx::Type{<:Base.Slice}, idxs...) = SparseData
 getindex_rep_def(lvl::DenseData, idx::Drop, idxs...) = getindex_rep_def(lvl.lvl, idxs...)
 getindex_rep_def(lvl::DenseData, idx, idxs...) = DenseData(getindex_rep_def(lvl.lvl, idxs...))
 
+getindex_rep_def(lvl::RepeatData, idx::Drop, idxs...) = getindex_rep_def(lvl.lvl, idxs...)
+getindex_rep_def(lvl::RepeatData, idx, idxs...) = RepeatData(getindex_rep_def(lvl.lvl, idxs...))
+
 getindex_rep_def(lvl::ElementData) = lvl
 
-getindex_rep_def(lvl::RepeatData, idx::Drop) = SolidData(ElementData(lvl.default, lvl.eltype))
-getindex_rep_def(lvl::RepeatData, idx) = SolidData(ElementData(lvl.default, lvl.eltype))
-getindex_rep_def(lvl::RepeatData, idx::Type{<:AbstractUnitRange}) = SolidData(ElementData(lvl.default, lvl.eltype))
 
-Base.getindex(arr::Tensor, inds::AbstractVector) = getindex_helper(arr, to_indices(arr, axes(arr), (inds,)))
-function Base.getindex(arr::Tensor, inds...)
+Base.getindex(arr::AbstractTensor, inds::AbstractVector) = getindex_helper(arr, to_indices(arr, axes(arr), (inds,)))
+function Base.getindex(arr::AbstractTensor, inds...)
     if nothing in inds && inds isa Tuple{Vararg{Union{Nothing, Colon}}}
         return compute(lazy(arr)[inds...])
     else
         getindex_helper(arr, to_indices(arr, inds))
+    end
+end
+
+Base.getindex(arr::SwizzleArray{perm}, inds::AbstractVector) where {perm} = getindex_helper(arr, to_indices(arr, axes(arr), (inds,)))
+function Base.getindex(arr::SwizzleArray{perm}, inds...) where {perm}
+    if nothing in inds && inds isa Tuple{Vararg{Union{Nothing, Colon}}}
+        return compute(lazy(arr)[inds...])
+    else
+        inds_2 = Base.to_indices(arr, axes(arr), inds)
+        perm_2 = collect(invperm(perm))
+        res = getindex(arr.body, inds_2[perm_2]...)
+        perm_3 = sortperm(filter(n -> ndims(inds_2[n]) > 0, perm_2))
+        if issorted(perm_3)
+            return res
+        else
+            return swizzle(res, perm_3...)
+        end
     end
 end
 
@@ -43,7 +64,7 @@ end
     inds_ndims = ndims.(inds)
     if sum(inds_ndims, init=0) == 0
         return quote
-            scl = Scalar($(default(arr)))
+            scl = Scalar($(fill_value(arr)))
             @finch scl[] = arr[inds...]
             return scl[]
         end
@@ -63,14 +84,14 @@ end
     end
     dst_modes = modes[filter(n->ndims(inds[n]) != 0, 1:N)]
     exts = Expr(:block, (:($idx = _) for idx in reverse(dst_modes))...)
-    
+
     dst = fiber_ctr(getindex_rep(data_rep(arr), inds...))
 
     quote
         win = $dst
         ($(syms...), ) = (inds...,)
         @finch begin
-            win .= $(default(arr))
+            win .= $(fill_value(arr))
             $(Expr(:for, exts, quote
                 win[$(dst_modes...)] = arr[$(coords...)]
             end))
@@ -79,7 +100,15 @@ end
     end
 end
 
-Base.setindex!(arr::Tensor, src, inds...) = setindex_helper(arr, src, to_indices(arr, inds))
+Base.setindex!(arr::AbstractTensor, src, inds...) = setindex_helper(arr, src, to_indices(arr, inds))
+
+function Base.setindex!(arr::SwizzleArray{perm}, v, inds...) where {perm}
+    inds_2 = Base.to_indices(arr, inds)
+    perm_2 = collect(invperm(perm))
+    res = setindex!(arr.body, v, inds_2[perm_2]...)
+    arr
+end
+
 @staged function setindex_helper(arr, src, inds)
     inds <: Type{<:Tuple}
     inds = inds.parameters

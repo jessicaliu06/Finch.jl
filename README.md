@@ -1,15 +1,15 @@
 # Finch.jl
 
-[docs]:https://willow-ahrens.github.io/Finch.jl/stable
-[ddocs]:https://willow-ahrens.github.io/Finch.jl/dev
-[ci]:https://github.com/willow-ahrens/Finch.jl/actions/workflows/CI.yml?query=branch%3Amain
-[cov]:https://codecov.io/gh/willow-ahrens/Finch.jl
-[example]:https://github.com/willow-ahrens/Finch.jl/tree/main/docs/examples
+[docs]:https://finch-tensor.github.io/Finch.jl/stable
+[ddocs]:https://finch-tensor.github.io/Finch.jl/dev
+[ci]:https://github.com/finch-tensor/Finch.jl/actions/workflows/CI.yml?query=branch%3Amain
+[cov]:https://codecov.io/gh/finch-tensor/Finch.jl
+[example]:https://github.com/finch-tensor/Finch.jl/tree/main/docs/examples
 
 [docs_ico]:https://img.shields.io/badge/docs-stable-blue.svg
 [ddocs_ico]:https://img.shields.io/badge/docs-dev-blue.svg
-[ci_ico]:https://github.com/willow-ahrens/Finch.jl/actions/workflows/CI.yml/badge.svg?branch=main
-[cov_ico]:https://codecov.io/gh/willow-ahrens/Finch.jl/branch/main/graph/badge.svg
+[ci_ico]:https://github.com/finch-tensor/Finch.jl/actions/workflows/CI.yml/badge.svg?branch=main
+[cov_ico]:https://codecov.io/gh/finch-tensor/Finch.jl/branch/main/graph/badge.svg
 [example_ico]:https://img.shields.io/badge/examples-docs%2Fexamples-blue.svg
 
 | **Documentation**                             | **Build Status**                      | **Examples**    |
@@ -36,7 +36,7 @@ Finch supports a wide variety of array structure beyond sparsity. Whether you're
 | Major Sparse Formats and Structured Arrays |  `A = Tensor(Dense(SparseList(Element(0.0)), 3, 4)`|
 | Background Values Other Than Zero |  `B = Tensor(SparseList(Element(1.0)), 9)`|
 | Broadcasts and Reductions |  `sum(A .* B)`|
-| Custom Operators |  `x[] <<min>>= y[i] + z[i]`|
+| User-Defined Functions |  `x[] <<min>>= y[i] + z[i]`|
 | Multiple Outputs |  `x[] <<min>>= y[i]; z[] <<max>>= y[i]`|
 | Multicore Parallelism |  `for i = parallel(1:100)`|
 | Conditionals |  `if dist[] < best_dist[]`|

@@ -1,23 +1,23 @@
 quote
     tmp_lvl = ((ex.bodies[1]).bodies[1]).tns.bind.lvl
+    tmp_lvl_val = ((ex.bodies[1]).bodies[1]).tns.bind.lvl.val
     tmp_lvl_2 = ((ex.bodies[1]).bodies[1]).tns.bind.lvl.lvl
     tmp_lvl_3 = tmp_lvl_2.lvl
     ref_lvl = ((ex.bodies[1]).bodies[2]).body.rhs.tns.bind.lvl
     ref_lvl_ptr = ref_lvl.ptr
     ref_lvl_idx = ref_lvl.idx
     ref_lvl_val = ref_lvl.lvl.val
-    result = nothing
-    Finch.resize_if_smaller!(tmp_lvl.val, 1)
+    Finch.resize_if_smaller!(tmp_lvl_val, 1)
     for pos = 1:1
-        pointer_to_lvl = similar_level(tmp_lvl.lvl, level_default(typeof(tmp_lvl.lvl)), level_eltype(typeof(tmp_lvl.lvl)), ref_lvl.shape)
+        pointer_to_lvl = Finch.similar_level(tmp_lvl.lvl, Finch.level_fill_value(typeof(tmp_lvl.lvl)), Finch.level_eltype(typeof(tmp_lvl.lvl)), ref_lvl.shape)
         pointer_to_lvl_3 = pointer_to_lvl.lvl
         pointer_to_lvl_2_val = pointer_to_lvl.lvl.val
         Finch.resize_if_smaller!(pointer_to_lvl_2_val, ref_lvl.shape)
         Finch.fill_range!(pointer_to_lvl_2_val, false, 1, ref_lvl.shape)
         resize!(pointer_to_lvl_2_val, ref_lvl.shape)
-        tmp_lvl.val[pos] = (DenseLevel){Int64}(pointer_to_lvl_3, ref_lvl.shape)
+        tmp_lvl_val[pos] = (DenseLevel){Int64}(pointer_to_lvl_3, ref_lvl.shape)
     end
-    pointer_to_lvl_5 = tmp_lvl.val[1]
+    pointer_to_lvl_5 = tmp_lvl_val[1]
     pointer_to_lvl_6 = pointer_to_lvl_5.lvl
     pointer_to_lvl_5_val = pointer_to_lvl_5.lvl.val
     Finch.resize_if_smaller!(pointer_to_lvl_5_val, pointer_to_lvl_5.shape)
@@ -42,7 +42,7 @@ quote
                 pointer_to_lvl_5_val[pointer_to_lvl_5_q] = ref_lvl_2_val
                 ref_lvl_q += 1
             else
-                phase_stop_3 = min(ref_lvl_i, phase_stop)
+                phase_stop_3 = min(phase_stop, ref_lvl_i)
                 if ref_lvl_i == phase_stop_3
                     ref_lvl_2_val = ref_lvl_val[ref_lvl_q]
                     pointer_to_lvl_5_q = (1 - 1) * pointer_to_lvl_5.shape + phase_stop_3
@@ -54,7 +54,6 @@ quote
         end
     end
     resize!(pointer_to_lvl_5_val, pointer_to_lvl_5.shape)
-    tmp_lvl.val[1] = (DenseLevel){Int64}(pointer_to_lvl_6, pointer_to_lvl_5.shape)
-    result = (tmp = Tensor((SeparateLevel){DenseLevel{Int64, ElementLevel{false, Bool, Int64, Vector{Bool}}}, Vector{DenseLevel{Int64, ElementLevel{false, Bool, Int64, Vector{Bool}}}}}((DenseLevel){Int64}(tmp_lvl_3, ref_lvl.shape), tmp_lvl.val)),)
-    result
+    tmp_lvl_val[1] = (DenseLevel){Int64}(pointer_to_lvl_6, pointer_to_lvl_5.shape)
+    (tmp = Tensor((SeparateLevel){DenseLevel{Int64, ElementLevel{false, Bool, Int64, Vector{Bool}}}, Vector{DenseLevel{Int64, ElementLevel{false, Bool, Int64, Vector{Bool}}}}}((DenseLevel){Int64}(tmp_lvl_3, ref_lvl.shape), tmp_lvl_val)),)
 end

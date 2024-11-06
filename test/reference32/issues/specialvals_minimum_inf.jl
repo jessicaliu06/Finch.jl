@@ -5,7 +5,6 @@ begin
     yf_lvl_ptr = yf_lvl.ptr
     yf_lvl_idx = yf_lvl.idx
     yf_lvl_val = yf_lvl.lvl.val
-    result = nothing
     yf_lvl_q = yf_lvl_ptr[1]
     yf_lvl_q_stop = yf_lvl_ptr[1 + 1]
     if yf_lvl_q < yf_lvl_q_stop
@@ -25,7 +24,7 @@ begin
                 x_val = min(yf_lvl_2_val, x_val)
                 yf_lvl_q += 1
             else
-                phase_stop_3 = min(yf_lvl_i, phase_stop)
+                phase_stop_3 = min(phase_stop, yf_lvl_i)
                 if yf_lvl_i == phase_stop_3
                     yf_lvl_2_val = yf_lvl_val[yf_lvl_q]
                     x_val = min(x_val, yf_lvl_2_val)

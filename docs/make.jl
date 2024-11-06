@@ -2,12 +2,12 @@
 if abspath(PROGRAM_FILE) == @__FILE__
     using Pkg
     Pkg.activate(@__DIR__)
+    Pkg.develop(PackageSpec(path = joinpath(@__DIR__, "..")))
     Pkg.instantiate()
 end
 
 using Documenter
 using Documenter.Remotes
-using Literate
 using Finch
 
 DocMeta.setdocmeta!(Finch, :DocTestSetup, :(using Finch; using SparseArrays); recursive=true)
@@ -15,11 +15,11 @@ DocMeta.setdocmeta!(Finch, :DocTestSetup, :(using Finch; using SparseArrays); re
 makedocs(;
     modules=[Finch],
     authors="Willow Ahrens",
-    repo=Remotes.GitHub("willow-ahrens", "Finch.jl"),
+    repo=Remotes.GitHub("finch-tensor", "Finch.jl"),
     sitename="Finch.jl",
     format=Documenter.HTML(;
         prettyurls=get(ENV, "CI", "false") == "true",
-        canonical="https://willow-ahrens.github.io/Finch.jl",
+        canonical="https://finch-tensor.github.io/Finch.jl",
         assets=["assets/favicon.ico"],
         size_threshold = 1_000_000,
     ),
@@ -37,7 +37,7 @@ makedocs(;
             "Index Sugar" => "guides/index_sugar.md",
             "Mask Sugar" => "guides/mask_sugar.md",
             "Iteration Protocols" => "guides/iteration_protocols.md",
-            "Custom Operators" => "guides/custom_operators.md",
+            "User-Defined Functions" => "guides/user-defined_functions.md",
             "High-Level Array API" => "guides/array_api.md",
             #"Parallelization and Architectures" => "guides/parallelization.md",
             "FileIO" => "guides/fileio.md",
@@ -47,15 +47,14 @@ makedocs(;
             #"Debugging Tips" => "guides/debugging_tips.md",
         ],
         "Technical Reference" => [
-        #    "Finch Core API" => "reference/core_api.md",
             "Documentation Listing" => "reference/listing.md",
-            "Advanced Implementation Details" => [
-                "Internals" => "reference/advanced_implementation/internals.md",
-        #        "Looplets and Coiteration" => "reference/advanced_implementation/looplets_coiteration.md",
-        #        "Concordization" => "reference/advanced_implementation/concordization.md",
-        #        "Local Variables and Constant Propagation" => "reference/advanced_implementation/local_variables.md",
-                "Tensor Interface" => "reference/advanced_implementation/tensor_interface.md",
-        #        "Looplet Interface" => "reference/advanced_implementation/looplet_interface.md",
+            "Advanced Internal Details" => [
+                "Virtualization" => "reference/internals/virtualization.md",
+                "Tensor Interface" => "reference/internals/tensor_interface.md",
+                "Compiler Interfaces" => "reference/internals/compiler_interface.md",
+                "Finch Notation" => "reference/internals/finch_notation.md",
+                "Finch Logic" => "reference/internals/finch_logic.md",
+        #        "Looplets and Coiteration" => "reference/internals/looplets_coiteration.md",
             ],
         ],
         "Community and Contributions" => "CONTRIBUTING.md",
@@ -71,6 +70,6 @@ makedocs(;
 )
 
 deploydocs(;
-    repo="github.com/willow-ahrens/Finch.jl",
+    repo="github.com/finch-tensor/Finch.jl",
     devbranch="main",
 )

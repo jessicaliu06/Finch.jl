@@ -13,10 +13,10 @@ end
 """
     instantiate!(ctx, prgm)
 
-A transformation to instantiate readers and updaters before executing an
+A transformation to call `instantiate` on tensors before executing an
 expression.
 """
-function instantiate!(ctx, prgm) 
+function instantiate!(ctx, prgm)
     prgm = InstantiateTensors(ctx=ctx)(prgm)
     return prgm
 end
@@ -43,8 +43,7 @@ function (ctx::InstantiateTensors)(node::FinchNode)
         node
     elseif (@capture node access(~tns, ~mode, ~idxs...)) && !(getroot(tns) in ctx.escape)
         #@assert get(ctx.ctx.modes, tns, reader) === node.mode.val
-        protos = [(mode.val === reader ? defaultread : defaultupdate) for _ in idxs]
-        tns_2 = instantiate(ctx.ctx, tns, mode.val, protos)
+        tns_2 = instantiate(ctx.ctx, tns, mode.val)
         access(tns_2, mode, idxs...)
     elseif istree(node)
         return similarterm(node, operation(node), map(ctx, arguments(node)))
@@ -68,20 +67,20 @@ getvalue(::Type{Val{v}}) where {v} = v
                 end
             catch
                 println("Error executing code:")
-                println($(QuoteNode(code |> unblock |> pretty |> unquote_literals)))
+                println($(QuoteNode(code |> pretty |> unquote_literals)))
                 rethrow()
             end
         end
     else
         return quote
             @inbounds @fastmath begin
-                $(code |> unblock |> pretty |> unquote_literals)
+                $(code |> pretty |> unquote_literals)
             end
         end
     end
 end
 
-function execute_code(ex, T; algebra = DefaultAlgebra(), mode = :safe, ctx = LowerJulia(algebra = algebra, mode=mode))
+function execute_code(ex, T; algebra = DefaultAlgebra(), mode = :safe, ctx = FinchCompiler(algebra = algebra, mode=mode))
     code = contain(ctx) do ctx_2
         prgm = nothing
         prgm = virtualize(ctx_2.code, ex, T)
@@ -95,12 +94,11 @@ end
 lower the program `prgm` at global scope in the context `ctx`.
 """
 function lower_global(ctx, prgm)
+    prgm = exit_on_yieldbind(prgm)
     prgm = enforce_scopes(prgm)
     prgm = evaluate_partial(ctx, prgm)
     code = contain(ctx) do ctx_2
         quote
-            $(ctx.needs_return) = true
-            $(ctx.result) = nothing
             $(begin
                 prgm = wrapperize(ctx_2, prgm)
                 prgm = enforce_lifecycles(prgm)
@@ -113,7 +111,7 @@ function lower_global(ctx, prgm)
                     ctx_3(prgm)
                 end
             end)
-            $(ctx.result)
+            $(get_result(ctx))
         end
     end
 end
@@ -125,7 +123,7 @@ Run a finch program `prgm`. The syntax for a finch program is a set of nested
 loops, statements, and branches over pointwise array assignments. For example,
 the following program computes the sum of two arrays `A = B + C`:
 
-```julia   
+```julia
 @finch begin
     A .= 0
     for i = _
@@ -152,7 +150,7 @@ index variables into the scope of their bodies.
 
 Finch uses the types of the arrays and symbolic analysis to discover program
 optimizations. If `B` and `C` are sparse array types, the program will only run
-over the nonzeros of either. 
+over the nonzeros of either.
 
 Semantically, Finch programs execute every iteration. However, Finch can use
 sparsity information to reliably skip iterations when possible.
@@ -228,14 +226,19 @@ type `prgm`. Here, `fname` is the name of the function and `args` is a
 
 See also: [`@finch`](@ref)
 """
-function finch_kernel(fname, args, prgm; algebra = DefaultAlgebra(), mode = :safe, ctx = LowerJulia(algebra=algebra, mode=mode))
+function finch_kernel(fname, args, prgm; algebra = DefaultAlgebra(), mode = :safe, ctx = FinchCompiler(algebra=algebra, mode=mode))
     maybe_typeof(x) = x isa Type ? x : typeof(x)
+    unreachable = gensym(:unreachable)
     code = contain(ctx) do ctx_2
         foreach(args) do (key, val)
-            ctx_2.bindings[variable(key)] = finch_leaf(virtualize(ctx_2.code, key, maybe_typeof(val), key))
+            set_binding!(ctx_2, variable(key), finch_leaf(virtualize(ctx_2.code, key, maybe_typeof(val), key)))
         end
-        execute_code(:UNREACHABLE, prgm, algebra = algebra, mode = mode, ctx = ctx_2)
-    end |> pretty |> unresolve |> dataflow |> unquote_literals
+        execute_code(unreachable, prgm, algebra = algebra, mode = mode, ctx = ctx_2)
+    end
+    if unreachable in PostOrderDFS(code)
+        throw(FinchNotation.FinchSyntaxError("Attempting to interpolate value from local scope into @finch_kernel, pass values as function arguments or use \$ to interpolate explicitly."))
+    end
+    code = code |> pretty |> unresolve |> dataflow |> unquote_literals
     arg_defs = map(((key, val),) -> :($key::$(maybe_typeof(val))), args)
     striplines(:(function $fname($(arg_defs...))
         @inbounds @fastmath $(striplines(unblock(code)))
@@ -260,7 +263,7 @@ macro finch_kernel(opts_def...)
     named_args = map(arg -> :($(QuoteNode(arg)) => $(esc(arg))), args)
     prgm = FinchNotation.finch_parse_instance(ex)
     for arg in args
-        prgm = quote    
+        prgm = quote
             let $(esc(arg)) = $(FinchNotation.variable_instance(arg))
                 $prgm
             end

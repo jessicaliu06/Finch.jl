@@ -1,17 +1,13 @@
 
 virtual_size(ctx, tns::FinchNode) = virtual_size(ctx, resolve(ctx, tns))
 virtual_resize!(ctx, tns::FinchNode, dims...) = virtual_resize!(ctx, resolve(ctx, tns), dims...)
-virtual_default(ctx, tns::FinchNode) = virtual_default(ctx, resolve(ctx, tns))
+virtual_fill_value(ctx, tns::FinchNode) = virtual_fill_value(ctx, resolve(ctx, tns))
 
-function stylize_access(ctx::Stylize{<:AbstractCompiler}, node, tns::FinchNode)
-    stylize_access(ctx, node, resolve(ctx.ctx, tns))
-end
-
-function instantiate(ctx::AbstractCompiler, tns::FinchNode, mode, protos)
+function instantiate(ctx::AbstractCompiler, tns::FinchNode, mode)
     if tns.kind === virtual
-        return instantiate(ctx, tns.val, mode, protos)
+        return instantiate(ctx, tns.val, mode)
     elseif tns.kind === variable
-        return Unfurled(tns, instantiate(ctx, resolve(ctx, tns), mode, protos))
+        return Unfurled(tns, instantiate(ctx, resolve(ctx, tns), mode))
     else
         return tns
     end
@@ -21,15 +17,15 @@ declare!(ctx::AbstractCompiler, tns::FinchNode, init) = declare!(ctx, resolve(ct
 thaw!(ctx::AbstractCompiler, tns::FinchNode) = thaw!(ctx, resolve(ctx, tns))
 freeze!(ctx::AbstractCompiler, tns::FinchNode) = freeze!(ctx, resolve(ctx, tns))
 
-function unfurl(ctx, tns::FinchNode, ext, mode, protos...)
-    unfurl(ctx, resolve(ctx, tns), ext, mode, protos...)
-end
+unfurl(ctx, tns::FinchNode, ext, mode, proto) =
+    unfurl(ctx, resolve(ctx, tns), ext, mode, proto)
 
-lower_access(ctx::AbstractCompiler, node, tns::FinchNode) = 
-    lower_access(ctx, node, resolve(ctx, tns))
+lower_access(ctx::AbstractCompiler, tns::FinchNode, mode) =
+    lower_access(ctx, resolve(ctx, tns), mode)
 
 is_injective(ctx, lvl::FinchNode) = is_injective(ctx, resolve(ctx, lvl))
 is_atomic(ctx, lvl::FinchNode) = is_atomic(ctx, resolve(ctx, lvl))
+is_concurrent(ctx, lvl::FinchNode) = is_concurrent(ctx, resolve(ctx, lvl))
 
 function getroot(node::FinchNode)
     if node.kind === virtual

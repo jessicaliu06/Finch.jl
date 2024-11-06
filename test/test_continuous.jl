@@ -1,34 +1,34 @@
 @testset "continuous" begin
     @info "Testing Continuous Insertion"
-    let 
+    let
         s1 = Scalar(0)
-        x = Tensor(SparseRLE{Limit{Float32}}(Element(0)), 10)
+        x = Tensor(SparseRunList{Limit{Float32}}(Element(0)), 10)
         @finch mode=:fast (x[3] = 1)
         @finch mode=:fast (for i=realextent(5+Eps,7-Eps); x[~i] = 1 end)
         @finch mode=:fast (for i=realextent(8,9+Eps); x[~i] = 1 end)
-        
+
         @finch mode=:fast (for i=_; s1[] += x[i] * d(i) end)
         @test s1.val == 3
     end
 
-    let 
+    let
         s1 = Scalar(0)
-        x = Tensor(SparseRLE{Limit{Float32}}(SparseList(Element(0))), 10, 10)
+        x = Tensor(SparseRunList{Limit{Float32}}(SparseList(Element(0))), 10, 10)
         a = [1, 4, 8]
         @finch mode=:fast (for i=realextent(2,4-Eps); for j=extent(1,3); x[a[j], ~i] = 1 end end)
         @finch mode=:fast (for i=realextent(6+Eps,10-Eps); x[2, ~i] = 1 end)
-        
+
         @finch mode=:fast (for i=_; for j=_; s1[] += x[j,i] * d(i) end end)
         @test s1.val == 10
-    end   
-    
+    end
+
     @info "Testing Continuous Usage"
     using StatsBase
     using Random
     using StableRNGs
 
     Shape = 100 #1000
-    NumItvl = 10 #100 
+    NumItvl = 10 #100
 
     # Generating Random Intervals
     #v = sort(sample(StableRNG(1234), 1:Shape, NumItvl*2, replace=false))
@@ -41,7 +41,7 @@
 
     let
         x = Tensor(SparseList{Float32}(Element{0}(fill(1, 2*NumItvl)), Shape, [1, 2*NumItvl+1], v))
-        y = Tensor(SparseRLE{Float32}(Element{0}(fill(1, 2*NumItvl)), Shape, [1, 2*NumItvl+1], v, v))
+        y = Tensor(SparseRunList{Float32}(Element{0}(fill(1, 2*NumItvl)), Shape, [1, 2*NumItvl+1], v, v))
         z1 = Scalar(0);
         z2 = Scalar(0);
 
@@ -53,7 +53,7 @@
         @repl io @finch_code (z2 .= 0; for i=_; z2[] += y[i] end)
         @repl io @finch (z2 .= 0; for i=_; z2[] += y[i] end)
         @test check_output("continuous/pinpoint_rle.txt", String(take!(io)))
-       
+
         @test z1.val == z2.val
 
         @finch (z1 .= 0; for i=_; z1[] += x[i] * d(i) end)
@@ -63,7 +63,7 @@
 
     let
         x = Tensor(SparseList{Float32}(Element{0}(fill(1, 2*NumItvl)), Shape, [1, 2*NumItvl+1], v))
-        y = Tensor(SparseRLE{Float32}(Element{0}(fill(1, 2*NumItvl)), Shape, [1, 2*NumItvl+1], v, v))
+        y = Tensor(SparseRunList{Float32}(Element{0}(fill(1, 2*NumItvl)), Shape, [1, 2*NumItvl+1], v, v))
         z1 = Scalar(0);
         z2 = Scalar(0);
 
@@ -75,18 +75,18 @@
         @repl io @finch_code (z1 .= 0; for i=_; z2[] += y[2*i+10] end)
         @repl io @finch (z1 .= 0; for i=_; z2[] += y[2*i+10] end)
         @test check_output("continuous/affine_rle.txt", String(take!(io)))
-      
+
         @test z1.val == z2.val
 
         @finch (z1 .= 0; for i=realextent(3,15); z1[] += coalesce(x[~(2*i+10)],0) end)
         @finch (z2 .= 0; for i=realextent(3,15); z2[] += coalesce(y[~(2*i+10)],0) end)
-        @test z1.val == 5 && z2.val == 5 
+        @test z1.val == 5 && z2.val == 5
     end
 
     let
-        x = Tensor(SparseRLE{Float32}(Element{0}(fill(1, NumItvl)), Shape, [1, NumItvl+1], s1, e1))
-        y = Tensor(SparseRLE{Float32}(Element{0}(fill(1, NumItvl)), Shape, [1, NumItvl+1], s2, e2))
-        z = Tensor(SparseRLE{Limit{Float32}}(Element{0}()))
+        x = Tensor(SparseRunList{Float32}(Element{0}(fill(1, NumItvl)), Shape, [1, NumItvl+1], s1, e1))
+        y = Tensor(SparseRunList{Float32}(Element{0}(fill(1, NumItvl)), Shape, [1, NumItvl+1], s2, e2))
+        z = Tensor(SparseRunList{Limit{Float32}}(Element{0}()))
         s = Scalar(0)
 
         io = IOBuffer()
@@ -105,7 +105,7 @@
         @repl io @finch_code (s .= 0; for i=_; s[] += (x[i] * y[i]) * d(i) end)
         @repl io @finch (s .= 0; for i=_; s[] += (x[i] * y[i]) * d(i)  end)
         @test check_output("continuous/intersect_lebesgue.txt", String(take!(io)))
-        
+
         @repl io @finch_code (s .= 0; for i=_; s[] += (x[i] + y[i])  end)
         @repl io @finch (s .= 0; for i=_; s[] += (x[i] + y[i])  end)
         @test check_output("continuous/union_counting.txt", String(take!(io)))
@@ -125,41 +125,41 @@
         col_s1, col_e1 = endpoint1[begin:2:end], endpoint1[begin+1:2:end]
         col_s2, col_e2 = endpoint2[begin:2:end], endpoint2[begin+1:2:end]
 
-        x = Tensor(SparseRLE{Float32}(SparseRLE{Float32}(Element{0}(fill(1, NumItvl*NumItvl)), Shape, colptr, col_s1, col_e1), Shape, [1, NumItvl+1], s1, e1))
-        y = Tensor(SparseRLE{Float32}(SparseRLE{Float32}(Element{0}(fill(1, NumItvl*NumItvl)), Shape, colptr, col_s2, col_e2), Shape, [1, NumItvl+1], s2, e2))
-        z = Tensor(SparseRLE{Limit{Float32}}(SparseRLE{Limit{Float32}}(Element{0}())))
+        x = Tensor(SparseRunList{Float32}(SparseRunList{Float32}(Element{0}(fill(1, NumItvl*NumItvl)), Shape, colptr, col_s1, col_e1), Shape, [1, NumItvl+1], s1, e1))
+        y = Tensor(SparseRunList{Float32}(SparseRunList{Float32}(Element{0}(fill(1, NumItvl*NumItvl)), Shape, colptr, col_s2, col_e2), Shape, [1, NumItvl+1], s2, e2))
+        z = Tensor(SparseRunList{Limit{Float32}}(SparseRunList{Limit{Float32}}(Element{0}())))
         s = Scalar(0)
 
         io = IOBuffer()
         @repl io @finch_code (z .= 0; for i=_, j=_; z[j,i] += x[j,i] * y[j,i] end)
         @repl io @finch (z .= 0; for i=_, j=_; z[j,i] += x[j,i] * y[j,i] end)
-        @test check_output("continuous/2d_intersect.txt", String(take!(io)))  
+        @test check_output("continuous/2d_intersect.txt", String(take!(io)))
 
         @repl io @finch_code (z .= 0; for i=_, j=_; z[j,i] += x[j,i] + y[j,i] end)
         @repl io @finch (z .= 0; for i=_, j=_; z[j,i] += x[j,i] + y[j,i] end)
-        @test check_output("continuous/2d_union.txt", String(take!(io)))  
+        @test check_output("continuous/2d_union.txt", String(take!(io)))
 
         @repl io @finch_code (s .= 0; for i=_, j=_; s[] += (x[j,i] * y[j,i]) * d(i,j) end)
         @repl io @finch (s .= 0; for i=_, j=_; s[] += (x[j,i] * y[j,i]) * d(i,j) end)
-        @test check_output("continuous/2d_intersect_lebesgue.txt", String(take!(io)))  
+        @test check_output("continuous/2d_intersect_lebesgue.txt", String(take!(io)))
 
         @repl io @finch_code (s .= 0; for i=_, j=_; s[] += (x[j,i] * y[j,i]) end)
         @repl io @finch (s .= 0; for i=_, j=_; s[] += (x[j,i] * y[j,i]) end)
-        @test check_output("continuous/2d_intersect_counting.txt", String(take!(io)))  
+        @test check_output("continuous/2d_intersect_counting.txt", String(take!(io)))
 
         @repl io @finch_code (s .= 0; for i=_, j=_; s[] += (x[j,i] + y[j,i]) end)
         @repl io @finch (s .= 0; for i=_, j=_; s[] += (x[j,i] + y[j,i]) end)
-        @test check_output("continuous/2d_union_counting.txt", String(take!(io))) 
+        @test check_output("continuous/2d_union_counting.txt", String(take!(io)))
 
         @repl io @finch_code (s .= 0; for i=_, j=_; s[] += (x[j,i] + y[j,i]) * d(i,j) end)
         @repl io @finch (s .= 0; for i=_, j=_; s[] += (x[j,i] + y[j,i]) * d(i,j) end)
-        @test check_output("continuous/2d_union_lebesgue.txt", String(take!(io)))  
+        @test check_output("continuous/2d_union_lebesgue.txt", String(take!(io)))
 
         sum1 = Scalar(0)
         sum2 = Scalar(0)
         @repl io @finch (sum1 .= 0; for i=_,j=_; sum1[] += x[j,i] * d(i,j) end)
         @repl io @finch (sum2 .= 0; for i=_,j=_; sum2[] += y[j,i] * d(i,j) end)
-        @test s.val == sum1.val + sum2.val 
+        @test s.val == sum1.val + sum2.val
 
     end
 
@@ -169,22 +169,22 @@
         endpoint1 = [17, 24, 27, 30, 34, 36, 37, 38, 47, 52, 55, 56, 59, 65, 78, 84, 91, 92, 94, 96, 9, 10, 13, 17, 20, 23, 27, 29, 39, 42, 46, 47, 53, 54, 62, 68, 69, 70, 81, 93, 1, 2, 5, 10, 12, 18, 19, 25, 32, 33, 34, 38, 61, 62, 63, 65, 73, 80, 93, 98, 2, 5, 18, 19, 20, 23, 26, 41, 45, 50, 61, 74, 79, 81, 83, 84, 90, 94, 95, 96, 7, 9, 14, 15, 33, 39, 40, 45, 52, 53, 57, 62, 74, 83, 89, 90, 93, 95, 98, 99, 6, 7, 10, 15, 22, 25, 32, 33, 34, 44, 46, 55, 56, 59, 63, 69, 80, 95, 97, 99, 3, 11, 15, 17, 18, 25, 30, 33, 34, 38, 39, 44, 55, 67, 71, 74, 80, 86, 92, 98, 4, 12, 15, 17, 19, 20, 37, 40, 50, 51, 59, 61, 66, 68, 84, 90, 92, 94, 99, 100, 3, 11, 15, 21, 22, 32, 35, 38, 48, 52, 54, 65, 67, 70, 71, 78, 86, 89, 95, 96, 3, 10, 16, 19, 26, 39, 46, 47, 48, 59, 60, 64, 67, 68, 73, 87, 90, 92, 94, 97]
         col_s1, col_e1 = endpoint1[begin:2:end], endpoint1[begin+1:2:end]
 
-        x1 = Tensor(SparseList{Float32}(SparseRLE{Float32}(Element{0}(fill(1, NumItvl*NumItvl)), Shape, colptr, col_s1, col_e1), Shape, [1, NumItvl+1], e1))
-        x2 = Tensor(SparseRLE{Float32}(SparseRLE{Float32}(Element{0}(fill(1, NumItvl*NumItvl)), Shape, colptr, col_s1, col_e1), Shape, [1, NumItvl+1], e1, e1))
-        y = Tensor(SparseRLE{Float32}(Element{0}(fill(1, NumItvl)), Shape, [1, NumItvl+1], s2, e2))
+        x1 = Tensor(SparseList{Float32}(SparseRunList{Float32}(Element{0}(fill(1, NumItvl*NumItvl)), Shape, colptr, col_s1, col_e1), Shape, [1, NumItvl+1], e1))
+        x2 = Tensor(SparseRunList{Float32}(SparseRunList{Float32}(Element{0}(fill(1, NumItvl*NumItvl)), Shape, colptr, col_s1, col_e1), Shape, [1, NumItvl+1], e1, e1))
+        y = Tensor(SparseRunList{Float32}(Element{0}(fill(1, NumItvl)), Shape, [1, NumItvl+1], s2, e2))
 
         s1 = Scalar(0);
         s2 = Scalar(0);
- 
+
         io = IOBuffer()
         @repl io @finch_code (s1 .= 0; for i=_, j=_; s1[] += x1[j,i] * y[j] * d(j) end)
         @repl io @finch (s1 .= 0; for i=_, j=_; s1[] += x1[j,i] * y[j] * d(j) end)
-        @test check_output("continuous/2d_itvl_sum_sl.txt", String(take!(io)))  
+        @test check_output("continuous/2d_itvl_sum_sl.txt", String(take!(io)))
 
         @repl io @finch_code (s2 .= 0; for i=_, j=_; s2[] += x1[j,i] * y[j] * d(j) end)
         @repl io @finch (s2 .= 0; for i=_, j=_; s2[] += x1[j,i] * y[j] * d(j) end)
-        @test check_output("continuous/2d_itvl_sum_rle.txt", String(take!(io)))  
-   
+        @test check_output("continuous/2d_itvl_sum_rle.txt", String(take!(io)))
+
         @test s1.val==s2.val
     end
 

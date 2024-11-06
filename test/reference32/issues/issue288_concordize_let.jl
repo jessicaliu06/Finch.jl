@@ -17,23 +17,21 @@ begin
     A_mode1_stop == C_mode1_stop || throw(DimensionMismatch("mismatched dimension limits ($(A_mode1_stop) != $(C_mode1_stop))"))
     C_mode2_stop == X_mode2_stop || throw(DimensionMismatch("mismatched dimension limits ($(C_mode2_stop) != $(X_mode2_stop))"))
     C_mode3_stop == A_mode3_stop || throw(DimensionMismatch("mismatched dimension limits ($(C_mode3_stop) != $(A_mode3_stop))"))
-    result = nothing
     for k_4 = 1:C_mode3_stop
         for j_4 = 1:C_mode2_stop
             for i_6 = 1:A_mode1_stop
                 val = X[i_6, j_4]
                 for l_4 = 1:A_mode2_stop
-                    val_2 = A[i_6, l_4, k_4]
+                    val_3 = A[i_6, l_4, k_4]
                     phase_stop = min(i_6, l_4 + -1)
                     if phase_stop >= i_6
                         for s_5 = i_6:phase_stop
-                            C[i_6, j_4, k_4] = val_2 * val + C[i_6, j_4, k_4]
+                            C[i_6, j_4, k_4] = val_3 * val + C[i_6, j_4, k_4]
                         end
                     end
                 end
             end
         end
     end
-    result = ()
-    result
+    ()
 end

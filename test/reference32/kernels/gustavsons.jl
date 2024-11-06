@@ -17,7 +17,6 @@ begin
     A_lvl_idx = A_lvl_2.idx
     A_lvl_2_val = A_lvl_2.lvl.val
     A_lvl_2.shape == A_lvl.shape || throw(DimensionMismatch("mismatched dimension limits ($(A_lvl_2.shape) != $(A_lvl.shape))"))
-    result = nothing
     B_lvl_2_qos_fill = 0
     B_lvl_2_qos_stop = 0
     B_lvl_2_prev_pos = 0
@@ -93,7 +92,7 @@ begin
                                 end
                                 A_lvl_2_q_2 += 1
                             else
-                                phase_stop_5 = min(A_lvl_2_i_2, phase_stop_3)
+                                phase_stop_5 = min(phase_stop_3, A_lvl_2_i_2)
                                 if A_lvl_2_i_2 == phase_stop_5
                                     A_lvl_3_val_2 = A_lvl_2_val[A_lvl_2_q_2]
                                     w_lvl_q_2 = (1 - 1) * A_lvl_2.shape + phase_stop_5
@@ -115,7 +114,7 @@ begin
                     end
                     A_lvl_2_q += 1
                 else
-                    phase_stop_7 = min(A_lvl_2_i, phase_stop)
+                    phase_stop_7 = min(phase_stop, A_lvl_2_i)
                     if A_lvl_2_i == phase_stop_7
                         A_lvl_3_val = A_lvl_2_val[A_lvl_2_q]
                         A_lvl_q_2 = (1 - 1) * A_lvl.shape + phase_stop_7
@@ -135,10 +134,10 @@ begin
                                 A_lvl_2_i_3 = A_lvl_idx[A_lvl_2_q_3]
                                 if A_lvl_2_i_3 < phase_stop_8
                                     A_lvl_3_val_3 = A_lvl_2_val[A_lvl_2_q_3]
-                                    w_lvl_q_2 = (1 - 1) * A_lvl_2.shape + A_lvl_2_i_3
-                                    w_lvl_val[w_lvl_q_2] = A_lvl_3_val * A_lvl_3_val_3 + w_lvl_val[w_lvl_q_2]
-                                    if !(w_lvl_tbl[w_lvl_q_2])
-                                        w_lvl_tbl[w_lvl_q_2] = true
+                                    w_lvl_q_3 = (1 - 1) * A_lvl_2.shape + A_lvl_2_i_3
+                                    w_lvl_val[w_lvl_q_3] = A_lvl_3_val * A_lvl_3_val_3 + w_lvl_val[w_lvl_q_3]
+                                    if !(w_lvl_tbl[w_lvl_q_3])
+                                        w_lvl_tbl[w_lvl_q_3] = true
                                         w_lvl_qos_fill += 1
                                         if w_lvl_qos_fill > w_lvl_qos_stop
                                             w_lvl_qos_stop = max(w_lvl_qos_stop << 1, 1)
@@ -148,13 +147,13 @@ begin
                                     end
                                     A_lvl_2_q_3 += 1
                                 else
-                                    phase_stop_10 = min(A_lvl_2_i_3, phase_stop_8)
+                                    phase_stop_10 = min(phase_stop_8, A_lvl_2_i_3)
                                     if A_lvl_2_i_3 == phase_stop_10
                                         A_lvl_3_val_3 = A_lvl_2_val[A_lvl_2_q_3]
-                                        w_lvl_q_2 = (1 - 1) * A_lvl_2.shape + phase_stop_10
-                                        w_lvl_val[w_lvl_q_2] = A_lvl_3_val * A_lvl_3_val_3 + w_lvl_val[w_lvl_q_2]
-                                        if !(w_lvl_tbl[w_lvl_q_2])
-                                            w_lvl_tbl[w_lvl_q_2] = true
+                                        w_lvl_q_3 = (1 - 1) * A_lvl_2.shape + phase_stop_10
+                                        w_lvl_val[w_lvl_q_3] = A_lvl_3_val * A_lvl_3_val_3 + w_lvl_val[w_lvl_q_3]
+                                        if !(w_lvl_tbl[w_lvl_q_3])
+                                            w_lvl_tbl[w_lvl_q_3] = true
                                             w_lvl_qos_fill += 1
                                             if w_lvl_qos_fill > w_lvl_qos_stop
                                                 w_lvl_qos_stop = max(w_lvl_qos_stop << 1, 1)
@@ -207,8 +206,8 @@ begin
             while true
                 w_lvl_i_2 = last(w_lvl_srt[w_lvl_r_3])
                 if w_lvl_i_2 < phase_stop_13
-                    w_lvl_q_3 = (1 - 1) * A_lvl_2.shape + w_lvl_i_2
-                    w_lvl_2_val = w_lvl_val[w_lvl_q_3]
+                    w_lvl_q_4 = (1 - 1) * A_lvl_2.shape + w_lvl_i_2
+                    w_lvl_2_val = w_lvl_val[w_lvl_q_4]
                     if B_lvl_2_qos > B_lvl_2_qos_stop
                         B_lvl_2_qos_stop = max(B_lvl_2_qos_stop << 1, 1)
                         Finch.resize_if_smaller!(B_lvl_idx, B_lvl_2_qos_stop)
@@ -221,10 +220,10 @@ begin
                     B_lvl_2_prev_pos = B_lvl_q
                     w_lvl_r_3 += 1
                 else
-                    phase_stop_15 = min(w_lvl_i_2, phase_stop_13)
+                    phase_stop_15 = min(phase_stop_13, w_lvl_i_2)
                     if w_lvl_i_2 == phase_stop_15
-                        w_lvl_q_3 = (1 - 1) * A_lvl_2.shape + w_lvl_i_2
-                        w_lvl_2_val_2 = w_lvl_val[w_lvl_q_3]
+                        w_lvl_q_4 = (1 - 1) * A_lvl_2.shape + w_lvl_i_2
+                        w_lvl_2_val_2 = w_lvl_val[w_lvl_q_4]
                         if B_lvl_2_qos > B_lvl_2_qos_stop
                             B_lvl_2_qos_stop = max(B_lvl_2_qos_stop << 1, 1)
                             Finch.resize_if_smaller!(B_lvl_idx, B_lvl_2_qos_stop)
@@ -251,6 +250,5 @@ begin
     qos_stop = B_lvl_ptr[A_lvl.shape + 1] - 1
     resize!(B_lvl_idx, qos_stop)
     resize!(B_lvl_2_val, qos_stop)
-    result = (B = Tensor((DenseLevel){Int32}((SparseListLevel){Int32}(B_lvl_3, A_lvl_2.shape, B_lvl_ptr, B_lvl_idx), A_lvl.shape)),)
-    result
+    (B = Tensor((DenseLevel){Int32}((SparseListLevel){Int32}(B_lvl_3, A_lvl_2.shape, B_lvl_ptr, B_lvl_idx), A_lvl.shape)),)
 end

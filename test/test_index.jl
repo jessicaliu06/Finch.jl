@@ -83,7 +83,7 @@
     y = Array{Any}(undef, 4)
     x = Tensor(Dense(Element(0.0)), zeros(2))
     X = Finch.permissive(x, true)
-    
+
     @finch for i = _; y[i] := X[i] end
 
     @test isequal(y, [0.0, 0.0, missing, missing])
@@ -137,14 +137,14 @@
             end
         end
         @repl io AsArray(A)
-        
+
         @test check_output("index/chunkmask.txt", String(take!(io)))
     end
 
     let
         #=
             function wrapper_result(inst)
-                ctx = Finch.LowerJulia()
+                ctx = Finch.FinchCompiler()
                 prgm = Finch.virtualize(ctx.code, :inst, typeof(inst))
                 prgm = Finch.evaluate_partial(ctx, prgm)
                 Finch.wrapperize(ctx, prgm)
@@ -152,7 +152,7 @@
         =#
 
         x = Scalar(0.0)
-        A = Tensor(Dense(Dense(Dense(Element(0.0)))), 
+        A = Tensor(Dense(Dense(Dense(Element(0.0)))),
         reshape([1 3 5 2 4 6 7 9 11 8 10 12 13 15 17 14 16 18 19 21 23 20 22 24], 2, 3, 4))
         @finch begin
             x .= 0
@@ -178,7 +178,7 @@
         end)
 
         x = Scalar(0.0)
-        A = swizzle(Tensor(Dense(Dense(Dense(Element(0.0)))), 
+        A = swizzle(Tensor(Dense(Dense(Dense(Element(0.0)))),
         reshape([1 3 5 2 4 6 7 9 11 8 10 12 13 15 17 14 16 18 19 21 23 20 22 24], 2, 3, 4)), 3, 2, 1)
         @finch begin
             x .= 0

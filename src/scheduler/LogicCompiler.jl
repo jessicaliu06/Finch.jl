@@ -42,10 +42,22 @@ end
     mode = :fast
 end
 
-function finch_pointwise_logic_to_code(ex)
+@kwdef struct PointwiseLowerer
+    bound_idxs = []
+end
+
+function compile_pointwise_logic(ex)
+    ctx = PointwiseLowerer()
+    code = ctx(ex)
+    bound_idxs = ctx.bound_idxs
+    (code, bound_idxs)
+end
+
+function (ctx::PointwiseLowerer)(ex)
     if @capture ex mapjoin(~op, ~args...)
-        :($(op.val)($(map(arg -> finch_pointwise_logic_to_code(arg), args)...)))
+        :($(op.val)($(map(ctx, args)...)))
     elseif (@capture ex reorder(relabel(~arg::isalias, ~idxs_1...), ~idxs_2...))
+        append!(ctx.bound_idxs, idxs_1)
         :($(arg.name)[$(map(idx -> idx in idxs_2 ? idx.name : 1, idxs_1)...)]) #TODO need a trait for the first index
     elseif (@capture ex reorder(~arg::isimmediate, ~idxs...))
         arg.val
@@ -82,44 +94,66 @@ function (ctx::LogicLowerer)(ex)
     elseif @capture ex query(~lhs::isalias, reformat(~tns, reorder(relabel(~arg::isalias, ~idxs_1...), ~idxs_2...)))
         loop_idxs = map(idx -> idx.name, withsubsequence(intersect(idxs_1, idxs_2), idxs_2))
         lhs_idxs = map(idx -> idx.name, idxs_2)
-        rhs = finch_pointwise_logic_to_code(reorder(relabel(arg, idxs_1...), idxs_2...))
+        (rhs, rhs_idxs) = compile_pointwise_logic(reorder(relabel(arg, idxs_1...), idxs_2...))
         body = :($(lhs.name)[$(lhs_idxs...)] = $rhs)
         for idx in loop_idxs
-            body = :(for $idx = _
-                $body
-            end)
+            if field(idx) in rhs_idxs
+                body = :(for $idx = _
+                    $body
+                end)
+            elseif idx in lhs_idxs
+                body = :(for $idx = 1:1
+                    $body
+                end)
+            end
         end
         quote
             $(lhs.name) = $(compile_logic_constant(tns))
             @finch mode = $(QuoteNode(ctx.mode)) begin
-                $(lhs.name) .= $(default(logic_constant_type(tns)))
+                $(lhs.name) .= $(fill_value(logic_constant_type(tns)))
                 $body
                 return $(lhs.name)
             end
         end
     elseif @capture ex query(~lhs::isalias, reformat(~tns, mapjoin(~args...)))
-        z = default(logic_constant_type(tns))
+        z = fill_value(logic_constant_type(tns))
         ctx(query(lhs, reformat(tns, aggregate(initwrite(z), immediate(z), mapjoin(args...)))))
     elseif @capture ex query(~lhs, reformat(~tns, aggregate(~op, ~init, ~arg, ~idxs_1...)))
         idxs_2 = map(idx -> idx.name, getfields(arg))
-        idxs_3 = map(idx -> idx.name, setdiff(getfields(arg), idxs_1))
-        rhs = finch_pointwise_logic_to_code(arg)
-        body = :($(lhs.name)[$(idxs_3...)] <<$(compile_logic_constant(op))>>= $rhs)
+        lhs_idxs = map(idx -> idx.name, setdiff(getfields(arg), idxs_1))
+        (rhs, rhs_idxs) = compile_pointwise_logic(arg)
+        body = :($(lhs.name)[$(lhs_idxs...)] <<$(compile_logic_constant(op))>>= $rhs)
         for idx in idxs_2
-            body = :(for $idx = _
-                $body
-            end)
+            if field(idx) in rhs_idxs
+                body = :(for $idx = _
+                    $body
+                end)
+            elseif idx in lhs_idxs
+                body = :(for $idx = 1:1
+                    $body
+                end)
+            end
         end
         quote
             $(lhs.name) = $(compile_logic_constant(tns))
             @finch mode = $(QuoteNode(ctx.mode)) begin
-                $(lhs.name) .= $(default(logic_constant_type(tns)))
+                $(lhs.name) .= $(fill_value(logic_constant_type(tns)))
                 $body
                 return $(lhs.name)
             end
         end
     elseif @capture ex produces(~args...)
-        return :(return ($(map(arg -> arg.name, args)...),))
+        return :(return ($(map(args) do arg
+            if @capture(arg, reorder(relabel(~tns::isalias, ~idxs_1...), ~idxs_2...)) && Set(idxs_1) == Set(idxs_2)
+                :(swizzle($(tns.name), $([findfirst(isequal(idx), idxs_1) for idx in idxs_2]...)))
+            elseif @capture(arg, reorder(~tns::isalias, ~idxs...))
+                tns.name
+            elseif isalias(arg)
+                arg.name
+            else
+                error("Unrecognized logic: $(arg)")
+            end
+        end...),))
     elseif @capture ex plan(~bodies...)
         Expr(:block, map(ctx, bodies)...)
     else

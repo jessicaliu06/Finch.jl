@@ -1,4 +1,4 @@
-struct DiagMask end
+struct DiagMask <: AbstractTensor end
 
 """
     diagmask
@@ -13,34 +13,43 @@ function Base.show(io::IO, mime::MIME"text/plain", ex::DiagMask)
     print(io, "diagmask")
 end
 
-virtualize(ctx, ex, ::Type{DiagMask}) = diagmask
-FinchNotation.finch_leaf(x::DiagMask) = virtual(x)
-Finch.virtual_size(ctx, ::DiagMask) = (dimless, dimless)
+struct VirtualDiagMask <: AbstractVirtualTensor end
 
-function instantiate(ctx, arr::DiagMask, mode::Reader, subprotos, ::typeof(defaultread), ::typeof(defaultread))
+virtualize(ctx, ex, ::Type{DiagMask}) = VirtualDiagMask()
+FinchNotation.finch_leaf(x::VirtualDiagMask) = virtual(x)
+Finch.virtual_size(ctx, ::VirtualDiagMask) = (dimless, dimless)
+
+struct VirtualDiagMaskColumn
+    j
+end
+
+FinchNotation.finch_leaf(x::VirtualDiagMaskColumn) = virtual(x)
+
+function unfurl(ctx, arr::VirtualDiagMask, ext, mode::Reader, proto)
     Unfurled(
         arr = arr,
-        body = Furlable(
-            body = (ctx, ext) -> Lookup(
-                body = (ctx, i) -> Furlable(
-                    body = (ctx, ext) -> Sequence([
-                        Phase(
-                            stop = (ctx, ext) -> value(:($(ctx(i)) - 1)),
-                            body = (ctx, ext) -> Run(body=Fill(false))
-                        ),
-                        Phase(
-                            stop = (ctx, ext) -> i,
-                            body = (ctx, ext) -> Run(body=Fill(true)),
-                        ),
-                        Phase(body = (ctx, ext) -> Run(body=Fill(false)))
-                    ])
-                )
-            )
+        body = Lookup(
+            body = (ctx, j) -> VirtualDiagMaskColumn(j)
         )
     )
 end
 
-struct UpTriMask end
+function unfurl(ctx, arr::VirtualDiagMaskColumn, ext, mode::Reader, proto)
+    j = arr.j
+    Sequence([
+        Phase(
+            stop = (ctx, ext) -> value(:($(ctx(j)) - 1)),
+            body = (ctx, ext) -> Run(body=FillLeaf(false))
+        ),
+        Phase(
+            stop = (ctx, ext) -> j,
+            body = (ctx, ext) -> Run(body=FillLeaf(true)),
+        ),
+        Phase(body = (ctx, ext) -> Run(body=FillLeaf(false)))
+    ])
+end
+
+struct UpTriMask <: AbstractTensor end
 
 """
     uptrimask
@@ -55,32 +64,41 @@ function Base.show(io::IO, mime::MIME"text/plain", ex::UpTriMask)
     print(io, "uptrimask")
 end
 
-virtualize(ctx, ex, ::Type{UpTriMask}) = uptrimask
-FinchNotation.finch_leaf(x::UpTriMask) = virtual(x)
-Finch.virtual_size(ctx, ::UpTriMask) = (dimless, dimless)
+struct VirtualUpTriMask <: AbstractVirtualTensor end
 
-function instantiate(ctx, arr::UpTriMask, mode::Reader, subprotos, ::typeof(defaultread), ::typeof(defaultread))
+virtualize(ctx, ex, ::Type{UpTriMask}) = VirtualUpTriMask()
+FinchNotation.finch_leaf(x::VirtualUpTriMask) = virtual(x)
+Finch.virtual_size(ctx, ::VirtualUpTriMask) = (dimless, dimless)
+
+struct VirtualUpTriMaskColumn
+    j
+end
+
+FinchNotation.finch_leaf(x::VirtualUpTriMaskColumn) = virtual(x)
+
+function unfurl(ctx, arr::VirtualUpTriMask, ext, mode::Reader, proto)
     Unfurled(
         arr = arr,
-        body = Furlable(
-            body = (ctx, ext) -> Lookup(
-                body = (ctx, i) -> Furlable(
-                    body = (ctx, ext) -> Sequence([
-                        Phase(
-                            stop = (ctx, ext) -> value(:($(ctx(i)))),
-                            body = (ctx, ext) -> Run(body=Fill(true))
-                        ),
-                        Phase(
-                            body = (ctx, ext) -> Run(body=Fill(false)),
-                        )
-                    ])
-                )
-            )
+        body = Lookup(
+            body = (ctx, j) -> VirtualUpTriMaskColumn(j)
         )
     )
 end
 
-struct LoTriMask end
+function unfurl(ctx, arr::VirtualUpTriMaskColumn, ext, mode::Reader, proto)
+    j = arr.j
+    Sequence([
+        Phase(
+            stop = (ctx, ext) -> value(:($(ctx(j)))),
+            body = (ctx, ext) -> Run(body=FillLeaf(true))
+        ),
+        Phase(
+            body = (ctx, ext) -> Run(body=FillLeaf(false)),
+        )
+    ])
+end
+
+struct LoTriMask <: AbstractTensor end
 
 """
     lotrimask
@@ -95,32 +113,41 @@ function Base.show(io::IO, mime::MIME"text/plain", ex::LoTriMask)
     print(io, "lotrimask")
 end
 
-virtualize(ctx, ex, ::Type{LoTriMask}) = lotrimask
-FinchNotation.finch_leaf(x::LoTriMask) = virtual(x)
-Finch.virtual_size(ctx, ::LoTriMask) = (dimless, dimless)
+struct VirtualLoTriMask <: AbstractVirtualTensor end
 
-function instantiate(ctx, arr::LoTriMask, mode::Reader, subprotos, ::typeof(defaultread), ::typeof(defaultread))
+virtualize(ctx, ex, ::Type{LoTriMask}) = VirtualLoTriMask()
+FinchNotation.finch_leaf(x::VirtualLoTriMask) = virtual(x)
+Finch.virtual_size(ctx, ::VirtualLoTriMask) = (dimless, dimless)
+
+struct VirtualLoTriMaskColumn
+    j
+end
+
+FinchNotation.finch_leaf(x::VirtualLoTriMaskColumn) = virtual(x)
+
+function unfurl(ctx, arr::VirtualLoTriMask, ext, mode::Reader, proto)
     Unfurled(
         arr = arr,
-        body = Furlable(
-            body = (ctx, ext) -> Lookup(
-                body = (ctx, i) -> Furlable(
-                    body = (ctx, ext) -> Sequence([
-                        Phase(
-                            stop = (ctx, ext) -> value(:($(ctx(i)) - 1)),
-                            body = (ctx, ext) -> Run(body=Fill(false))
-                        ),
-                        Phase(
-                            body = (ctx, ext) -> Run(body=Fill(true)),
-                        )
-                    ])
-                )
-            )
+        body = Lookup(
+            body = (ctx, j) -> VirtualLoTriMaskColumn(j)
         )
     )
 end
 
-struct BandMask end
+function unfurl(ctx, arr::VirtualLoTriMaskColumn, ext, mode::Reader, proto)
+    j = arr.j
+    Sequence([
+        Phase(
+            stop = (ctx, ext) -> value(:($(ctx(j)) - 1)),
+            body = (ctx, ext) -> Run(body=FillLeaf(false))
+        ),
+        Phase(
+            body = (ctx, ext) -> Run(body=FillLeaf(true)),
+        )
+    ])
+end
+
+struct BandMask <: AbstractTensor end
 
 """
     bandmask
@@ -135,40 +162,57 @@ function Base.show(io::IO, mime::MIME"text/plain", ex::BandMask)
     print(io, "bandmask")
 end
 
-virtualize(ctx, ex, ::Type{BandMask}) = bandmask
-FinchNotation.finch_leaf(x::BandMask) = virtual(x)
-Finch.virtual_size(ctx, ::BandMask) = (dimless, dimless, dimless)
+struct VirtualBandMask <: AbstractVirtualTensor end
 
-function instantiate(ctx, arr::BandMask, mode, subprotos, ::typeof(defaultread), ::typeof(defaultread), ::typeof(defaultread))
+virtualize(ctx, ex, ::Type{BandMask}) = VirtualBandMask()
+FinchNotation.finch_leaf(x::VirtualBandMask) = virtual(x)
+Finch.virtual_size(ctx, ::VirtualBandMask) = (dimless, dimless, dimless)
+
+struct VirtualBandMaskSlice
+    j_lo
+end
+
+FinchNotation.finch_leaf(x::VirtualBandMaskSlice) = virtual(x)
+
+struct VirtualBandMaskColumn
+    j_lo
+    j_hi
+end
+
+FinchNotation.finch_leaf(x::VirtualBandMaskColumn) = virtual(x)
+
+function unfurl(ctx, arr::VirtualBandMask, ext, mode, proto)
     Unfurled(
         arr = arr,
-        tns = Furlable(
-            body = (ctx, ext) -> Lookup(
-                body = (ctx, k) -> Furlable(
-                    body = (ctx, ext) -> Lookup(
-                        body = (ctx, j) -> Furlable(
-                            body = (ctx, ext) -> Sequence([
-                                Phase(
-                                    stop = (ctx, ext) -> value(:($(ctx(j)) - 1)),
-                                    body = (ctx, ext) -> Run(body=Fill(false))
-                                ),
-                                Phase(
-                                    stop = (ctx, ext) -> k,
-                                    body = (ctx, ext) -> Run(body=Fill(true))
-                                ),
-                                Phase(
-                                    body = (ctx, ext) -> Run(body=Fill(false)),
-                                )
-                            ])
-                        )
-                    )
-                )
-            )
+        body = Lookup(
+            body = (ctx, j_lo) -> VirtualBandMaskSlice(j_lo)
         )
     )
 end
 
-struct SplitMask
+function unfurl(ctx, arr::VirtualBandMaskSlice, ext, mode, proto)
+    Lookup(
+        body = (ctx, j_hi) -> VirtualBandMaskColumn(arr.j_lo, j_hi)
+    )
+end
+
+function unfurl(ctx, arr::VirtualBandMaskColumn, ext, mode, proto)
+    Sequence([
+        Phase(
+            stop = (ctx, ext) -> value(:($(ctx(j)) - 1)),
+            body = (ctx, ext) -> Run(body=FillLeaf(false))
+        ),
+        Phase(
+            stop = (ctx, ext) -> k,
+            body = (ctx, ext) -> Run(body=FillLeaf(true))
+        ),
+        Phase(
+            body = (ctx, ext) -> Run(body=FillLeaf(false)),
+        )
+    ])
+end
+
+struct SplitMask <: AbstractTensor
     P::Int
 end
 
@@ -188,32 +232,39 @@ end
 FinchNotation.finch_leaf(x::VirtualSplitMask) = virtual(x)
 Finch.virtual_size(ctx, arr::VirtualSplitMask) = (dimless, Extent(literal(1), arr.P))
 
-function instantiate(ctx, arr::VirtualSplitMask, mode::Reader, subprotos, ::typeof(defaultread), ::typeof(defaultread))
+struct VirtualSplitMaskColumn
+    P
+    j
+end
+
+FinchNotation.finch_leaf(x::VirtualSplitMaskColumn) = virtual(x)
+
+function unfurl(ctx, arr::VirtualSplitMask, ext, mode, proto)
     Unfurled(
         arr = arr,
-        body = Furlable(
-            body = (ctx, ext) -> Lookup(
-                body = (ctx, i) -> Furlable(
-                    body = (ctx, ext_2) -> begin
-                        Sequence([
-                            Phase(
-                                stop = (ctx, ext) -> call(+, call(-, getstart(ext_2), 1), call(fld, call(*, measure(ext_2), call(-, i, 1)), arr.P)),
-                                body = (ctx, ext) -> Run(body=Fill(false))
-                            ),
-                            Phase(
-                                stop = (ctx, ext) -> call(+, call(-, getstart(ext_2), 1), call(fld, call(*, measure(ext_2), i), arr.P)),
-                                body = (ctx, ext) -> Run(body=Fill(true)),
-                            ),
-                            Phase(body = (ctx, ext) -> Run(body=Fill(false)))
-                        ])
-                    end
-                )
-            )
+        body = Lookup(
+            body = (ctx, j) -> VirtualSplitMaskColumn(arr.P, j)
         )
     )
 end
 
-struct ChunkMask{Dim}
+function unfurl(ctx, arr::VirtualSplitMaskColumn, ext_2, mode, proto)
+    j = arr.j
+    P = arr.P
+    Sequence([
+        Phase(
+            stop = (ctx, ext) -> call(+, call(-, getstart(ext_2), 1), call(fld, call(*, measure(ext_2), call(-, j, 1)), P)),
+            body = (ctx, ext) -> Run(body=FillLeaf(false))
+        ),
+        Phase(
+            stop = (ctx, ext) -> call(+, call(-, getstart(ext_2), 1), call(fld, call(*, measure(ext_2), j), P)),
+            body = (ctx, ext) -> Run(body=FillLeaf(true)),
+        ),
+        Phase(body = (ctx, ext) -> Run(body=FillLeaf(false)))
+    ])
+end
+
+struct ChunkMask{Dim} <: AbstractTensor
     b::Int
     dim::Dim
 end
@@ -252,45 +303,60 @@ end
 FinchNotation.finch_leaf(x::VirtualChunkMask) = virtual(x)
 Finch.virtual_size(ctx, arr::VirtualChunkMask) = (arr.dim, Extent(literal(1), call(cld, measure(arr.dim), arr.b)))
 
-function instantiate(ctx, arr::VirtualChunkMask, mode::Reader, subprotos, ::typeof(defaultread), ::typeof(defaultread))
+struct VirtualChunkMaskColumn
+    arr :: VirtualChunkMask
+    j
+end
+
+struct VirtualChunkMaskCleanupColumn
+    arr :: VirtualChunkMask
+end
+
+FinchNotation.finch_leaf(x::VirtualChunkMaskColumn) = virtual(x)
+FinchNotation.finch_leaf(x::VirtualChunkMaskCleanupColumn) = virtual(x)
+
+function unfurl(ctx, arr::VirtualChunkMask, ext, mode, proto)
     Unfurled(
         arr = arr,
-        body = Furlable(
-            body = (ctx, ext) -> Sequence([
-                Phase(
-                    stop = (ctx, ext) -> call(cld, measure(arr.dim), arr.b),
-                    body = (ctx, ext) -> Lookup(
-                        body = (ctx, i) -> Furlable(
-                            body = (ctx, ext) -> Sequence([
-                                Phase(
-                                    stop = (ctx, ext) -> call(*, arr.b, call(-, i, 1)),
-                                    body = (ctx, ext) -> Run(body=Fill(false))
-                                ),
-                                Phase(
-                                    stop = (ctx, ext) -> call(*, arr.b, i),
-                                    body = (ctx, ext) -> Run(body=Fill(true)),
-                                ),
-                                Phase(body = (ctx, ext) -> Run(body=Fill(false)))
-                            ])
-                        )
-                    )
-                ),
-                Phase(
-                    body = (ctx, ext) -> Run(
-                        body = Furlable(
-                            body = (ctx, ext) -> Sequence([
-                                Phase(
-                                    stop = (ctx, ext) -> call(*, call(fld, measure(arr.dim), arr.b), arr.b),
-                                    body = (ctx, ext) -> Run(body=Fill(false))
-                                ),
-                                Phase(
-                                    body = (ctx, ext) -> Run(body=Fill(true)),
-                                )
-                            ])
-                        )
-                    )
+        body = Sequence([
+            Phase(
+                stop = (ctx, ext) -> call(cld, measure(arr.dim), arr.b),
+                body = (ctx, ext) -> Lookup(
+                    body = (ctx, j) -> VirtualChunkMaskColumn(arr, j)
                 )
-            ])
-        )
+            ),
+            Phase(
+                body = (ctx, ext) -> Run(
+                    body = VirtualChunkMaskCleanupColumn(arr)
+                )
+            )
+        ])
     )
+end
+
+function unfurl(ctx, arr::VirtualChunkMaskColumn, ext, mode, proto)
+    j = arr.j
+    Sequence([
+        Phase(
+            stop = (ctx, ext) -> call(*, arr.arr.b, call(-, j, 1)),
+            body = (ctx, ext) -> Run(body=FillLeaf(false))
+        ),
+        Phase(
+            stop = (ctx, ext) -> call(*, arr.arr.b, j),
+            body = (ctx, ext) -> Run(body=FillLeaf(true)),
+        ),
+        Phase(body = (ctx, ext) -> Run(body=FillLeaf(false)))
+    ])
+end
+
+function unfurl(ctx, arr::VirtualChunkMaskCleanupColumn, ext, mode, proto)
+    Sequence([
+        Phase(
+            stop = (ctx, ext) -> call(*, call(fld, measure(arr.arr.dim), arr.arr.b), arr.arr.b),
+            body = (ctx, ext) -> Run(body=FillLeaf(false))
+        ),
+        Phase(
+            body = (ctx, ext) -> Run(body=FillLeaf(true)),
+        )
+    ])
 end

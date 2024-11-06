@@ -13,8 +13,8 @@ FinchNotation.finch_leaf(x::Lookup) = virtual(x)
 
 struct LookupStyle end
 
-(ctx::Stylize{<:AbstractCompiler})(node::Lookup) = ctx.root.kind === loop ? LookupStyle() : DefaultStyle()
-instantiate(ctx, tns::Lookup, mode, protos) = tns
+get_style(ctx, ::Lookup, root) = root.kind === loop ? LookupStyle() : DefaultStyle()
+
 combine_style(a::DefaultStyle, b::LookupStyle) = LookupStyle()
 combine_style(a::ThunkStyle, b::LookupStyle) = ThunkStyle()
 combine_style(a::SimplifyStyle, b::LookupStyle) = a
@@ -22,9 +22,9 @@ combine_style(a::LookupStyle, b::LookupStyle) = LookupStyle()
 
 function lower(ctx::AbstractCompiler, root::FinchNode, ::LookupStyle)
     if root.kind === loop
-        idx_sym = freshen(ctx.code, root.idx.name)
+        idx_sym = freshen(ctx, root.idx.name)
         body = contain(ctx) do ctx_2
-            ctx_2.bindings[root.idx] = value(idx_sym)
+            set_binding!(ctx_2, root.idx, value(idx_sym))
             body_3 = Rewrite(Postwalk(
                 @rule access(~a::isvirtual, ~m, ~i..., ~j) => begin
                     a_2 = get_point_body(ctx_2, a.val, root.ext.val, value(idx_sym))
@@ -35,7 +35,9 @@ function lower(ctx::AbstractCompiler, root::FinchNode, ::LookupStyle)
                     end
                 end
             ))(root.body)
-            open_scope(ctx_2, body_3)
+            open_scope(ctx_2) do ctx_3
+                ctx_3(body_3)
+            end
         end
         @assert isvirtual(root.ext)
 

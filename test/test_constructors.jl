@@ -5,14 +5,14 @@
 
     basic_levels = [
         ("Dense", Dense, (;), [[0.0, 2.0, 2.0, 0.0, 3.0, 3.0],]),
-        ("DenseRLE", DenseRLE, (;), [[0.0, 2.0, 2.0, 0.0, 3.0, 3.0],]),
-        ("DenseRLElazy", DenseRLE, (; merge = false), [[0.0, 2.0, 2.0, 0.0, 3.0, 3.0],]),
+        ("RunList", RunList, (;), [[0.0, 2.0, 2.0, 0.0, 3.0, 3.0],]),
+        ("RunListlazy", RunList, (; merge = false), [[0.0, 2.0, 2.0, 0.0, 3.0, 3.0],]),
         ("SparseList", SparseList, (;), [[0.0, 2.0, 2.0, 0.0, 3.0, 3.0],]),
-        ("SparseVBL", SparseVBL, (;), [[0.0, 2.0, 2.0, 0.0, 3.0, 3.0],]),
+        ("SparseBlockList", SparseBlockList, (;), [[0.0, 2.0, 2.0, 0.0, 3.0, 3.0],]),
         ("SparseBand", SparseBand, (;), [[0.0, 2.0, 2.0, 0.0, 3.0, 0.0],]),
         ("SparseByteMap", SparseByteMap, (;), [[0.0, 2.0, 2.0, 0.0, 3.0, 3.0],]),
-        ("SparseRLE", SparseRLE, (;), [[0.0, 2.0, 2.0, 0.0, 3.0, 3.0],]),
-        ("SparseRLELazy", SparseRLE, (; merge = false), [[0.0, 2.0, 2.0, 0.0, 3.0, 3.0],]),
+        ("SparseRunList", SparseRunList, (;), [[0.0, 2.0, 2.0, 0.0, 3.0, 3.0],]),
+        ("SparseRunListLazy", SparseRunList, (; merge = false), [[0.0, 2.0, 2.0, 0.0, 3.0, 3.0],]),
         ("SparseDict", SparseDict, (;), [[0.0, 2.0, 2.0, 0.0, 3.0, 3.0],]),
         ("SparsePoint", SparsePoint, (;), [[0.0, 0.0, 2.0, 0.0, 0.0, 0.0],]),
         ("SparseInterval", SparseInterval, (;), [[0.0, 0.0, 2.0, 0.0, 0.0, 0.0],]),
@@ -25,14 +25,14 @@
 
             for arr in arrs
 
-                fbr = dropdefaults!(Tensor(Lvl(Element(zero(eltype(arr))); flags...)), arr)
+                fbr = dropfills!(Tensor(Lvl(Element(zero(eltype(arr))); flags...)), arr)
                 println(io, "initialized tensor: ", fbr)
                 lvl = fbr.lvl
                 props = map(name -> getproperty(lvl, name), propertynames(lvl))
                 @test Structure(fbr) == Structure(Tensor(Lvl(props...; flags...)))
                 @test Structure(fbr) == Structure(Tensor(Lvl{Int}(props...; flags...)))
 
-                fbr = dropdefaults!(Tensor(Lvl{Int16}(Element(zero(eltype(arr))); flags...)), arr)
+                fbr = dropfills!(Tensor(Lvl{Int16}(Element(zero(eltype(arr))); flags...)), arr)
                 println(io, "initialized tensor: ", fbr)
                 lvl = fbr.lvl
                 props = map(name -> getproperty(lvl, name), propertynames(lvl))
@@ -68,27 +68,27 @@
                 fbr = Tensor(Dense(Lvl(Element(Int64(0)); flags...)), [0 0 0 1; 0 1 0 0; 0 0 0 0])
                 res = similar(fbr)
                 @test size(res) == size(fbr)
-                @test default(res) == 0 && eltype(res) == Int64
+                @test fill_value(res) == 0 && eltype(res) == Int64
 
                 res = similar(fbr, (10, 5))
                 @test size(res) == (10, 5)
-                @test default(res) == 0 && eltype(res) == Int64
+                @test fill_value(res) == 0 && eltype(res) == Int64
 
                 res = similar(fbr, Float64)
                 @test size(res) == size(fbr)
-                @test default(res) == 0 && eltype(res) == Float64
+                @test fill_value(res) == 0 && eltype(res) == Float64
 
                 res = similar(fbr, 1, Float64)
                 @test size(res) == size(fbr)
-                @test default(res) == 1 && eltype(res) == Float64
+                @test fill_value(res) == 1 && eltype(res) == Float64
 
                 res = similar(fbr, ComplexF32, (10, 5))
                 @test size(res) == (10, 5)
-                @test default(res) == 0 && eltype(res) == ComplexF32
+                @test fill_value(res) == 0 && eltype(res) == ComplexF32
 
                 res = similar(fbr, 2, ComplexF64, (10, 5))
                 @test size(res) == (10, 5)
-                @test default(res) == 2 && eltype(res) == ComplexF64
+                @test fill_value(res) == 2 && eltype(res) == ComplexF64
 
                 if key == "SparsePoint" || key == "SparseInterval"
                     continue  # don't test copyto! for Single*
@@ -96,7 +96,7 @@
 
                 res = copyto!(similar(fbr, -1, Float64), fbr)
                 @test res == fbr
-                @test default(res) == -1 && eltype(res) == Float64
+                @test fill_value(res) == -1 && eltype(res) == Float64
             end
 
             @test check_output("constructors/format_$key.txt", String(take!(io)))
@@ -105,10 +105,6 @@
 
     multi_levels = [
         ("SparseCOO", SparseCOO, (;), [
-            [0.0, 2.0, 2.0, 0.0, 3.0, 3.0],
-            [0.0 2.0 2.0; 0.0 3.0 3.0]
-        ]),
-        ("SparseHash", SparseHash, (;), [
             [0.0, 2.0, 2.0, 0.0, 3.0, 3.0],
             [0.0 2.0 2.0; 0.0 3.0 3.0]
         ]),
@@ -121,14 +117,14 @@
                 N = ndims(arr)
                 println(io, "Tensor($key{$N}(Element(0))) constructors:")
 
-                fbr = dropdefaults!(Tensor(Lvl{N}(Element(zero(eltype(arr))); flags...)), arr)
+                fbr = dropfills!(Tensor(Lvl{N}(Element(zero(eltype(arr))); flags...)), arr)
                 println(io, "initialized tensor: ", fbr)
                 lvl = fbr.lvl
                 props = map(name -> getproperty(lvl, name), propertynames(lvl))
                 @test Structure(fbr) == Structure(Tensor(Lvl{N}(props...; flags...)))
                 @test Structure(fbr) == Structure(Tensor(Lvl{N, NTuple{N, Int}}(props...; flags...)))
 
-                fbr = dropdefaults!(Tensor(Lvl{N, NTuple{N, Int16}}(Element(zero(eltype(arr))); flags...)), arr)
+                fbr = dropfills!(Tensor(Lvl{N, NTuple{N, Int16}}(Element(zero(eltype(arr))); flags...)), arr)
                 println(io, "initialized tensor: ", fbr)
                 lvl = fbr.lvl
                 props = map(name -> getproperty(lvl, name), propertynames(lvl))
@@ -166,7 +162,7 @@
                 fbr = Tensor(Lvl{2}(Element(0); flags...), Matrix(reshape(1:25, (5, 5))))
                 res = copyto!(similar(fbr, -1, Float64), fbr)
                 @test res == fbr
-                @test default(res) == -1 && eltype(res) == Float64
+                @test fill_value(res) == -1 && eltype(res) == Float64
 
             end
             @test check_output("constructors/format_$(key).txt", String(take!(io)))
@@ -178,21 +174,21 @@
         arr = [0.0 2.0 2.0 0.0 3.0 3.0;
             1.0 0.0 7.0 1.0 0.0 0.0;
             0.0 0.0 0.0 0.0 0.0 9.0]
-        
+
         println(io, "Tensor(Dense(Separate(Dense(Element(0))))):")
-        
-        fbr = dropdefaults!(Tensor(Dense(Separate(Dense(Element(0))))), arr)
+
+        fbr = dropfills!(Tensor(Dense(Separate(Dense(Element(0))))), arr)
 
         # sublvl = Tensor(Dense(Element(0)), [])
-        # col1 = dropdefaults!(Tensor((Dense(Element(0)))), arr[:, 1])
-        # col2 = dropdefaults!(Tensor((Dense(Element(0)))), arr[:, 2])
-        # col3 = dropdefaults!(Tensor((Dense(Element(0)))), arr[:, 3])
-        # col4 = dropdefaults!(Tensor((Dense(Element(0)))), arr[:, 4])
-        # col5 = dropdefaults!(Tensor((Dense(Element(0)))), arr[:, 5])
-        # col6 = dropdefaults!(Tensor((Dense(Element(0)))), arr[:, 6])
+        # col1 = dropfills!(Tensor((Dense(Element(0)))), arr[:, 1])
+        # col2 = dropfills!(Tensor((Dense(Element(0)))), arr[:, 2])
+        # col3 = dropfills!(Tensor((Dense(Element(0)))), arr[:, 3])
+        # col4 = dropfills!(Tensor((Dense(Element(0)))), arr[:, 4])
+        # col5 = dropfills!(Tensor((Dense(Element(0)))), arr[:, 5])
+        # col6 = dropfills!(Tensor((Dense(Element(0)))), arr[:, 6])
         # vals = [col1, col2, col3, col4, col5, col6]
-        
-        
+
+
         println(io, "initialized tensor: ", fbr)
         @test Structure(fbr) == Structure(Tensor(Dense(Separate(fbr.lvl.lvl.lvl, fbr.lvl.lvl.val), 6)))
         @test Structure(fbr) == Structure(Tensor(Dense(Separate{typeof(fbr.lvl.lvl.lvl), typeof(fbr.lvl.lvl.val)}(fbr.lvl.lvl.lvl, fbr.lvl.lvl.val), 6)))
@@ -209,7 +205,7 @@
         fbr = Tensor(Dense(Separate(Dense(Element(0)))), Matrix(reshape(1:25, (5, 5))))
         res = copyto!(similar(fbr, -1, Float64), fbr)
         @test res == fbr
-        @test default(res) == -1 && eltype(res) == Float64
+        @test fill_value(res) == -1 && eltype(res) == Float64
 
         @test check_output("constructors/format_d_p_d_e.txt", String(take!(io)))
     end
@@ -219,8 +215,8 @@
         arr = [0.0 2.0 2.0 0.0 3.0 3.0;
             1.0 0.0 7.0 1.0 0.0 0.0;
             0.0 0.0 0.0 0.0 0.0 9.0]
-        
-        fbr = dropdefaults!(Tensor(Dense(Atomic(Dense(Element(0))))), arr)
+
+        fbr = dropfills!(Tensor(Dense(Atomic(Dense(Element(0))))), arr)
 
         println(io, "initialized tensor: ", fbr)
         @test Structure(fbr) == Structure(Tensor(Dense(Atomic(fbr.lvl.lvl.lvl, fbr.lvl.lvl.locks), 6)))
@@ -238,7 +234,7 @@
         fbr = Tensor(Dense(Atomic(Dense(Element(0)))), Matrix(reshape(1:25, (5, 5))))
         res = copyto!(similar(fbr, -1, Float64), fbr)
         @test res == fbr
-        @test default(res) == -1 && eltype(res) == Float64
+        @test fill_value(res) == -1 && eltype(res) == Float64
 
         @test check_output("constructors/format_d_a_d_e.txt", String(take!(io)))
     end

@@ -267,7 +267,7 @@ function freeze_level!(ctx::AbstractCompiler, lvl::VirtualSparseBandLevel, pos_s
     return lvl
 end
 
-function instantiate(ctx, fbr::VirtualSubFiber{VirtualSparseBandLevel}, mode::Reader, subprotos, ::Union{typeof(defaultread), typeof(walk)})
+function unfurl(ctx, fbr::VirtualSubFiber{VirtualSparseBandLevel}, ext, mode::Reader, ::Union{typeof(defaultread), typeof(walk)})
     (lvl, pos) = (fbr.lvl, fbr.pos)
     tag = lvl.ex
     Tp = postype(lvl)
@@ -281,8 +281,9 @@ function instantiate(ctx, fbr::VirtualSubFiber{VirtualSparseBandLevel}, mode::Re
     my_q_ofs = freshen(ctx, tag, :_q_ofs)
     my_i1 = freshen(ctx, tag, :_i1)
 
-    Furlable(
-        body = (ctx, ext) -> Thunk(
+    Unfurled(
+        arr = fbr,
+        body = Thunk(
             preamble = quote
                 $my_r = $(lvl.ptr)[$(ctx(pos))]
                 $my_r_stop = $(lvl.ptr)[$(ctx(pos)) + $(Tp(1))] - 1
@@ -308,7 +309,7 @@ function instantiate(ctx, fbr::VirtualSubFiber{VirtualSparseBandLevel}, mode::Re
                     body = (ctx, ext) -> Lookup(
                         body = (ctx, i) -> Thunk(
                             preamble = :($my_q = $my_q_ofs + $(ctx(i))),
-                            body = (ctx) -> instantiate(ctx, VirtualSubFiber(lvl.lvl, value(my_q, Tp)), mode, subprotos),
+                            body = (ctx) -> instantiate(ctx, VirtualSubFiber(lvl.lvl, value(my_q, Tp)), mode),
                         )
                     )
                 ),
@@ -320,9 +321,9 @@ function instantiate(ctx, fbr::VirtualSubFiber{VirtualSparseBandLevel}, mode::Re
     )
 end
 
-instantiate(ctx, fbr::VirtualSubFiber{VirtualSparseBandLevel}, mode::Updater, protos) =
-    instantiate(ctx, VirtualHollowSubFiber(fbr.lvl, fbr.pos, freshen(ctx, :null)), mode, protos)
-function instantiate(ctx, fbr::VirtualHollowSubFiber{VirtualSparseBandLevel}, mode::Updater, subprotos, ::Union{typeof(defaultupdate), typeof(extrude)})
+unfurl(ctx, fbr::VirtualSubFiber{VirtualSparseBandLevel}, ext, mode::Updater, proto) =
+    unfurl(ctx, VirtualHollowSubFiber(fbr.lvl, fbr.pos, freshen(ctx, :null)), ext, mode, proto)
+function unfurl(ctx, fbr::VirtualHollowSubFiber{VirtualSparseBandLevel}, ext, mode::Updater, ::Union{typeof(defaultupdate), typeof(extrude)})
     (lvl, pos) = (fbr.lvl, fbr.pos)
     tag = lvl.ex
     Tp = postype(lvl)
@@ -341,8 +342,9 @@ function instantiate(ctx, fbr::VirtualHollowSubFiber{VirtualSparseBandLevel}, mo
     dirty = freshen(ctx, tag, :dirty)
     qos_2 = freshen(ctx, tag, :_qos_2)
 
-    Furlable(
-        body = (ctx, ext) -> Thunk(
+    Unfurled(
+        arr = fbr,
+        body = Thunk(
             preamble = quote
                 $ros = $ros_fill
                 $qos = $qos_fill + 1
@@ -377,7 +379,7 @@ function instantiate(ctx, fbr::VirtualHollowSubFiber{VirtualSparseBandLevel}, mo
                         end
                         $dirty = false
                     end,
-                    body = (ctx) -> instantiate(ctx, VirtualHollowSubFiber(lvl.lvl, value(qos, Tp), dirty), mode, subprotos),
+                    body = (ctx) -> instantiate(ctx, VirtualHollowSubFiber(lvl.lvl, value(qos, Tp), dirty), mode),
                     epilogue = quote
                         if $dirty
                             $(fbr.dirty) = true

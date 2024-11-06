@@ -406,7 +406,7 @@ function thaw_level!(ctx::AbstractCompiler, lvl::VirtualRunListLevel, pos_stop)
     =#
 end
 
-function instantiate(ctx, fbr::VirtualSubFiber{VirtualRunListLevel}, mode::Reader, subprotos, ::Union{typeof(defaultread), typeof(walk)})
+function unfurl(ctx, fbr::VirtualSubFiber{VirtualRunListLevel}, ext, mode::Reader, ::Union{typeof(defaultread), typeof(walk)})
     (lvl, pos) = (fbr.lvl, fbr.pos)
     tag = lvl.ex
     Tp = postype(lvl)
@@ -416,8 +416,9 @@ function instantiate(ctx, fbr::VirtualSubFiber{VirtualRunListLevel}, mode::Reade
     my_q_stop = freshen(ctx, tag, :_q_stop)
     my_i1 = freshen(ctx, tag, :_i1)
 
-    Furlable(
-        body = (ctx, ext) -> Thunk(
+    Unfurled(
+        arr = fbr,
+        body = Thunk(
             preamble = (quote
                 $my_q = $(lvl.ptr)[$(ctx(pos))]
                 $my_q_stop = $(lvl.ptr)[$(ctx(pos)) + $(Tp(1))]
@@ -439,7 +440,7 @@ function instantiate(ctx, fbr::VirtualSubFiber{VirtualRunListLevel}, mode::Reade
                 preamble = :($my_i = $(lvl.right)[$my_q]),
                 stop = (ctx, ext) -> value(my_i),
                 chunk = Run(
-                    body = Simplify(instantiate(ctx, VirtualSubFiber(lvl.lvl, value(my_q)), mode, subprotos))
+                    body = Simplify(instantiate(ctx, VirtualSubFiber(lvl.lvl, value(my_q)), mode))
                 ),
                 next = (ctx, ext) -> :($my_q += $(Tp(1)))
             )
@@ -447,8 +448,8 @@ function instantiate(ctx, fbr::VirtualSubFiber{VirtualRunListLevel}, mode::Reade
     )
 end
 
-instantiate(ctx, fbr::VirtualSubFiber{VirtualRunListLevel}, mode::Updater, protos) =
-    instantiate(ctx, VirtualHollowSubFiber(fbr.lvl, fbr.pos, freshen(ctx, :null)), mode, protos)
+unfurl(ctx, fbr::VirtualSubFiber{VirtualRunListLevel}, ext, mode::Updater, proto) =
+    unfurl(ctx, VirtualHollowSubFiber(fbr.lvl, fbr.pos, freshen(ctx, :null)), ext, mode, proto)
 
 #Invariants of the level (Write Mode):
 # 1. prevpos is the last position written (initially 0)
@@ -456,7 +457,7 @@ instantiate(ctx, fbr::VirtualSubFiber{VirtualRunListLevel}, mode::Updater, proto
 # 3. for all p in 1:prevpos-1, ptr[p] is the number of runs in that position
 # 4. qos_fill is the position of the last index written
 
-function instantiate(ctx, fbr::VirtualHollowSubFiber{VirtualRunListLevel}, mode::Updater, subprotos, ::Union{typeof(defaultupdate), typeof(extrude)})
+function unfurl(ctx, fbr::VirtualHollowSubFiber{VirtualRunListLevel}, ext, mode::Updater, ::Union{typeof(defaultupdate), typeof(extrude)})
     (lvl, pos) = (fbr.lvl, fbr.pos)
     tag = lvl.ex
     Tp = postype(lvl)
@@ -472,8 +473,9 @@ function instantiate(ctx, fbr::VirtualHollowSubFiber{VirtualRunListLevel}, mode:
     qos_3 = freshen(ctx, tag, :_qos_3)
     local_i_prev = freshen(ctx, tag, :_i_prev)
 
-    Furlable(
-        body = (ctx, ext) -> Thunk(
+    Unfurled( 
+        arr = fbr,
+        body = Thunk(
             preamble = quote
                 $qos = $qos_fill + 1
                 $(if issafe(get_mode_flag(ctx))
@@ -507,7 +509,7 @@ function instantiate(ctx, fbr::VirtualHollowSubFiber{VirtualRunListLevel}, mode:
                         end
                         $dirty = false
                     end,
-                    body = (ctx) -> instantiate(ctx, VirtualHollowSubFiber(lvl.buf, value(qos_3, Tp), dirty), mode, subprotos),
+                    body = (ctx) -> instantiate(ctx, VirtualHollowSubFiber(lvl.buf, value(qos_3, Tp), dirty), mode),
                     epilogue = quote
                         if $dirty
                             $(lvl.right)[$qos] = $(ctx(getstart(ext))) - $unit

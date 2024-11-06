@@ -68,8 +68,8 @@ virtual_resize!(ctx::AbstractCompiler, arr::VirtualWindowedArray, dims...) =
 
 virtual_fill_value(ctx::AbstractCompiler, arr::VirtualWindowedArray) = virtual_fill_value(ctx, arr.body)
 
-instantiate(ctx, arr::VirtualWindowedArray, mode, protos) =
-    VirtualWindowedArray(instantiate(ctx, arr.body, mode, protos), arr.dims)
+instantiate(ctx, arr::VirtualWindowedArray, mode) =
+    VirtualWindowedArray(instantiate(ctx, arr.body, mode), arr.dims)
 
 get_style(ctx, node::VirtualWindowedArray, root) = get_style(ctx, node.body, root)
 
@@ -133,12 +133,12 @@ short_circuit_cases(ctx, node::VirtualWindowedArray, op) =
 
 getroot(tns::VirtualWindowedArray) = getroot(tns.body)
 
-function unfurl(ctx, tns::VirtualWindowedArray, ext, mode, protos...)
+function unfurl(ctx, tns::VirtualWindowedArray, ext, mode, proto)
     if tns.dims[end] !== nothing
         dims = virtual_size(ctx, tns.body)
-        tns_2 = unfurl(ctx, tns.body, dims[end], mode, protos...)
+        tns_2 = unfurl(ctx, tns.body, dims[end], mode, proto)
         truncate(ctx, tns_2, dims[end], ext)
     else
-        unfurl(ctx, tns.body, ext, mode, protos...)
+        unfurl(ctx, tns.body, ext, mode, proto)
     end
 end

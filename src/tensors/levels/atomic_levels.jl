@@ -191,61 +191,41 @@ function virtual_moveto_level(ctx::AbstractCompiler, lvl::VirtualAtomicLevel, ar
     virtual_moveto_level(ctx, lvl.lvl, arch)
 end
 
-function instantiate(ctx, fbr::VirtualSubFiber{VirtualAtomicLevel}, mode::Reader, protos)
+function instantiate(ctx, fbr::VirtualSubFiber{VirtualAtomicLevel}, mode::Reader)
     (lvl, pos) = (fbr.lvl, fbr.pos)
-    # lvlp = freshen(ctx, lvl.ex, :_lvl)
-    # sym = freshen(ctx, lvl.ex, :_after_atomic_lvl)
-    return body = Thunk(
-        body = (ctx) -> begin
-            instantiate(ctx, VirtualSubFiber(lvl.lvl, pos), mode, protos)
-        end,
-    )
+    instantiate(ctx, VirtualSubFiber(lvl.lvl, pos), mode)
 end
 
-function instantiate(ctx, fbr::VirtualSubFiber{VirtualAtomicLevel}, mode::Updater, protos)
+function instantiate(ctx, fbr::VirtualSubFiber{VirtualAtomicLevel}, mode::Updater)
     (lvl, pos) = (fbr.lvl, fbr.pos)
     sym = freshen(ctx, lvl.ex, :after_atomic_lvl)
     atomicData = freshen(ctx, lvl.ex, :atomicArraysAcc)
     lockVal = freshen(ctx, lvl.ex, :lockVal)
     dev = lower(ctx, virtual_get_device(ctx.code.task), DefaultStyle())
-    return Thunk(
-
-        body =  (ctx) -> begin
-        preamble = quote
-            $atomicData =  Finch.get_lock($dev, $(lvl.locks), $(ctx(pos)), eltype($(lvl.AVal)))
-            $lockVal = Finch.aquire_lock!($dev, $atomicData)
-        end
-        epilogue = quote
-            Finch.release_lock!($dev, $atomicData) end
-        push_preamble!(ctx, preamble)
-        push_epilogue!(ctx, epilogue)
-            lvl_2 = lvl.lvl
-            update = instantiate(ctx, VirtualSubFiber(lvl_2, pos), mode, protos)
-            return update
-        end,
-
-    )
+    push_preamble!(ctx, quote
+        $atomicData =  Finch.get_lock($dev, $(lvl.locks), $(ctx(pos)), eltype($(lvl.AVal)))
+        $lockVal = Finch.aquire_lock!($dev, $atomicData)
+    end)
+    res = instantiate(ctx, VirtualSubFiber(lvl.lvl, pos), mode)
+    push_epilogue!(ctx, quote
+        Finch.release_lock!($dev, $atomicData)
+    end)
+    return res
 end
-function instantiate(ctx, fbr::VirtualHollowSubFiber{VirtualAtomicLevel}, mode::Updater, protos)
+
+function instantiate(ctx, fbr::VirtualHollowSubFiber{VirtualAtomicLevel}, mode::Updater)
     (lvl, pos) = (fbr.lvl, fbr.pos)
     sym = freshen(ctx, lvl.ex, :after_atomic_lvl)
-    atomicData = freshen(ctx, lvl.ex, :atomicArrays)
+    atomicData = freshen(ctx, lvl.ex, :atomicArraysAcc)
     lockVal = freshen(ctx, lvl.ex, :lockVal)
     dev = lower(ctx, virtual_get_device(ctx.code.task), DefaultStyle())
-    return Thunk(
-
-        body =  (ctx) -> begin
-        preamble = quote
-            $atomicData =  Finch.get_lock($dev, $(lvl.locks), $(ctx(pos)), eltype($(lvl.AVal)))
-            $lockVal = Finch.aquire_lock!($dev, $atomicData)
-        end
-        epilogue = quote
-            Finch.release_lock!($dev, $atomicData) end
-            push_preamble!(ctx, preamble)
-            push_epilogue!(ctx, epilogue)
-            lvl_2 = lvl.lvl
-            update = instantiate(ctx, VirtualHollowSubFiber(lvl_2, pos, fbr.dirty), mode, protos)
-            return update
-        end
-    )
+    push_preamble!(ctx, quote
+        $atomicData =  Finch.get_lock($dev, $(lvl.locks), $(ctx(pos)), eltype($(lvl.AVal)))
+        $lockVal = Finch.aquire_lock!($dev, $atomicData)
+    end)
+    res = instantiate(ctx, VirtualHollowSubFiber(lvl.lvl, pos, fbr.dirty), mode)
+    push_epilogue!(ctx, quote
+        Finch.release_lock!($dev, $atomicData)
+    end)
+    return res
 end

@@ -393,7 +393,7 @@ function thaw_level!(ctx::AbstractCompiler, lvl::VirtualSparseRunListLevel, pos_
     return lvl
 end
 
-function instantiate(ctx, fbr::VirtualSubFiber{VirtualSparseRunListLevel}, mode::Reader, subprotos, ::Union{typeof(defaultread), typeof(walk)})
+function unfurl(ctx, fbr::VirtualSubFiber{VirtualSparseRunListLevel}, ext, mode::Reader, ::Union{typeof(defaultread), typeof(walk)})
     (lvl, pos) = (fbr.lvl, fbr.pos)
     tag = lvl.ex
     Tp = postype(lvl)
@@ -404,63 +404,61 @@ function instantiate(ctx, fbr::VirtualSubFiber{VirtualSparseRunListLevel}, mode:
     my_q = freshen(ctx, tag, :_q)
     my_q_stop = freshen(ctx, tag, :_q_stop)
 
-    Furlable(
-        body = (ctx, ext) -> Thunk(
-            preamble = quote
-                $my_q = $(lvl.ptr)[$(ctx(pos))]
-                $my_q_stop = $(lvl.ptr)[$(ctx(pos)) + $(Tp(1))]
-                if $my_q < $my_q_stop
-                    $my_i_end = $(lvl.right)[$my_q_stop - $(Tp(1))]
-                else
-                    $my_i_end = $(Ti(0))
-                end
+    Thunk(
+        preamble = quote
+            $my_q = $(lvl.ptr)[$(ctx(pos))]
+            $my_q_stop = $(lvl.ptr)[$(ctx(pos)) + $(Tp(1))]
+            if $my_q < $my_q_stop
+                $my_i_end = $(lvl.right)[$my_q_stop - $(Tp(1))]
+            else
+                $my_i_end = $(Ti(0))
+            end
 
-            end,
-            body = (ctx) -> Sequence([
-                Phase(
-                    stop = (ctx, ext) -> value(my_i_end),
-                    body = (ctx, ext) -> Stepper(
-                        seek = (ctx, ext) -> quote
-                            if $(lvl.right)[$my_q] < $(ctx(getstart(ext)))
-                                $my_q = Finch.scansearch($(lvl.right), $(ctx(getstart(ext))), $my_q, $my_q_stop - 1)
-                            end
-                        end,
-                        preamble = quote
-                            $my_i_start = $(lvl.left)[$my_q]
-                            $my_i_stop = $(lvl.right)[$my_q]
-                        end,
-                        stop = (ctx, ext) -> value(my_i_stop),
-                        body = (ctx, ext) -> Thunk(
-                            body = (ctx) -> Sequence([
-                                Phase(
-                                    stop = (ctx, ext) -> call(-, value(my_i_start), getunit(ext)),
-                                    body = (ctx, ext) -> Run(FillLeaf(virtual_level_fill_value(lvl))),
-                                ),
-                                Phase(
-                                    body = (ctx,ext) -> Run(
-                                        body = Simplify(instantiate(ctx, VirtualSubFiber(lvl.lvl, value(my_q)), mode, subprotos))
-                                    )
+        end,
+        body = (ctx) -> Sequence([
+            Phase(
+                stop = (ctx, ext) -> value(my_i_end),
+                body = (ctx, ext) -> Stepper(
+                    seek = (ctx, ext) -> quote
+                        if $(lvl.right)[$my_q] < $(ctx(getstart(ext)))
+                            $my_q = Finch.scansearch($(lvl.right), $(ctx(getstart(ext))), $my_q, $my_q_stop - 1)
+                        end
+                    end,
+                    preamble = quote
+                        $my_i_start = $(lvl.left)[$my_q]
+                        $my_i_stop = $(lvl.right)[$my_q]
+                    end,
+                    stop = (ctx, ext) -> value(my_i_stop),
+                    body = (ctx, ext) -> Thunk(
+                        body = (ctx) -> Sequence([
+                            Phase(
+                                stop = (ctx, ext) -> call(-, value(my_i_start), getunit(ext)),
+                                body = (ctx, ext) -> Run(FillLeaf(virtual_level_fill_value(lvl))),
+                            ),
+                            Phase(
+                                body = (ctx,ext) -> Run(
+                                    body = Simplify(instantiate(ctx, VirtualSubFiber(lvl.lvl, value(my_q)), mode))
                                 )
-                            ]),
-                            epilogue = quote
-                                $my_q += ($(ctx(getstop(ext))) == $my_i_stop)
-                            end
-                        )
+                            )
+                        ]),
+                        epilogue = quote
+                            $my_q += ($(ctx(getstop(ext))) == $my_i_stop)
+                        end
                     )
-                ),
-                Phase(
-                    body = (ctx, ext) -> Run(FillLeaf(virtual_level_fill_value(lvl)))
                 )
-            ])
-        )
+            ),
+            Phase(
+                body = (ctx, ext) -> Run(FillLeaf(virtual_level_fill_value(lvl)))
+            )
+        ])
     )
 end
 
 
-instantiate(ctx, fbr::VirtualSubFiber{VirtualSparseRunListLevel}, mode::Updater, protos) =
-    instantiate(ctx, VirtualHollowSubFiber(fbr.lvl, fbr.pos, freshen(ctx, :null)), mode, protos)
+unfurl(ctx, fbr::VirtualSubFiber{VirtualSparseRunListLevel}, ext, mode::Updater, proto) =
+    unfurl(ctx, VirtualHollowSubFiber(fbr.lvl, fbr.pos, freshen(ctx, :null)), ext, mode, proto)
 
-function instantiate(ctx, fbr::VirtualHollowSubFiber{VirtualSparseRunListLevel}, mode::Updater, subprotos, ::Union{typeof(defaultupdate), typeof(extrude)})
+function unfurl(ctx, fbr::VirtualHollowSubFiber{VirtualSparseRunListLevel}, ext, mode::Updater, ::Union{typeof(defaultupdate), typeof(extrude)})
     (lvl, pos) = (fbr.lvl, fbr.pos)
     tag = lvl.ex
     Tp = postype(lvl)
@@ -470,48 +468,46 @@ function instantiate(ctx, fbr::VirtualHollowSubFiber{VirtualSparseRunListLevel},
     qos_stop = lvl.qos_stop
     dirty = freshen(ctx, tag, :dirty)
 
-    Furlable(
-        body = (ctx, ext) -> Thunk(
-            preamble = quote
-                $qos = $qos_fill + 1
-                $(if issafe(get_mode_flag(ctx))
-                    quote
-                        $(lvl.prev_pos) < $(ctx(pos)) || throw(FinchProtocolError("SparseRunListLevels cannot be updated multiple times"))
-                    end
-                end)
-            end,
+    Thunk(
+        preamble = quote
+            $qos = $qos_fill + 1
+            $(if issafe(get_mode_flag(ctx))
+                quote
+                    $(lvl.prev_pos) < $(ctx(pos)) || throw(FinchProtocolError("SparseRunListLevels cannot be updated multiple times"))
+                end
+            end)
+        end,
 
-            body = (ctx) -> AcceptRun(
-                body = (ctx, ext) -> Thunk(
-                    preamble = quote
-                        if $qos > $qos_stop
-                            $qos_stop = max($qos_stop << 1, 1)
-                            Finch.resize_if_smaller!($(lvl.left), $qos_stop)
-                            Finch.resize_if_smaller!($(lvl.right), $qos_stop)
-                            $(contain(ctx_2->assemble_level!(ctx_2, lvl.buf, value(qos, Tp), value(qos_stop, Tp)), ctx))
-                        end
-                        $dirty = false
-                    end,
-                    body = (ctx) -> instantiate(ctx, VirtualHollowSubFiber(lvl.buf, value(qos, Tp), dirty), mode, subprotos),
-                    epilogue = quote
-                        if $dirty
-                            $(fbr.dirty) = true
-                            $(lvl.left)[$qos] = $(ctx(getstart(ext)))
-                            $(lvl.right)[$qos] = $(ctx(getstop(ext)))
-                            $(qos) += $(Tp(1))
-                            $(if issafe(get_mode_flag(ctx))
-                                quote
-                                    $(lvl.prev_pos) = $(ctx(pos))
-                                end
-                            end)
-                        end
+        body = (ctx) -> AcceptRun(
+            body = (ctx, ext) -> Thunk(
+                preamble = quote
+                    if $qos > $qos_stop
+                        $qos_stop = max($qos_stop << 1, 1)
+                        Finch.resize_if_smaller!($(lvl.left), $qos_stop)
+                        Finch.resize_if_smaller!($(lvl.right), $qos_stop)
+                        $(contain(ctx_2->assemble_level!(ctx_2, lvl.buf, value(qos, Tp), value(qos_stop, Tp)), ctx))
                     end
-                )
-            ),
-            epilogue = quote
-                $(lvl.ptr)[$(ctx(pos)) + 1] += $qos - $qos_fill - 1
-                $qos_fill = $qos - 1
-            end
-        )
+                    $dirty = false
+                end,
+                body = (ctx) -> instantiate(ctx, VirtualHollowSubFiber(lvl.buf, value(qos, Tp), dirty), mode),
+                epilogue = quote
+                    if $dirty
+                        $(fbr.dirty) = true
+                        $(lvl.left)[$qos] = $(ctx(getstart(ext)))
+                        $(lvl.right)[$qos] = $(ctx(getstop(ext)))
+                        $(qos) += $(Tp(1))
+                        $(if issafe(get_mode_flag(ctx))
+                            quote
+                                $(lvl.prev_pos) = $(ctx(pos))
+                            end
+                        end)
+                    end
+                end
+            )
+        ),
+        epilogue = quote
+            $(lvl.ptr)[$(ctx(pos)) + 1] += $qos - $qos_fill - 1
+            $qos_fill = $qos - 1
+        end
     )
 end

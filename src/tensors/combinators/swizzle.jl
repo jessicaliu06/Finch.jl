@@ -69,16 +69,13 @@ virtual_size(ctx::AbstractCompiler, arr::VirtualSwizzleArray) =
 virtual_resize!(ctx::AbstractCompiler, arr::VirtualSwizzleArray, dims...) =
     virtual_resize!(ctx, arr.body, dims[invperm(arr.dims)]...)
 
-instantiate(ctx, arr::VirtualSwizzleArray, mode, protos) =
-    VirtualSwizzleArray(instantiate(ctx, arr.body, mode, protos), arr.dims)
-
+instantiate(ctx, arr::VirtualSwizzleArray, mode) =
+    VirtualSwizzleArray(instantiate(ctx, arr.body, mode), arr.dims)
+    
 get_style(ctx, node::VirtualSwizzleArray, root) = get_style(ctx, node.body, root)
 
 getroot(tns::VirtualSwizzleArray) = getroot(tns.body)
 
-function lower_access(ctx::AbstractCompiler, node, tns::VirtualSwizzleArray)
-    if !isempty(node.idxs)
-        error("SwizzleArray not lowered completely")
-    end
-    lower_access(ctx, node, tns.body)
+function lower_access(ctx::AbstractCompiler, tns::VirtualSwizzleArray, mode)
+    lower_access(ctx, tns.body, mode)
 end

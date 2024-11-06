@@ -26,9 +26,9 @@ begin
                     phase_stop = min(i_9, l_6 + -1)
                     if phase_stop >= i_9
                         for s_4 = i_9:phase_stop
-                            val_2 = A[i_9, l_6, k_6]
-                            C[i_9, j_5, k_6] = val_2 * val + C[i_9, j_5, k_6]
-                            C[i_9, j_5, k_6] = val * val_2 + C[i_9, j_5, k_6]
+                            val_4 = A[i_9, l_6, k_6]
+                            C[i_9, j_5, k_6] = val_4 * val + C[i_9, j_5, k_6]
+                            C[i_9, j_5, k_6] = val * val_4 + C[i_9, j_5, k_6]
                         end
                     end
                 end

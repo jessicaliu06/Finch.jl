@@ -10,10 +10,10 @@ The `AbstractTensor` interface (defined in `src/abstract_tensor.jl`) is the inte
 
 ```@docs
 declare!
-instantiate
 freeze!
 thaw!
 unfurl
+instantiate
 fill_value
 virtual_eltype
 virtual_fill_value

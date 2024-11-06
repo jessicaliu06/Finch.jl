@@ -71,7 +71,6 @@ lower(ctx::AbstractCompiler, tns::VirtualProductArray, ::DefaultStyle) = :(Produ
 
 #virtual_size(ctx::AbstractCompiler, arr::FillLeaf) = (dimless,) # this is needed for multidimensional convolution..
 #virtual_size(ctx::AbstractCompiler, arr::Simplify) = (dimless,)
-#virtual_size(ctx::AbstractCompiler, arr::Furlable) = (dimless,)
 
 function virtual_size(ctx::AbstractCompiler, arr::VirtualProductArray)
     dims = virtual_size(ctx, arr.body)
@@ -81,12 +80,8 @@ function virtual_resize!(ctx::AbstractCompiler, arr::VirtualProductArray, dims..
     virtual_resize!(ctx, arr.body, dims[1:arr.dim - 1]..., dimless, dims[arr.dim + 2:end]...)
 end
 
-function instantiate_reader(arr::VirtualProductArray, ctx, protos)
-    VirtualProductArray(instantiate_reader(arr.body, ctx, [protos[1:arr.dim]; protos[arr.dim + 2:end]]), arr.dim)
-end
-function instantiate_updater(arr::VirtualProductArray, ctx, protos)
-    VirtualProductArray(instantiate_updater(arr.body, ctx, [protos[1:arr.dim]; protos[arr.dim + 2:end]]), arr.dim)
-end
+instantiate(arr::VirtualProductArray, ctx, mode) =
+    VirtualProductArray(instantiate(arr.body, ctx, mode), arr.dim)
 
 get_style(ctx, node::VirtualProductArray, root) = get_style(ctx, node.body, root)
 
@@ -142,7 +137,7 @@ jumper_seek(ctx, node::VirtualProductArray, ext) = jumper_seek(ctx, node.body, e
 
 getroot(tns::VirtualProductArray) = getroot(tns.body)
 
-function unfurl(ctx, tns::VirtualProductArray, ext, mode, protos...)
+function unfurl(ctx, tns::VirtualProductArray, ext, mode, proto)
     if length(virtual_size(ctx, tns)) == tns.dim + 1
         Unfurled(tns,
             Lookup(
@@ -150,6 +145,6 @@ function unfurl(ctx, tns::VirtualProductArray, ext, mode, protos...)
             )
         )
     else
-        VirtualProductArray(unfurl(ctx, tns.body, ext, mode, protos...), tns.dim)
+        VirtualProductArray(unfurl(ctx, tns.body, ext, mode, proto), tns.dim)
     end
 end

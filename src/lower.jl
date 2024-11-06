@@ -260,6 +260,13 @@ function lower_access(ctx, tns::Number, mode)
     tns
 end
 
+"""
+    unfurl(ctx, tns, ext, proto)
+Return an array object (usually a looplet nest) for lowering the outermost
+dimension of virtual tensor `tns`. `ext` is the extent of the looplet. `proto`
+is the protocol that should be used for this index, but one doesn't need to
+unfurl all the indices at once.
+"""
 unfurl(ctx, tns, ext, mode, proto) = 
     throw(FinchProtocolError("$tns does not support $mode with protocol $proto"))
 

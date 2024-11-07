@@ -1,12 +1,7 @@
 """
     AtomicElementLevel{Vf, [Tv=typeof(Vf)], [Tp=Int], [Val]}()
 
-A subfiber of an element level is a scalar of type `Tv`, initialized to `Vf`. `Vf`
-may optionally be given as the first argument.
-
-The data is stored in a vector
-of type `Val` with `eltype(Val) = Tv`. The type `Tp` is the index type used to
-access Val.
+Like an [`ElementLevel`](@ref), but updates to the level are performed atomically.
 
 ```jldoctest
 julia> Tensor(Dense(AtomicElement(0.0)), [1, 2, 3])

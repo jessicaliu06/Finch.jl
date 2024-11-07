@@ -80,7 +80,7 @@ end
 
 countstored_level(lvl::MutexLevel, pos) = countstored_level(lvl.lvl, pos)
 
-mutable struct VirtualAtomicLevel <: AbstractVirtualLevel
+mutable struct VirtualMutexLevel <: AbstractVirtualLevel
     lvl # the level below us.
     ex
     locks
@@ -91,21 +91,21 @@ mutable struct VirtualAtomicLevel <: AbstractVirtualLevel
 end
 postype(lvl:: MutexLevel) = postype(lvl.lvl)
 
-postype(lvl:: VirtualAtomicLevel) = postype(lvl.lvl)
+postype(lvl:: VirtualMutexLevel) = postype(lvl.lvl)
 
-is_level_injective(ctx, lvl::VirtualAtomicLevel) = [is_level_injective(ctx, lvl.lvl)...]
+is_level_injective(ctx, lvl::VirtualMutexLevel) = [is_level_injective(ctx, lvl.lvl)...]
 
-function is_level_concurrent(ctx, lvl::VirtualAtomicLevel)
+function is_level_concurrent(ctx, lvl::VirtualMutexLevel)
     (below, c) = is_level_concurrent(ctx, lvl.lvl)
     return (below, c)
 end
 
-function is_level_atomic(ctx, lvl::VirtualAtomicLevel)
+function is_level_atomic(ctx, lvl::VirtualMutexLevel)
     (below, _) = is_level_atomic(ctx, lvl.lvl)
     return (below, true)
 end
 
-function lower(ctx::AbstractCompiler, lvl::VirtualAtomicLevel, ::DefaultStyle)
+function lower(ctx::AbstractCompiler, lvl::VirtualMutexLevel, ::DefaultStyle)
     quote
         $MutexLevel{$(lvl.AVal), $(lvl.Lvl)}($(ctx(lvl.lvl)), $(lvl.locks))
     end
@@ -119,23 +119,23 @@ function virtualize(ctx, ex, ::Type{MutexLevel{AVal, Lvl}}, tag=:lvl) where {AVa
             $atomics = $ex.locks
         end)
     lvl_2 = virtualize(ctx, :($sym.lvl), Lvl, sym)
-    temp = VirtualAtomicLevel(lvl_2, sym, atomics, typeof(level_fill_value(Lvl)), Val, AVal, Lvl)
+    temp = VirtualMutexLevel(lvl_2, sym, atomics, typeof(level_fill_value(Lvl)), Val, AVal, Lvl)
     temp
 end
 
-Base.summary(lvl::VirtualAtomicLevel) = "Mutex($(lvl.Lvl))"
-virtual_level_resize!(ctx, lvl::VirtualAtomicLevel, dims...) = (lvl.lvl = virtual_level_resize!(ctx, lvl.lvl, dims...); lvl)
-virtual_level_size(ctx, lvl::VirtualAtomicLevel) = virtual_level_size(ctx, lvl.lvl)
-virtual_level_ndims(ctx, lvl::VirtualAtomicLevel) = length(virtual_level_size(ctx, lvl.lvl))
-virtual_level_eltype(lvl::VirtualAtomicLevel) = virtual_level_eltype(lvl.lvl)
-virtual_level_fill_value(lvl::VirtualAtomicLevel) = virtual_level_fill_value(lvl.lvl)
+Base.summary(lvl::VirtualMutexLevel) = "Mutex($(lvl.Lvl))"
+virtual_level_resize!(ctx, lvl::VirtualMutexLevel, dims...) = (lvl.lvl = virtual_level_resize!(ctx, lvl.lvl, dims...); lvl)
+virtual_level_size(ctx, lvl::VirtualMutexLevel) = virtual_level_size(ctx, lvl.lvl)
+virtual_level_ndims(ctx, lvl::VirtualMutexLevel) = length(virtual_level_size(ctx, lvl.lvl))
+virtual_level_eltype(lvl::VirtualMutexLevel) = virtual_level_eltype(lvl.lvl)
+virtual_level_fill_value(lvl::VirtualMutexLevel) = virtual_level_fill_value(lvl.lvl)
 
-function declare_level!(ctx, lvl::VirtualAtomicLevel, pos, init)
+function declare_level!(ctx, lvl::VirtualMutexLevel, pos, init)
     lvl.lvl = declare_level!(ctx, lvl.lvl, pos, init)
     return lvl
 end
 
-function assemble_level!(ctx, lvl::VirtualAtomicLevel, pos_start, pos_stop)
+function assemble_level!(ctx, lvl::VirtualMutexLevel, pos_start, pos_stop)
     pos_start = cache!(ctx, :pos_start, simplify(ctx, pos_start))
     pos_stop = cache!(ctx, :pos_stop, simplify(ctx, pos_stop))
     idx = freshen(ctx, :idx)
@@ -149,8 +149,8 @@ function assemble_level!(ctx, lvl::VirtualAtomicLevel, pos_start, pos_stop)
     assemble_level!(ctx, lvl.lvl, pos_start, pos_stop)
 end
 
-supports_reassembly(lvl::VirtualAtomicLevel) = supports_reassembly(lvl.lvl)
-function reassemble_level!(ctx, lvl::VirtualAtomicLevel, pos_start, pos_stop)
+supports_reassembly(lvl::VirtualMutexLevel) = supports_reassembly(lvl.lvl)
+function reassemble_level!(ctx, lvl::VirtualMutexLevel, pos_start, pos_stop)
     pos_start = cache!(ctx, :pos_start, simplify(ctx, pos_start))
     pos_stop = cache!(ctx, :pos_stop, simplify(ctx, pos_stop))
     idx = freshen(ctx, :idx)
@@ -165,7 +165,7 @@ function reassemble_level!(ctx, lvl::VirtualAtomicLevel, pos_start, pos_stop)
     lvl
 end
 
-function freeze_level!(ctx, lvl::VirtualAtomicLevel, pos)
+function freeze_level!(ctx, lvl::VirtualMutexLevel, pos)
     idx = freshen(ctx, :idx)
     push_preamble!(ctx, quote
         resize!($(lvl.locks), $(ctx(pos)))
@@ -174,12 +174,12 @@ function freeze_level!(ctx, lvl::VirtualAtomicLevel, pos)
     return lvl
 end
 
-function thaw_level!(ctx::AbstractCompiler, lvl::VirtualAtomicLevel, pos)
+function thaw_level!(ctx::AbstractCompiler, lvl::VirtualMutexLevel, pos)
     lvl.lvl = thaw_level!(ctx, lvl.lvl, pos)
     return lvl
 end
 
-function virtual_moveto_level(ctx::AbstractCompiler, lvl::VirtualAtomicLevel, arch)
+function virtual_moveto_level(ctx::AbstractCompiler, lvl::VirtualMutexLevel, arch)
     #Add for seperation level too.
     atomics = freshen(ctx, :locksArray)
 
@@ -193,17 +193,17 @@ function virtual_moveto_level(ctx::AbstractCompiler, lvl::VirtualAtomicLevel, ar
     virtual_moveto_level(ctx, lvl.lvl, arch)
 end
 
-function instantiate(ctx, fbr::VirtualSubFiber{VirtualAtomicLevel}, mode::Reader)
+function instantiate(ctx, fbr::VirtualSubFiber{VirtualMutexLevel}, mode::Reader)
     (lvl, pos) = (fbr.lvl, fbr.pos)
     instantiate(ctx, VirtualSubFiber(lvl.lvl, pos), mode)
 end
 
-function unfurl(ctx, fbr::VirtualSubFiber{VirtualAtomicLevel}, ext, mode::Reader, proto)
+function unfurl(ctx, fbr::VirtualSubFiber{VirtualMutexLevel}, ext, mode::Reader, proto)
     (lvl, pos) = (fbr.lvl, fbr.pos)
     unfurl(ctx, VirtualSubFiber(lvl.lvl, pos), ext, mode, proto)
 end
 
-function unfurl(ctx, fbr::VirtualSubFiber{VirtualAtomicLevel}, ext, mode::Updater, proto)
+function unfurl(ctx, fbr::VirtualSubFiber{VirtualMutexLevel}, ext, mode::Updater, proto)
     (lvl, pos) = (fbr.lvl, fbr.pos)
     sym = freshen(ctx, lvl.ex, :after_atomic_lvl)
     atomicData = freshen(ctx, lvl.ex, :atomicArraysAcc)
@@ -220,7 +220,7 @@ function unfurl(ctx, fbr::VirtualSubFiber{VirtualAtomicLevel}, ext, mode::Update
     return res
 end
 
-function unfurl(ctx, fbr::VirtualHollowSubFiber{VirtualAtomicLevel}, ext, mode::Updater, proto)
+function unfurl(ctx, fbr::VirtualHollowSubFiber{VirtualMutexLevel}, ext, mode::Updater, proto)
     (lvl, pos) = (fbr.lvl, fbr.pos)
     sym = freshen(ctx, lvl.ex, :after_atomic_lvl)
     atomicData = freshen(ctx, lvl.ex, :atomicArraysAcc)
@@ -237,7 +237,7 @@ function unfurl(ctx, fbr::VirtualHollowSubFiber{VirtualAtomicLevel}, ext, mode::
     return res
 end
 
-function lower_assign(ctx, fbr::VirtualSubFiber{VirtualAtomicLevel}, mode::Updater, op, rhs)
+function lower_assign(ctx, fbr::VirtualSubFiber{VirtualMutexLevel}, mode::Updater, op, rhs)
     (lvl, pos) = (fbr.lvl, fbr.pos)
     sym = freshen(ctx, lvl.ex, :after_atomic_lvl)
     atomicData = freshen(ctx, lvl.ex, :atomicArraysAcc)
@@ -254,7 +254,7 @@ function lower_assign(ctx, fbr::VirtualSubFiber{VirtualAtomicLevel}, mode::Updat
     return res
 end
 
-function lower_assign(ctx, fbr::VirtualHollowSubFiber{VirtualAtomicLevel}, mode::Updater, op, rhs)
+function lower_assign(ctx, fbr::VirtualHollowSubFiber{VirtualMutexLevel}, mode::Updater, op, rhs)
     (lvl, pos) = (fbr.lvl, fbr.pos)
     sym = freshen(ctx, lvl.ex, :after_atomic_lvl)
     atomicData = freshen(ctx, lvl.ex, :atomicArraysAcc)

@@ -157,8 +157,8 @@ end
 
 is_level_injective(ctx, lvl::VirtualSparseCOOLevel) = [is_level_injective(ctx, lvl.lvl)..., (true for _ in 1:lvl.N)...]
 function is_level_atomic(ctx, lvl::VirtualSparseCOOLevel)
-    (below, atomic) = is_level_atomic(ctx, lvl.lvl)
-    return ([below; [atomic for _ in 1:lvl.N]], atomic)
+    (below, Mutex) = is_level_atomic(ctx, lvl.lvl)
+    return ([below; [Mutex for _ in 1:lvl.N]], Mutex)
 end
 function is_level_concurrent(ctx, lvl::VirtualSparseCOOLevel)
     (data, _) = is_level_concurrent(ctx, lvl.lvl)

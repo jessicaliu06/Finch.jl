@@ -39,7 +39,7 @@ export Dense, DenseLevel
 export Element, ElementLevel
 export AtomicElement, AtomicElementLevel
 export Separate, SeparateLevel
-export Atomic, AtomicLevel
+export Mutex, MutexLevel
 export Pattern, PatternLevel
 export Scalar, SparseScalar, ShortCircuitScalar, SparseShortCircuitScalar
 export walk, gallop, follow, extrude, laminate

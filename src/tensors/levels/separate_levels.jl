@@ -92,8 +92,8 @@ postype(lvl:: VirtualSeparateLevel) = postype(lvl.lvl)
 
 is_level_injective(ctx, lvl::VirtualSeparateLevel) = [is_level_injective(ctx, lvl.lvl)..., true]
 function is_level_atomic(ctx, lvl::VirtualSeparateLevel)
-    (below, atomic) = is_level_atomic(ctx, lvl.lvl)
-    return ([below; [atomic]], atomic)
+    (below, Mutex) = is_level_atomic(ctx, lvl.lvl)
+    return ([below; [Mutex]], Mutex)
 end
 function is_level_concurrent(ctx, lvl::VirtualSeparateLevel)
     (data, _) = is_level_concurrent(ctx, lvl.lvl)

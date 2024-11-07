@@ -1,50 +1,50 @@
 
 """
-    AtomicLevel{Val, Lvl}()
+    MutexLevel{Val, Lvl}()
 
-Atomic Level Protects the level directly below it with atomics
+Mutex Level Protects the level directly below it with atomics
 
-Each position in the level below the atomic level is protected by an atomic.
+Each position in the level below the Mutex level is protected by an Mutex.
 ```jldoctest
-julia> Tensor(Dense(Atomic(Element(0.0))), [1, 2, 3])
+julia> Tensor(Dense(Mutex(Element(0.0))), [1, 2, 3])
 Dense [1:3]
-├─[1]: Atomic -> 1.0
-├─[2]: Atomic -> 2.0
-├─[3]: Atomic -> 3.0
+├─[1]: Mutex -> 1.0
+├─[2]: Mutex -> 2.0
+├─[3]: Mutex -> 3.0
 ```
 """
 
-struct AtomicLevel{AVal, Lvl} <: AbstractLevel
+struct MutexLevel{AVal, Lvl} <: AbstractLevel
     lvl::Lvl
     locks::AVal
 end
-const Atomic = AtomicLevel
+const Mutex = MutexLevel
 
 
-AtomicLevel(lvl) = AtomicLevel(lvl, Base.Threads.SpinLock[])
-#AtomicLevel(lvl::Lvl, locks::AVal) where {Lvl, AVal} =
-#    AtomicLevel{AVal, Lvl}(lvl, locks)
-Base.summary(::AtomicLevel{AVal, Lvl}) where {Lvl, AVal} = "AtomicLevel($(AVal), $(Lvl))"
+MutexLevel(lvl) = MutexLevel(lvl, Base.Threads.SpinLock[])
+#MutexLevel(lvl::Lvl, locks::AVal) where {Lvl, AVal} =
+#    MutexLevel{AVal, Lvl}(lvl, locks)
+Base.summary(::MutexLevel{AVal, Lvl}) where {Lvl, AVal} = "MutexLevel($(AVal), $(Lvl))"
 
-similar_level(lvl::Atomic{AVal, Lvl}, fill_value, eltype::Type, dims...) where {Lvl, AVal} =
-    AtomicLevel(similar_level(lvl.lvl, fill_value, eltype, dims...))
+similar_level(lvl::Mutex{AVal, Lvl}, fill_value, eltype::Type, dims...) where {Lvl, AVal} =
+    MutexLevel(similar_level(lvl.lvl, fill_value, eltype, dims...))
 
-postype(::Type{<:AtomicLevel{AVal, Lvl}}) where {Lvl, AVal} = postype(Lvl)
+postype(::Type{<:MutexLevel{AVal, Lvl}}) where {Lvl, AVal} = postype(Lvl)
 
-function moveto(lvl::AtomicLevel, device)
+function moveto(lvl::MutexLevel, device)
     lvl_2 = moveto(lvl.lvl, device)
     locks_2 = moveto(lvl.locks, device)
-    return AtomicLevel(lvl_2, locks_2)
+    return MutexLevel(lvl_2, locks_2)
 end
 
-pattern!(lvl::AtomicLevel) = AtomicLevel(pattern!(lvl.lvl), lvl.locks)
-set_fill_value!(lvl::AtomicLevel, init) = AtomicLevel(set_fill_value!(lvl.lvl, init), lvl.locks)
+pattern!(lvl::MutexLevel) = MutexLevel(pattern!(lvl.lvl), lvl.locks)
+set_fill_value!(lvl::MutexLevel, init) = MutexLevel(set_fill_value!(lvl.lvl, init), lvl.locks)
 # TODO: FIXME: Need toa dopt the number of dims
-Base.resize!(lvl::AtomicLevel, dims...) = AtomicLevel(resize!(lvl.lvl, dims...), lvl.locks)
+Base.resize!(lvl::MutexLevel, dims...) = MutexLevel(resize!(lvl.lvl, dims...), lvl.locks)
 
 
-function Base.show(io::IO, lvl::AtomicLevel{AVal, Lvl}) where {AVal, Lvl}
-    print(io, "Atomic(")
+function Base.show(io::IO, lvl::MutexLevel{AVal, Lvl}) where {AVal, Lvl}
+    print(io, "Mutex(")
     if get(io, :compact, false)
         print(io, "…")
     else
@@ -55,30 +55,30 @@ function Base.show(io::IO, lvl::AtomicLevel{AVal, Lvl}) where {AVal, Lvl}
     print(io, ")")
 end
 
-labelled_show(io::IO, ::SubFiber{<:AtomicLevel}) =
-    print(io, "Atomic -> ")
+labelled_show(io::IO, ::SubFiber{<:MutexLevel}) =
+    print(io, "Mutex -> ")
 
-function labelled_children(fbr::SubFiber{<:AtomicLevel})
+function labelled_children(fbr::SubFiber{<:MutexLevel})
     lvl = fbr.lvl
     pos = fbr.pos
     [LabelledTree(SubFiber(lvl.lvl, pos))]
 end
 
 
-@inline level_ndims(::Type{<:AtomicLevel{AVal, Lvl}}) where {AVal, Lvl} = level_ndims(Lvl)
-@inline level_size(lvl::AtomicLevel{AVal, Lvl}) where {AVal, Lvl} = level_size(lvl.lvl)
-@inline level_axes(lvl::AtomicLevel{AVal, Lvl}) where {AVal, Lvl} = level_axes(lvl.lvl)
-@inline level_eltype(::Type{AtomicLevel{AVal, Lvl}}) where {AVal, Lvl} = level_eltype(Lvl)
-@inline level_fill_value(::Type{<:AtomicLevel{AVal, Lvl}}) where {AVal, Lvl} = level_fill_value(Lvl)
+@inline level_ndims(::Type{<:MutexLevel{AVal, Lvl}}) where {AVal, Lvl} = level_ndims(Lvl)
+@inline level_size(lvl::MutexLevel{AVal, Lvl}) where {AVal, Lvl} = level_size(lvl.lvl)
+@inline level_axes(lvl::MutexLevel{AVal, Lvl}) where {AVal, Lvl} = level_axes(lvl.lvl)
+@inline level_eltype(::Type{MutexLevel{AVal, Lvl}}) where {AVal, Lvl} = level_eltype(Lvl)
+@inline level_fill_value(::Type{<:MutexLevel{AVal, Lvl}}) where {AVal, Lvl} = level_fill_value(Lvl)
 
 # FIXME: These.
-(fbr::Tensor{<:AtomicLevel})() = SubFiber(fbr.lvl, 1)()
-(fbr::SubFiber{<:AtomicLevel})() = fbr #TODO this is not consistent somehow
-function (fbr::SubFiber{<:AtomicLevel})(idxs...)
+(fbr::Tensor{<:MutexLevel})() = SubFiber(fbr.lvl, 1)()
+(fbr::SubFiber{<:MutexLevel})() = fbr #TODO this is not consistent somehow
+function (fbr::SubFiber{<:MutexLevel})(idxs...)
     return Tensor(fbr.lvl.lvl)(idxs...)
 end
 
-countstored_level(lvl::AtomicLevel, pos) = countstored_level(lvl.lvl, pos)
+countstored_level(lvl::MutexLevel, pos) = countstored_level(lvl.lvl, pos)
 
 mutable struct VirtualAtomicLevel <: AbstractVirtualLevel
     lvl # the level below us.
@@ -89,7 +89,7 @@ mutable struct VirtualAtomicLevel <: AbstractVirtualLevel
     AVal
     Lvl
 end
-postype(lvl:: AtomicLevel) = postype(lvl.lvl)
+postype(lvl:: MutexLevel) = postype(lvl.lvl)
 
 postype(lvl:: VirtualAtomicLevel) = postype(lvl.lvl)
 
@@ -107,11 +107,11 @@ end
 
 function lower(ctx::AbstractCompiler, lvl::VirtualAtomicLevel, ::DefaultStyle)
     quote
-        $AtomicLevel{$(lvl.AVal), $(lvl.Lvl)}($(ctx(lvl.lvl)), $(lvl.locks))
+        $MutexLevel{$(lvl.AVal), $(lvl.Lvl)}($(ctx(lvl.lvl)), $(lvl.locks))
     end
 end
 
-function virtualize(ctx, ex, ::Type{AtomicLevel{AVal, Lvl}}, tag=:lvl) where {AVal, Lvl}
+function virtualize(ctx, ex, ::Type{MutexLevel{AVal, Lvl}}, tag=:lvl) where {AVal, Lvl}
     sym = freshen(ctx, tag)
     atomics = freshen(ctx, tag, :_locks)
     push_preamble!(ctx, quote
@@ -123,7 +123,7 @@ function virtualize(ctx, ex, ::Type{AtomicLevel{AVal, Lvl}}, tag=:lvl) where {AV
     temp
 end
 
-Base.summary(lvl::VirtualAtomicLevel) = "Atomic($(lvl.Lvl))"
+Base.summary(lvl::VirtualAtomicLevel) = "Mutex($(lvl.Lvl))"
 virtual_level_resize!(ctx, lvl::VirtualAtomicLevel, dims...) = (lvl.lvl = virtual_level_resize!(ctx, lvl.lvl, dims...); lvl)
 virtual_level_size(ctx, lvl::VirtualAtomicLevel) = virtual_level_size(ctx, lvl.lvl)
 virtual_level_ndims(ctx, lvl::VirtualAtomicLevel) = length(virtual_level_size(ctx, lvl.lvl))

@@ -109,8 +109,8 @@ end
 
 is_level_injective(ctx, lvl::VirtualDenseLevel) = [is_level_injective(ctx, lvl.lvl)..., true]
 function is_level_atomic(ctx, lvl::VirtualDenseLevel)
-    (data, atomic) = is_level_atomic(ctx, lvl.lvl)
-    return ([data; atomic], atomic)
+    (data, Mutex) = is_level_atomic(ctx, lvl.lvl)
+    return ([data; Mutex], Mutex)
 end
 function is_level_concurrent(ctx, lvl::VirtualDenseLevel)
     (data, concurrent) = is_level_concurrent(ctx, lvl.lvl)

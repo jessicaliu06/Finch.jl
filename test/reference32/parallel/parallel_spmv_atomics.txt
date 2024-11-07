@@ -92,7 +92,7 @@ quote
         end
     resize!(locksArray, A_lvl.shape)
     resize!(val, A_lvl.shape)
-    (y = Tensor((DenseLevel){Int32}((AtomicLevel){Vector{Base.Threads.SpinLock}, ElementLevel{0, Int32, Int32, Vector{Int32}}}(y_lvl_3, locksArray), A_lvl.shape)),)
+    (y = Tensor((DenseLevel){Int32}((MutexLevel){Vector{Base.Threads.SpinLock}, ElementLevel{0, Int32, Int32, Vector{Int32}}}(y_lvl_3, locksArray), A_lvl.shape)),)
 end
 julia> @finch begin
         y .= 0
@@ -102,5 +102,5 @@ julia> @finch begin
             end
         end
     end
-(y = Tensor(Dense{Int32}(Atomic(Element{0, Int32, Int32}([4, 6]), [Base.Threads.SpinLock(0), Base.Threads.SpinLock(0)]), 2)),)
+(y = Tensor(Dense{Int32}(Mutex(Element{0, Int32, Int32}([4, 6]), [Base.Threads.SpinLock(0), Base.Threads.SpinLock(0)]), 2)),)
 

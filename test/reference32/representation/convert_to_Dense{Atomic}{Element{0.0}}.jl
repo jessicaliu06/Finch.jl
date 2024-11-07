@@ -50,5 +50,5 @@ quote
     Finch.release_lock!(CPU(1), tmp_lvlatomicArraysAcc)
     resize!(tmp_lvl_locks, 1)
     resize!(tmp_lvl_2_val, ref_lvl.shape)
-    (tmp = Tensor((AtomicLevel){Vector{Base.Threads.SpinLock}, DenseLevel{Int32, ElementLevel{0.0, Float64, Int32, Vector{Float64}}}}((DenseLevel){Int32}(tmp_lvl_3, ref_lvl.shape), tmp_lvl_locks)),)
+    (tmp = Tensor((MutexLevel){Vector{Base.Threads.SpinLock}, DenseLevel{Int32, ElementLevel{0.0, Float64, Int32, Vector{Float64}}}}((DenseLevel){Int32}(tmp_lvl_3, ref_lvl.shape), tmp_lvl_locks)),)
 end

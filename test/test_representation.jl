@@ -8,7 +8,7 @@
 
     modifier_levels = [
         (key = "Separate", Lvl = Separate),
-        (key = "Atomic", Lvl = Atomic, repr = false),
+        (key = "Mutex", Lvl = Mutex, repr = false),
     ]
 
     basic_levels = [

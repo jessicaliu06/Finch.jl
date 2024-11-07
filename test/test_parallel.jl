@@ -596,4 +596,34 @@
             end
         end)
     end
+
+
+    let
+        A = Tensor(Dense(SparseList(Element(0.0))), fsprand(UInt, 42, 42, 0.1))
+        x = Tensor(Dense(Element(0.0)), rand(UInt, 42))
+        y = Tensor(Dense(AtomicElement(0.0)))
+
+        check_output("parallel/parallel_spmv_atomic.txt", @finch_code begin
+            y .= 0
+            for j = parallel(_)
+                for i = _
+                    y[i] += A[i, j] * x[j]
+                end
+            end
+        end)
+
+        @finch begin
+            y .= 0
+            for j = parallel(_)
+                for i = _
+                    y[i] += A[i, j] * x[j]
+                end
+            end
+        end
+
+        @test norm(y - A * x)/norm(A * x) < 1e-10
+
+
+    end
+
 end

@@ -63,7 +63,7 @@ quote
                                                     A_lvl_3_val = A_lvl_2_val[A_lvl_2_q]
                                                     x_lvl_q = (1 - 1) * x_lvl.shape + A_lvl_2_i
                                                     x_lvl_2_val = x_lvl_val[x_lvl_q]
-                                                    y_lvl_2_val[y_lvl_q] += A_lvl_3_val * x_lvl_2_val
+                                                    y_lvl_2_val[y_lvl_q] = A_lvl_3_val * x_lvl_2_val + y_lvl_2_val[y_lvl_q]
                                                     A_lvl_2_q += 1
                                                 else
                                                     phase_stop_5 = min(phase_stop_3, A_lvl_2_i)

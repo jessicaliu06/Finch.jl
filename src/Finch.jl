@@ -19,6 +19,7 @@ using Distributions: Binomial, Normal, Poisson
 using TOML
 using UUIDs
 using Preferences
+using Atomix
 
 export @finch, @finch_program, @finch_code, @finch_kernel, value
 
@@ -36,6 +37,7 @@ export SparseByteMap, SparseByteMapLevel
 export SparseBlockList, SparseBlockListLevel
 export Dense, DenseLevel
 export Element, ElementLevel
+export AtomicElement, AtomicElementLevel
 export Separate, SeparateLevel
 export Atomic, AtomicLevel
 export Pattern, PatternLevel
@@ -133,6 +135,7 @@ include("tensors/levels/sparse_vbl_levels.jl")
 include("tensors/levels/dense_levels.jl")
 include("tensors/levels/dense_rle_levels.jl")
 include("tensors/levels/element_levels.jl")
+include("tensors/levels/atomic_element_levels.jl")
 include("tensors/levels/separate_levels.jl")
 include("tensors/levels/atomic_levels.jl")
 include("tensors/levels/pattern_levels.jl")

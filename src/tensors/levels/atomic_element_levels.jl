@@ -70,7 +70,7 @@ labelled_show(io::IO, fbr::SubFiber{<:AtomicElementLevel}) =
 @inline level_axes(::AtomicElementLevel) = ()
 @inline level_eltype(::Type{<:AtomicElementLevel{Vf, Tv}}) where {Vf, Tv} = Tv
 @inline level_fill_value(::Type{<:AtomicElementLevel{Vf}}) where {Vf} = Vf
-data_rep_level(::Type{<:AtomicElementLevel{Vf, Tv}}) where {Vf, Tv} = AtomicElementData(Vf, Tv)
+data_rep_level(::Type{<:AtomicElementLevel{Vf, Tv}}) where {Vf, Tv} = ElementData(Vf, Tv)
 
 (fbr::Tensor{<:AtomicElementLevel})() = SubFiber(fbr.lvl, 1)()
 function (fbr::SubFiber{<:AtomicElementLevel})()
@@ -110,7 +110,7 @@ Base.summary(lvl::VirtualAtomicElementLevel) = "AtomicElement($(lvl.Vf))"
 
 virtual_level_resize!(ctx, lvl::VirtualAtomicElementLevel) = lvl
 virtual_level_size(ctx, ::VirtualAtomicElementLevel) = ()
-virtual_level_ndims(ctx, lvl::VirtualAtomicLevel) = 0
+virtual_level_ndims(ctx, lvl::VirtualAtomicElementLevel) = 0
 virtual_level_eltype(lvl::VirtualAtomicElementLevel) = lvl.Tv
 virtual_level_fill_value(lvl::VirtualAtomicElementLevel) = lvl.Vf
 
@@ -180,19 +180,18 @@ function instantiate(ctx, fbr::VirtualHollowSubFiber{VirtualAtomicElementLevel},
 end
 
 function lower_assign(ctx, fbr::VirtualSubFiber{VirtualAtomicElementLevel}, mode::Updater, op, rhs)
-    push_preamble!(ctx, quote
-        $(fbr.dirty) = true
-    end)
+    (lvl, pos) = (fbr.lvl, fbr.pos)
     op = ctx(op)
     rhs = ctx(rhs)
-    :(Finch.Atomix.modify!(Finch.Atomix.IndexableRef($(lvl.val), $(ctx(pos))), $op, $rhs, :sequentially_consistent))
+    :(Finch.Atomix.modify!(Finch.Atomix.IndexableRef($(lvl.val), ($(ctx(pos)),)), $op, $rhs, Finch.Atomix.sequentially_consistent))
 end
 
 function lower_assign(ctx, fbr::VirtualHollowSubFiber{VirtualAtomicElementLevel}, mode::Updater, op, rhs)
+    (lvl, pos) = (fbr.lvl, fbr.pos)
     push_preamble!(ctx, quote
         $(fbr.dirty) = true
     end)
     op = ctx(op)
     rhs = ctx(rhs)
-    :(Finch.Atomix.modify!(Finch.Atomix.IndexableRef($(lvl.val), $(ctx(pos))), $op, $rhs, :sequentially_consistent))
+    :(Finch.Atomix.modify!(Finch.Atomix.IndexableRef($(lvl.val), ($(ctx(pos)),)), $op, $rhs, Finch.Atomix.sequentially_consistent))
 end

@@ -92,7 +92,7 @@ begin
                                             end
                                         end
                                         y_j.val = y_j_val
-                                        y_lvl_2_val[y_lvl_q] = y_j_val + y_lvl_2_val[y_lvl_q] + x_lvl_2_val * diag_lvl_2_val
+                                        y_lvl_2_val[y_lvl_q] = x_lvl_2_val * diag_lvl_2_val + y_j_val + y_lvl_2_val[y_lvl_q]
                                         Finch.release_lock!(CPU(Threads.nthreads()), y_lvl_2atomicArraysAcc)
                                     end
                                 end

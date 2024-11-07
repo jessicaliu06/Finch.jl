@@ -180,3 +180,13 @@ function instantiate(ctx, fbr::VirtualHollowSubFiber{VirtualElementLevel}, mode:
     (lvl, pos) = (fbr.lvl, fbr.pos)
     VirtualSparseScalar(nothing, lvl.Tv, lvl.Vf, gensym(), :($(lvl.val)[$(ctx(pos))]), fbr.dirty)
 end
+
+function lower_assign(ctx, fbr::VirtualHollowSubFiber{VirtualElementLevel}, mode::Updater, op, rhs)
+    (lvl, pos) = (fbr.lvl, fbr.pos)
+    lower_assign(ctx, VirtualSparseScalar(nothing, lvl.Tv, lvl.Vf, gensym(), :($(lvl.val)[$(ctx(pos))]), fbr.dirty), mode, op, rhs)
+end
+
+function lower_assign(ctx, fbr::VirtualSubFiber{VirtualElementLevel}, mode::Updater, op, rhs)
+    (lvl, pos) = (fbr.lvl, fbr.pos)
+    lower_assign(ctx, VirtualScalar(nothing, lvl.Tv, lvl.Vf, gensym(), :($(lvl.val)[$(ctx(pos))])), mode, op, rhs)
+end

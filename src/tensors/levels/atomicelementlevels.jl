@@ -1,57 +1,58 @@
 """
-    AtomicElementLevel{D, [Tv=typeof(D)], [Tp=Int], [Val]}()
+    AtomicElementLevel{Vf, [Tv=typeof(Vf)], [Tp=Int], [Val]}()
 
-A subfiber of an element level is a scalar of type `Tv`, initialized to `D`. `D`
+A subfiber of an element level is a scalar of type `Tv`, initialized to `Vf`. `Vf`
 may optionally be given as the first argument.
 
 The data is stored in a vector
-of type `Val` with `eltype(Val) = Tv`. The type `Ti` is the index type used to
+of type `Val` with `eltype(Val) = Tv`. The type `Tp` is the index type used to
 access Val.
 
 ```jldoctest
-julia> Tensor(Dense(Element(0.0)), [1, 2, 3])
-Dense [1:3]
-├─ [1]: 1.0
-├─ [2]: 2.0
-└─ [3]: 3.0
+julia> Tensor(Dense(AtomicElement(0.0)), [1, 2, 3])
+3-Tensor
+└─ Dense [1:3]
+   ├─ [1]: 1.0
+   ├─ [2]: 2.0
+   └─ [3]: 3.0
 ```
 """
-struct AtomicElementLevel{D, Tv, Tp, Val, AVal <: AbstractVector} <: AbstractLevel
+struct AtomicElementLevel{Vf, Tv, Tp, Val} <: AbstractLevel
     val::Val
-    locks::AVal
 end
-const Element = ElementLevel
+const AtomicElement = AtomicElementLevel
 
-function ElementLevel(d, args...)
+function AtomicElementLevel(d, args...)
     isbits(d) || throw(ArgumentError("Finch currently only supports isbits defaults"))
-    ElementLevel{d}(args...)
+    AtomicElementLevel{d}(args...)
 end
-AtomicElementLevel{D}() where {D} = ElementLevel{D, typeof(D)}()
-AtomicElementLevel{D}(val::Val) where {D, Val} = ElementLevel{D, eltype(Val)}(val)
-AtomicElementLevel{D, Tv}(args...) where {D, Tv} = ElementLevel{D, Tv, Int}(args...)
-AtomicElementLevel{D, Tv, Tp}() where {D, Tv, Tp} = ElementLevel{D, Tv, Tp}(Tv[])
+AtomicElementLevel{Vf}() where {Vf} = AtomicElementLevel{Vf, typeof(Vf)}()
+AtomicElementLevel{Vf}(val::Val) where {Vf, Val} = AtomicElementLevel{Vf, eltype(Val)}(val)
+AtomicElementLevel{Vf, Tv}(args...) where {Vf, Tv} = AtomicElementLevel{Vf, Tv, Int}(args...)
+AtomicElementLevel{Vf, Tv, Tp}() where {Vf, Tv, Tp} = AtomicElementLevel{Vf, Tv, Tp}(Tv[])
 
-AtomicElementLevel{D, Tv, Tp}(val::Val) where {D, Tv, Tp, Val} = ElementLevel{D, Tv, Tp, Val}(val)
+AtomicElementLevel{Vf, Tv, Tp}(val::Val) where {Vf, Tv, Tp, Val} = AtomicElementLevel{Vf, Tv, Tp, Val}(val)
 
-Base.summary(::AtomicElementLevel{D}) where {D} = "AtomicElementLevel($(D))"
+Base.summary(::AtomicElement{Vf}) where {Vf} = "AtomicElement($(Vf))"
 
-similar_level(::AtomicElementLevel{D, Tv, Tp}) where {D, Tv, Tp} = AtomicElementLevel{D, Tv, Tp}()
+similar_level(::AtomicElementLevel{Vf, Tv, Tp}, fill_value, eltype::Type, ::Vararg) where {Vf, Tv, Tp} =
+    AtomicElementLevel{fill_value, eltype, Tp}()
 
-postype(::Type{<:AtomicElementLevel{D, Tv, Tp}}) where {D, Tv, Tp} = Tp
+postype(::Type{<:AtomicElementLevel{Vf, Tv, Tp}}) where {Vf, Tv, Tp} = Tp
 
-function moveto(lvl::ElementLevel{D, Tv, Tp}, device) where {D, Tv, Tp}
-    return ElementLevel{D, Tv, Tp}(moveto(lvl.val, device))
+function moveto(lvl::AtomicElementLevel{Vf, Tv, Tp}, device) where {Vf, Tv, Tp}
+    return AtomicElementLevel{Vf, Tv, Tp}(moveto(lvl.val, device))
 end
 
-pattern!(lvl::AtomicElementLevel{D, Tv, Tp}) where  {D, Tv, Tp} =
+pattern!(lvl::AtomicElementLevel{Vf, Tv, Tp}) where  {Vf, Tv, Tp} =
     Pattern{Tp}()
-redefault!(lvl::AtomicElementLevel{D, Tv, Tp}, init) where {D, Tv, Tp} = 
-AtomicElementLevel{init, Tv, Tp}(lvl.val)
+set_fill_value!(lvl::AtomicElementLevel{Vf, Tv, Tp}, init) where {Vf, Tv, Tp} =
+    AtomicElementLevel{init, Tv, Tp}(lvl.val)
 Base.resize!(lvl::AtomicElementLevel) = lvl
 
-function Base.show(io::IO, lvl::AtomicElementLevel{D, Tv, Tp, Val}) where {D, Tv, Tp, Val}
+function Base.show(io::IO, lvl::AtomicElementLevel{Vf, Tv, Tp, Val}) where {Vf, Tv, Tp, Val}
     print(io, "AtomicElement{")
-    show(io, D)
+    show(io, Vf)
     print(io, ", $Tv, $Tp}(")
     if get(io, :compact, false)
         print(io, "…")
@@ -59,7 +60,7 @@ function Base.show(io::IO, lvl::AtomicElementLevel{D, Tv, Tp, Val}) where {D, Tv
         show(io, lvl.val)
     end
     print(io, ")")
-end 
+end
 
 labelled_show(io::IO, fbr::SubFiber{<:AtomicElementLevel}) =
     print(io, fbr.lvl.val[fbr.pos])
@@ -67,9 +68,9 @@ labelled_show(io::IO, fbr::SubFiber{<:AtomicElementLevel}) =
 @inline level_ndims(::Type{<:AtomicElementLevel}) = 0
 @inline level_size(::AtomicElementLevel) = ()
 @inline level_axes(::AtomicElementLevel) = ()
-@inline level_eltype(::Type{<:AtomicElementLevel{D, Tv}}) where {D, Tv} = Tv
-@inline level_default(::Type{<:AtomicElementLevel{D}}) where {D} = D
-data_rep_level(::Type{<:AtomicElementLevel{D, Tv}}) where {D, Tv} = ElementData(D, Tv)
+@inline level_eltype(::Type{<:AtomicElementLevel{Vf, Tv}}) where {Vf, Tv} = Tv
+@inline level_fill_value(::Type{<:AtomicElementLevel{Vf}}) where {Vf} = Vf
+data_rep_level(::Type{<:AtomicElementLevel{Vf, Tv}}) where {Vf, Tv} = AtomicElementData(Vf, Tv)
 
 (fbr::Tensor{<:AtomicElementLevel})() = SubFiber(fbr.lvl, 1)()
 function (fbr::SubFiber{<:AtomicElementLevel})()
@@ -81,48 +82,47 @@ countstored_level(lvl::AtomicElementLevel, pos) = pos
 
 mutable struct VirtualAtomicElementLevel <: AbstractVirtualLevel
     ex
-    D
+    Vf
     Tv
     Tp
     val
 end
 
 is_level_injective(ctx, ::VirtualAtomicElementLevel) = []
-is_level_atomic(ctx, lvl::VirtualAtomicElementLevel) = ([true], true)
-function is_level_concurrent(ctx, lvl::VirtualAtomicLevel)
+is_level_atomic(ctx, lvl::VirtualAtomicElementLevel) = ([], false)
+function is_level_concurrent(ctx, lvl::VirtualAtomicElementLevel)
     return ([], true)
 end
-num_indexable(ctx, lvl::VirtualAtomicElementLevel) = 0
 
 lower(ctx::AbstractCompiler, lvl::VirtualAtomicElementLevel, ::DefaultStyle) = lvl.ex
 
-function virtualize(ctx, ex, ::Type{AtomicElementLevel{D, Tv, Tp, Val}}, tag=:lvl) where {D, Tv, Tp, Val}
+function virtualize(ctx, ex, ::Type{AtomicElementLevel{Vf, Tv, Tp, Val}}, tag=:lvl) where {Vf, Tv, Tp, Val}
     sym = freshen(ctx, tag)
     val = freshen(ctx, tag, :_val)
-    push!(ctx.preamble, quote
+    push_preamble!(ctx, quote
         $sym = $ex
         $val = $ex.val
     end)
-    VirtualAtomicElementLevel(sym, D, Tv, Tp, val)
+    VirtualAtomicElementLevel(sym, Vf, Tv, Tp, val)
 end
 
-Base.summary(lvl::VirtualAtomicElementLevel) = "AtomicElement($(lvl.D))"
+Base.summary(lvl::VirtualAtomicElementLevel) = "AtomicElement($(lvl.Vf))"
 
 virtual_level_resize!(ctx, lvl::VirtualAtomicElementLevel) = lvl
 virtual_level_size(ctx, ::VirtualAtomicElementLevel) = ()
-virtual_level_ndims(ctx, lvl::VirtualAtomicLevel) = length(virtual_level_size(ctx, lvl))
+virtual_level_ndims(ctx, lvl::VirtualAtomicLevel) = 0
 virtual_level_eltype(lvl::VirtualAtomicElementLevel) = lvl.Tv
-virtual_level_default(lvl::VirtualAtomicElementLevel) = lvl.D
+virtual_level_fill_value(lvl::VirtualAtomicElementLevel) = lvl.Vf
 
 postype(lvl::VirtualAtomicElementLevel) = lvl.Tp
 
 function declare_level!(ctx, lvl::VirtualAtomicElementLevel, pos, init)
-    init == literal(lvl.D) || throw(FinchProtocolError("Cannot initialize Element Levels to non-default values (have $init expected $(lvl.D))"))
+    init == literal(lvl.Vf) || throw(FinchProtocolError("Cannot initialize AtomicElement Levels to non-fill values (have $init expected $(lvl.Vf))"))
     lvl
 end
 
 function freeze_level!(ctx::AbstractCompiler, lvl::VirtualAtomicElementLevel, pos)
-    push!(ctx.code.preamble, quote
+    push_preamble!(ctx, quote
         resize!($(lvl.val), $(ctx(pos)))
     end)
     return lvl
@@ -135,7 +135,7 @@ function assemble_level!(ctx, lvl::VirtualAtomicElementLevel, pos_start, pos_sto
     pos_stop = cache!(ctx, :pos_stop, simplify(ctx, pos_stop))
     quote
         Finch.resize_if_smaller!($(lvl.val), $(ctx(pos_stop)))
-        Finch.fill_range!($(lvl.val), $(lvl.D), $(ctx(pos_start)), $(ctx(pos_stop)))
+        Finch.fill_range!($(lvl.val), $(lvl.Vf), $(ctx(pos_start)), $(ctx(pos_stop)))
     end
 end
 
@@ -143,40 +143,40 @@ supports_reassembly(::VirtualAtomicElementLevel) = true
 function reassemble_level!(ctx, lvl::VirtualAtomicElementLevel, pos_start, pos_stop)
     pos_start = cache!(ctx, :pos_start, simplify(ctx, pos_start))
     pos_stop = cache!(ctx, :pos_stop, simplify(ctx, pos_stop))
-    push!(ctx.code.preamble, quote
-        Finch.fill_range!($(lvl.val), $(lvl.D), $(ctx(pos_start)), $(ctx(pos_stop)))
+    push_preamble!(ctx, quote
+        Finch.fill_range!($(lvl.val), $(lvl.Vf), $(ctx(pos_start)), $(ctx(pos_stop)))
     end)
     lvl
 end
 
 function virtual_moveto_level(ctx::AbstractCompiler, lvl::VirtualAtomicElementLevel, arch)
-    val_2 = freshen(ctx.code, :val)
-    push!(ctx.code.preamble, quote
+    val_2 = freshen(ctx, :val)
+    push_preamble!(ctx, quote
         $val_2 = $(lvl.val)
         $(lvl.val) = $moveto($(lvl.val), $(ctx(arch)))
     end)
-    push!(ctx.code.epilogue, quote
+    push_epilogue!(ctx, quote
         $(lvl.val) = $val_2
     end)
 end
 
-function instantiate(ctx, fbr::VirtualSubFiber{VirtualAtomicElementLevel}, mode::Reader, protos)
+function instantiate(ctx, fbr::VirtualSubFiber{VirtualAtomicElementLevel}, mode::Reader)
     (lvl, pos) = (fbr.lvl, fbr.pos)
     val = freshen(ctx.code, lvl.ex, :_val)
     return Thunk(
         preamble = quote
             $val = $(lvl.val)[$(ctx(pos))]
         end,
-        body = (ctx) -> VirtualScalar(nothing, lvl.Tv, lvl.D, gensym(), val)
+        body = (ctx) -> VirtualScalar(nothing, lvl.Tv, lvl.Vf, gensym(), val)
     )
 end
 
-function instantiate(ctx, fbr::VirtualSubFiber{VirtualAtomicElementLevel}, mode::Updater, protos)
+function instantiate(ctx, fbr::VirtualSubFiber{VirtualAtomicElementLevel}, mode::Updater)
     (lvl, pos) = (fbr.lvl, fbr.pos)
-    VirtualScalar(nothing, lvl.Tv, lvl.D, gensym(), :($(lvl.val)[$(ctx(pos))]))
+    VirtualScalar(nothing, lvl.Tv, lvl.Vf, gensym(), :($(lvl.val)[$(ctx(pos))]))
 end
 
-function instantiate(ctx, fbr::VirtualHollowSubFiber{VirtualAtomicElementLevel}, mode::Updater, protos)
+function instantiate(ctx, fbr::VirtualHollowSubFiber{VirtualAtomicElementLevel}, mode::Updater)
     (lvl, pos) = (fbr.lvl, fbr.pos)
-    VirtualSparseScalar(nothing, lvl.Tv, lvl.D, gensym(), :($(lvl.val)[$(ctx(pos))]), fbr.dirty)
+    VirtualSparseScalar(nothing, lvl.Tv, lvl.Vf, gensym(), :($(lvl.val)[$(ctx(pos))]), fbr.dirty)
 end

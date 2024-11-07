@@ -39,7 +39,7 @@ makedocs(;
             "Iteration Protocols" => "guides/iteration_protocols.md",
             "User-Defined Functions" => "guides/user-defined_functions.md",
             "High-Level Array API" => "guides/array_api.md",
-            #"Parallelization and Architectures" => "guides/parallelization.md",
+            "Parallelization" => "guides/parallelization.md",
             "FileIO" => "guides/fileio.md",
             "Interoperability" => "guides/interoperability.md",
             "Optimization Tips" => "guides/optimization_tips.md",

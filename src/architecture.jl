@@ -32,6 +32,11 @@ Makes a lock of type ty.
 """
 function make_lock end
 
+"""
+    CPU(n)
+
+A device that represents a CPU with n threads.
+"""
 struct CPU <: AbstractDevice
     n::Int
 end
@@ -52,6 +57,12 @@ lower(ctx::AbstractCompiler, device::VirtualCPU, ::DefaultStyle) =
 
 FinchNotation.finch_leaf(device::VirtualCPU) = virtual(device)
 
+
+"""
+    Serial()
+
+A device that represents a serial CPU execution.
+"""
 struct Serial <: AbstractTask end
 const serial = Serial()
 get_device(::Serial) = CPU(1)

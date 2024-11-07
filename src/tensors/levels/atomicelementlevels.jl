@@ -172,11 +172,27 @@ function instantiate(ctx, fbr::VirtualSubFiber{VirtualAtomicElementLevel}, mode:
 end
 
 function instantiate(ctx, fbr::VirtualSubFiber{VirtualAtomicElementLevel}, mode::Updater)
-    (lvl, pos) = (fbr.lvl, fbr.pos)
-    VirtualScalar(nothing, lvl.Tv, lvl.Vf, gensym(), :($(lvl.val)[$(ctx(pos))]))
+    fbr
 end
 
 function instantiate(ctx, fbr::VirtualHollowSubFiber{VirtualAtomicElementLevel}, mode::Updater)
-    (lvl, pos) = (fbr.lvl, fbr.pos)
-    VirtualSparseScalar(nothing, lvl.Tv, lvl.Vf, gensym(), :($(lvl.val)[$(ctx(pos))]), fbr.dirty)
+    fbr
+end
+
+function lower_assign(ctx, fbr::VirtualSubFiber{VirtualAtomicElementLevel}, mode::Updater, op, rhs)
+    push_preamble!(ctx, quote
+        $(fbr.dirty) = true
+    end)
+    op = ctx(op)
+    rhs = ctx(rhs)
+    :(Finch.Atomix.modify!(Finch.Atomix.IndexableRef($(lvl.val), $(ctx(pos))), $op, $rhs, :sequentially_consistent))
+end
+
+function lower_assign(ctx, fbr::VirtualHollowSubFiber{VirtualAtomicElementLevel}, mode::Updater, op, rhs)
+    push_preamble!(ctx, quote
+        $(fbr.dirty) = true
+    end)
+    op = ctx(op)
+    rhs = ctx(rhs)
+    :(Finch.Atomix.modify!(Finch.Atomix.IndexableRef($(lvl.val), $(ctx(pos))), $op, $rhs, :sequentially_consistent))
 end

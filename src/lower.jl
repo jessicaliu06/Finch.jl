@@ -226,14 +226,14 @@ function lower(ctx::AbstractCompiler, root::FinchNode, ::DefaultStyle)
     elseif root.kind === virtual
         ctx(root.val)
     elseif root.kind === assign
-        if root.lhs.kind === access
-            @assert root.lhs.mode.val === updater
-            rhs = ctx(simplify(ctx, call(root.op, root.lhs, root.rhs)))
-        else
-            rhs = ctx(root.rhs)
+        @assert root.lhs.kind === access
+        @assert root.lhs.mode.val === updater
+        if length(root.lhs.idxs) > 0
+            throw(FinchCompileError("Finch failed to completely lower an access to $tns"))
         end
-        lhs = ctx(root.lhs)
-        return :($lhs = $rhs)
+        rhs = simplify(ctx, root.rhs)
+        tns = resolve(ctx, root.lhs.tns)
+        return lower_assign(ctx, tns, root.lhs.mode.val, root.op, rhs)
     elseif root.kind === variable
         return ctx(get_binding(ctx, root))
     elseif root.kind === yieldbind
@@ -253,6 +253,13 @@ end
 function lower_access(ctx, tns, mode)
     tns = ctx(tns)
     :($(ctx(tns))[])
+end
+
+function lower_assign(ctx, tns, mode, op, rhs)
+    tns = ctx(tns)
+    op = ctx(op)
+    rhs = ctx(rhs)
+    :($tns[] = $op($tns[], $rhs))
 end
 
 function lower_access(ctx, tns::Number, mode)

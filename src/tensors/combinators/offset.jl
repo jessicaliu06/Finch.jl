@@ -137,3 +137,7 @@ unfurl(ctx, tns::VirtualOffsetArray, ext, mode, proto) =
 function lower_access(ctx::AbstractCompiler, tns::VirtualOffsetArray, mode)
     lower_access(ctx, tns.body, mode)
 end
+
+function lower_assign(ctx::AbstractCompiler, tns::VirtualOffsetArray, mode, op, rhs)
+    lower_assign(ctx, tns.body, mode, op, rhs)
+end

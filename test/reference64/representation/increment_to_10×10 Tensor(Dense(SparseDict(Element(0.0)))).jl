@@ -89,7 +89,7 @@ begin
                                     end
                                     fmt_lvl_tbl[(fmt_lvl_q, phase_stop_5)] = fmt_lvl_2_qos
                                 end
-                                fmt_lvl_2_val[fmt_lvl_2_qos] = arr_2_lvl_2_val + fmt_lvl_2_val[fmt_lvl_2_qos]
+                                fmt_lvl_2_val[fmt_lvl_2_qos] += arr_2_lvl_2_val
                                 fmt_lvl_val[fmt_lvl_2_qos] = fmt_lvl_2_qos
                                 arr_2_lvl_q_2 += 1
                             end
@@ -156,7 +156,7 @@ begin
                                         end
                                         fmt_lvl_tbl[(fmt_lvl_q, phase_stop_10)] = fmt_lvl_2_qos_2
                                     end
-                                    fmt_lvl_2_val[fmt_lvl_2_qos_2] = arr_2_lvl_2_val_2 + fmt_lvl_2_val[fmt_lvl_2_qos_2]
+                                    fmt_lvl_2_val[fmt_lvl_2_qos_2] += arr_2_lvl_2_val_2
                                     fmt_lvl_val[fmt_lvl_2_qos_2] = fmt_lvl_2_qos_2
                                     arr_2_lvl_q_3 += 1
                                 end

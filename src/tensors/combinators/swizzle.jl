@@ -79,3 +79,7 @@ getroot(tns::VirtualSwizzleArray) = getroot(tns.body)
 function lower_access(ctx::AbstractCompiler, tns::VirtualSwizzleArray, mode)
     lower_access(ctx, tns.body, mode)
 end
+
+function lower_assign(ctx::AbstractCompiler, tns::VirtualSwizzleArray, mode, op, rhs)
+    lower_assign(ctx, tns.body, mode, op, rhs)
+end

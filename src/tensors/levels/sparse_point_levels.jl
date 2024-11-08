@@ -140,8 +140,8 @@ end
 is_level_injective(ctx, lvl::VirtualSparsePointLevel) = [is_level_injective(ctx, lvl.lvl)..., false]
 
 function is_level_atomic(ctx, lvl::VirtualSparsePointLevel)
-    (below, Mutex) = is_level_atomic(ctx, lvl.lvl)
-    return ([below; [Mutex]], Mutex)
+    (below, atomic) = is_level_atomic(ctx, lvl.lvl)
+    return ([below; [atomic]], atomic)
 end
 function is_level_concurrent(ctx, lvl::VirtualSparsePointLevel)
     (data, _) = is_level_concurrent(ctx, lvl.lvl)

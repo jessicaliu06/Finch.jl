@@ -148,8 +148,8 @@ end
 
 is_level_injective(ctx, lvl::VirtualSparseRunListLevel) = [false, is_level_injective(ctx, lvl.lvl)...]
 function is_level_atomic(ctx, lvl::VirtualSparseRunListLevel)
-    (below, Mutex) = is_level_atomic(ctx, lvl.lvl)
-    return ([below; [Mutex]], Mutex)
+    (below, atomic) = is_level_atomic(ctx, lvl.lvl)
+    return ([below; [atomic]], atomic)
 end
 function is_level_concurrent(ctx, lvl::VirtualSparseRunListLevel)
     (data, _) = is_level_concurrent(ctx, lvl.lvl)

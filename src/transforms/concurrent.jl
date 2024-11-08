@@ -15,8 +15,8 @@ function is_injective end
 """
     is_atomic(ctx, tns)
 
-    Returns a tuple (atomicities, overall) where atomicities is a vector, indicating which indices have an Mutex that guards them,
-    and overall is a boolean that indicates is the last level had an Mutex guarding it.
+    Returns a tuple (atomicities, overall) where atomicities is a vector, indicating which indices have an atomic that guards them,
+    and overall is a boolean that indicates is the last level had an atomic guarding it.
 """
 function is_atomic end
 
@@ -35,7 +35,7 @@ ensure_concurrent(root, ctx)
 
 Ensures that all nonlocal assignments to the tensor root are consistently
 accessed with the same indices and associative operator.  Also ensures that the
-tensor is either Mutex, or accessed by `i` and concurrent and injective on `i`.
+tensor is either atomic, or accessed by `i` and concurrent and injective on `i`.
 """
 function ensure_concurrent(root, ctx)
     @assert @capture root loop(~idx, ~ext, ~body)
@@ -88,7 +88,7 @@ function ensure_concurrent(root, ctx)
             end
             throw(FinchConcurrencyError("Nonlocal assignments to $(root) via $(op) are not associative"))
         end
-        # If the acceses are different, then all acceses must be Mutex.
+        # If the acceses are different, then all acceses must be atomic.
         if !allequal(accs)
             for acc in accs
                 (atomicities, _) = is_atomic(ctx, acc.tns)
@@ -100,7 +100,7 @@ function ensure_concurrent(root, ctx)
             continue
         else
             #Since all operations/acceses are the same, a more fine grained analysis takes place:
-            #Every access must be injective or they must all be Mutex.
+            #Every access must be injective or they must all be atomic.
             if (@capture(acc, access(~tns, ~mode, ~i...)))
                 injectivities:: Vector{Bool} = is_injective(ctx, tns)
                 concurrencies = is_concurrent(ctx, acc.tns)
@@ -109,7 +109,7 @@ function ensure_concurrent(root, ctx)
                     (atomicities, overall) = is_atomic(ctx, acc.tns)
                     if !([atomicities; overall])[1]
                         throw(FinchConcurrencyError("Assignment $(acc) requires last level atomics!"))
-                        # FIXME: we could do Mutex operations here.
+                        # FIXME: we could do atomic operations here.
                     else
                         continue
                     end

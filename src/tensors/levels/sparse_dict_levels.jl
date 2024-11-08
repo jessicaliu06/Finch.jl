@@ -157,8 +157,8 @@ end
 
 is_level_injective(ctx, lvl::VirtualSparseDictLevel) = [is_level_injective(ctx, lvl.lvl)..., false]
 function is_level_atomic(ctx, lvl::VirtualSparseDictLevel)
-    (below, Mutex) = is_level_atomic(ctx, lvl.lvl)
-    return ([below; [Mutex]], Mutex)
+    (below, atomic) = is_level_atomic(ctx, lvl.lvl)
+    return ([below; [atomic]], atomic)
 end
 function is_level_concurrent(ctx, lvl::VirtualSparseDictLevel)
     (data, _) = is_level_concurrent(ctx, lvl.lvl)

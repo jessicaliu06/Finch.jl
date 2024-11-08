@@ -194,11 +194,6 @@ SparseByteMapLevel
 SparseDictLevel
 ```
 
-## Modifier Levels
-```@docs
-SeparateLevel
-```
-
 ## Legacy Levels
 ```@docs
 SparseCOOLevel

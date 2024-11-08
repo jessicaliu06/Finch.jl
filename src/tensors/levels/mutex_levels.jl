@@ -13,7 +13,6 @@ Dense [1:3]
 ├─[3]: Mutex -> 3.0
 ```
 """
-
 struct MutexLevel{AVal, Lvl} <: AbstractLevel
     lvl::Lvl
     locks::AVal

@@ -32,6 +32,11 @@ Makes a lock of type ty.
 """
 function make_lock end
 
+"""
+    CPU(n)
+
+A device that represents a CPU with n threads.
+"""
 struct CPU <: AbstractDevice
     n::Int
 end
@@ -52,6 +57,12 @@ lower(ctx::AbstractCompiler, device::VirtualCPU, ::DefaultStyle) =
 
 FinchNotation.finch_leaf(device::VirtualCPU) = virtual(device)
 
+
+"""
+    Serial()
+
+A device that represents a serial CPU execution.
+"""
 struct Serial <: AbstractTask end
 const serial = Serial()
 get_device(::Serial) = CPU(1)
@@ -158,4 +169,48 @@ end
 function moveto(vec::CPULocalVector, task::CPUThread)
     temp = vec.data[task.tid]
     return temp
+end
+
+struct Converter{f, T} end
+
+(::Converter{f, T})(x) where {f, T} = T(f(x))
+
+@propagate_inbounds function atomic_modify!(::Serial, vec, idx, op, x)
+    @inbounds begin
+        vec[idx] = op(vec[idx], x)
+    end
+end
+
+@propagate_inbounds function atomic_modify!(::CPU, vec, idx, op, x)
+    Base.unsafe_modify!(pointer(vec, idx), op, x, :sequentially_consistent)
+end
+
+@propagate_inbounds function atomic_modify!(::CPU, vec, idx, op::Chooser{Vf}, x) where {Vf}
+    Base.unsafe_replace!(pointer(vec, idx), Vf, x, :sequentially_consistent)
+end
+
+@propagate_inbounds function atomic_modify!(::CPU, vec, idx, op::typeof(overwrite), x)
+    Base.unsafe_store!(pointer(vec, idx), x, :sequentially_consistent)
+end
+
+@propagate_inbounds function atomic_modify!(::CPU, vec, idx, op::InitWriter{Vf}, x) where {Vf}
+    Base.unsafe_store!(pointer(vec, idx), x, :sequentially_consistent)
+end
+
+for T = [Bool, Int8, UInt8, Int16, UInt16, Int32, UInt32, Int64, UInt64, Int128, UInt128, Float16, Float32, Float64]
+    if T <: AbstractFloat
+        ops = [+, -]
+    else
+        ops = [+, -, *, /, %, &, |, ⊻, ⊼, max, min]
+    end
+    for op in ops
+        @eval @propagate_inbounds function atomic_modify!(::CPU, vec::Vector{$T}, idx, ::typeof($op), x::$T)
+            UnsafeAtomics.modify!(pointer(vec, idx), $op, x, UnsafeAtomics.seq_cst)
+        end
+    end
+
+    @eval @propagate_inbounds function atomic_modify!(::CPU, vec::Vector{$T}, idx, op::Chooser{Vf}, x::$T) where {Vf}
+        UnsafeAtomics.cas!(pointer(vec, idx), $T(Vf), x, UnsafeAtomics.seq_cst, UnsafeAtomics.seq_cst)
+    end
+
 end

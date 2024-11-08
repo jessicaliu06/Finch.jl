@@ -23,6 +23,10 @@ unfurl(ctx, tns::FinchNode, ext, mode, proto) =
 lower_access(ctx::AbstractCompiler, tns::FinchNode, mode) =
     lower_access(ctx, resolve(ctx, tns), mode)
 
+lower_assign(ctx::AbstractCompiler, tns::FinchNode, mode, op, rhs) =
+    lower_assign(ctx, resolve(ctx, tns), mode, op, rhs)
+    
+
 is_injective(ctx, lvl::FinchNode) = is_injective(ctx, resolve(ctx, lvl))
 is_atomic(ctx, lvl::FinchNode) = is_atomic(ctx, resolve(ctx, lvl))
 is_concurrent(ctx, lvl::FinchNode) = is_concurrent(ctx, resolve(ctx, lvl))

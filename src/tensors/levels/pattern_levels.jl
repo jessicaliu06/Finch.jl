@@ -124,9 +124,3 @@ end
 function instantiate(ctx, fbr::VirtualHollowSubFiber{VirtualPatternLevel}, mode::Updater)
     VirtualScalar(nothing, Bool, false, gensym(), fbr.dirty)
 end
-
-function lower_access(ctx::AbstractCompiler, tns::VirtualFiber{VirtualPatternLevel}, mode)
-    val = freshen(ctx, :null)
-    push_preamble!(ctx, :($val = false))
-    val
-end

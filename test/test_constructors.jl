@@ -210,28 +210,28 @@
         @test check_output("constructors/format_d_p_d_e.txt", String(take!(io)))
     end
 
-    @testset "Tensor(Dense(Atomic(Dense(Element(0)))))" begin
+    @testset "Tensor(Dense(Mutex(Dense(Element(0)))))" begin
         io = IOBuffer()
         arr = [0.0 2.0 2.0 0.0 3.0 3.0;
             1.0 0.0 7.0 1.0 0.0 0.0;
             0.0 0.0 0.0 0.0 0.0 9.0]
 
-        fbr = dropfills!(Tensor(Dense(Atomic(Dense(Element(0))))), arr)
+        fbr = dropfills!(Tensor(Dense(Mutex(Dense(Element(0))))), arr)
 
         println(io, "initialized tensor: ", fbr)
-        @test Structure(fbr) == Structure(Tensor(Dense(Atomic(fbr.lvl.lvl.lvl, fbr.lvl.lvl.locks), 6)))
-        @test Structure(fbr) == Structure(Tensor(Dense(Atomic{Vector{Base.Threads.SpinLock}, typeof(fbr.lvl.lvl.lvl)}(fbr.lvl.lvl.lvl, fbr.lvl.lvl.locks), 6)))
+        @test Structure(fbr) == Structure(Tensor(Dense(Mutex(fbr.lvl.lvl.lvl, fbr.lvl.lvl.locks), 6)))
+        @test Structure(fbr) == Structure(Tensor(Dense(Mutex{Vector{Base.Threads.SpinLock}, typeof(fbr.lvl.lvl.lvl)}(fbr.lvl.lvl.lvl, fbr.lvl.lvl.locks), 6)))
 
-        fbr = Tensor(Dense(Atomic(Dense(Element(0), 3)), 6))
+        fbr = Tensor(Dense(Mutex(Dense(Element(0), 3)), 6))
         println(io, "sized tensor: ", fbr)
-        @test Structure(fbr) == Structure(Tensor(Dense(Atomic(Dense(Element(0), 3)), 6)))
+        @test Structure(fbr) == Structure(Tensor(Dense(Mutex(Dense(Element(0), 3)), 6)))
 
 
-        fbr = Tensor(Dense(Atomic(Dense(Element(0)))))
+        fbr = Tensor(Dense(Mutex(Dense(Element(0)))))
         println(io, "empty tensor: ", fbr)
-        @test Structure(fbr) == Structure(Tensor(Dense(Atomic(Dense(Element(0))))))
+        @test Structure(fbr) == Structure(Tensor(Dense(Mutex(Dense(Element(0))))))
 
-        fbr = Tensor(Dense(Atomic(Dense(Element(0)))), Matrix(reshape(1:25, (5, 5))))
+        fbr = Tensor(Dense(Mutex(Dense(Element(0)))), Matrix(reshape(1:25, (5, 5))))
         res = copyto!(similar(fbr, -1, Float64), fbr)
         @test res == fbr
         @test fill_value(res) == -1 && eltype(res) == Float64

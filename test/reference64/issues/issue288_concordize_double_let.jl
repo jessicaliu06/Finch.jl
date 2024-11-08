@@ -28,7 +28,7 @@ begin
                         for s_4 = i_9:phase_stop
                             val_4 = A[i_9, l_6, k_6]
                             C[i_9, j_5, k_6] = val_4 * val + C[i_9, j_5, k_6]
-                            C[i_9, j_5, k_6] = val * val_4 + C[i_9, j_5, k_6]
+                            C[i_9, j_5, k_6] += val * val_4
                         end
                     end
                 end

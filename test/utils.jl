@@ -40,7 +40,7 @@ isstructequal(a::T, b::T) where {T <: Dense} =
     a.shape == b.shape &&
     isstructequal(a.lvl, b.lvl)
 
-isstructequal(a::T, b::T) where {T <: Atomic} =
+isstructequal(a::T, b::T) where {T <: Mutex} =
     typeof(a.locks) == typeof(b.locks) &&
     isstructequal(a.lvl, b.lvl)
 # Temporary hack to deal with SpinLock allocate undefined references.

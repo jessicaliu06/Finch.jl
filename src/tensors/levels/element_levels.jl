@@ -110,6 +110,7 @@ Base.summary(lvl::VirtualElementLevel) = "Element($(lvl.Vf))"
 
 virtual_level_resize!(ctx, lvl::VirtualElementLevel) = lvl
 virtual_level_size(ctx, ::VirtualElementLevel) = ()
+virtual_level_ndims(ctx, lvl::VirtualElementLevel) = 0
 virtual_level_eltype(lvl::VirtualElementLevel) = lvl.Tv
 virtual_level_fill_value(lvl::VirtualElementLevel) = lvl.Vf
 
@@ -178,4 +179,14 @@ end
 function instantiate(ctx, fbr::VirtualHollowSubFiber{VirtualElementLevel}, mode::Updater)
     (lvl, pos) = (fbr.lvl, fbr.pos)
     VirtualSparseScalar(nothing, lvl.Tv, lvl.Vf, gensym(), :($(lvl.val)[$(ctx(pos))]), fbr.dirty)
+end
+
+function lower_assign(ctx, fbr::VirtualHollowSubFiber{VirtualElementLevel}, mode::Updater, op, rhs)
+    (lvl, pos) = (fbr.lvl, fbr.pos)
+    lower_assign(ctx, VirtualSparseScalar(nothing, lvl.Tv, lvl.Vf, gensym(), :($(lvl.val)[$(ctx(pos))]), fbr.dirty), mode, op, rhs)
+end
+
+function lower_assign(ctx, fbr::VirtualSubFiber{VirtualElementLevel}, mode::Updater, op, rhs)
+    (lvl, pos) = (fbr.lvl, fbr.pos)
+    lower_assign(ctx, VirtualScalar(nothing, lvl.Tv, lvl.Vf, gensym(), :($(lvl.val)[$(ctx(pos))])), mode, op, rhs)
 end

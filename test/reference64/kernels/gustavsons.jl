@@ -96,7 +96,7 @@ begin
                                 if A_lvl_2_i_2 == phase_stop_5
                                     A_lvl_3_val_2 = A_lvl_2_val[A_lvl_2_q_2]
                                     w_lvl_q_2 = (1 - 1) * A_lvl_2.shape + phase_stop_5
-                                    w_lvl_val[w_lvl_q_2] = A_lvl_3_val * A_lvl_3_val_2 + w_lvl_val[w_lvl_q_2]
+                                    w_lvl_val[w_lvl_q_2] += A_lvl_3_val * A_lvl_3_val_2
                                     if !(w_lvl_tbl[w_lvl_q_2])
                                         w_lvl_tbl[w_lvl_q_2] = true
                                         w_lvl_qos_fill += 1
@@ -151,7 +151,7 @@ begin
                                     if A_lvl_2_i_3 == phase_stop_10
                                         A_lvl_3_val_3 = A_lvl_2_val[A_lvl_2_q_3]
                                         w_lvl_q_3 = (1 - 1) * A_lvl_2.shape + phase_stop_10
-                                        w_lvl_val[w_lvl_q_3] = A_lvl_3_val * A_lvl_3_val_3 + w_lvl_val[w_lvl_q_3]
+                                        w_lvl_val[w_lvl_q_3] += A_lvl_3_val * A_lvl_3_val_3
                                         if !(w_lvl_tbl[w_lvl_q_3])
                                             w_lvl_tbl[w_lvl_q_3] = true
                                             w_lvl_qos_fill += 1

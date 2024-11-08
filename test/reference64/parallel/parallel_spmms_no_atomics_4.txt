@@ -123,7 +123,7 @@ begin
                                                                         A_lvl_i_2 = A_lvl_tbl1[A_lvl_q_2]
                                                                         if A_lvl_i_2 < phase_stop_10
                                                                             A_lvl_2_val = A_lvl_val[A_lvl_q_2]
-                                                                            Ct_lvl_2_val[Ct_lvl_2_q] += B_lvl_2_val * A_lvl_2_val
+                                                                            Ct_lvl_2_val[Ct_lvl_2_q] = B_lvl_2_val * A_lvl_2_val + Ct_lvl_2_val[Ct_lvl_2_q]
                                                                             A_lvl_q_2 += 1
                                                                         else
                                                                             phase_stop_12 = min(phase_stop_10, A_lvl_i_2)
@@ -255,7 +255,7 @@ begin
                                                                             A_lvl_i_4 = A_lvl_tbl1[A_lvl_q_4]
                                                                             if A_lvl_i_4 < phase_stop_26
                                                                                 A_lvl_2_val_2 = A_lvl_val[A_lvl_q_4]
-                                                                                Ct_lvl_2_val[Ct_lvl_2_q_2] += B_lvl_2_val_3 * A_lvl_2_val_2
+                                                                                Ct_lvl_2_val[Ct_lvl_2_q_2] = B_lvl_2_val_3 * A_lvl_2_val_2 + Ct_lvl_2_val[Ct_lvl_2_q_2]
                                                                                 A_lvl_q_4 += 1
                                                                             else
                                                                                 phase_stop_28 = min(phase_stop_26, A_lvl_i_4)

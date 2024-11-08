@@ -110,3 +110,7 @@ is_concurrent(ctx, lvl::Unfurled) = is_concurrent(ctx, lvl.arr)
 function lower_access(ctx::AbstractCompiler, tns::Unfurled, mode)
     lower_access(ctx, tns.body, mode)
 end
+
+function lower_assign(ctx::AbstractCompiler, tns::Unfurled, mode, op, rhs)
+    lower_assign(ctx, tns.body, mode, op, rhs)
+end

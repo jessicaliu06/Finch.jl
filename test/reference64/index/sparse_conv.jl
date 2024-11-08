@@ -62,7 +62,7 @@ begin
                                 F_lvl_q = (1 - 1) * F_lvl.shape + phase_stop_6
                                 F_lvl_2_val = F_lvl_val[F_lvl_q]
                                 C_lvldirty = true
-                                C_lvl_val[C_lvl_qos] += (A_lvl_2_val != 0) * F_lvl_2_val * coalesce(A_lvl_2_val_2, 0)
+                                C_lvl_val[C_lvl_qos] = (A_lvl_2_val != 0) * F_lvl_2_val * coalesce(A_lvl_2_val_2, 0) + C_lvl_val[C_lvl_qos]
                                 A_lvl_q_2 += 1
                             else
                                 phase_stop_7 = min(phase_stop_5, -v_3 + -3 + A_lvl_i_2)

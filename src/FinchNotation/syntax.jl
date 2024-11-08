@@ -58,7 +58,6 @@ struct InitWriter{Vf} end
 
 (f::InitWriter{Vf})(x) where {Vf} = x
 function (f::InitWriter{Vf})(x, y) where {Vf}
-    (x, y) = promote(x, y)
     @debug begin
         @assert isequal(x, Vf)
     end

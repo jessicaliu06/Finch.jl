@@ -170,3 +170,29 @@ function moveto(vec::CPULocalVector, task::CPUThread)
     temp = vec.data[task.tid]
     return temp
 end
+
+function atomic_modify!(::Serial, vec, idx, op, x)
+    @inbounds begin
+        vec[idx] = op(vec[idx], x)
+    end
+end
+
+function atomic_modify!(::CPU, vec, idx, op, x)
+    Base.unsafe_modify!(pointer(vec, idx), op, x, :sequentially_consistent)
+end
+
+for T = [Bool, Int8, UInt8, Int16, UInt16, Int32, UInt32, Int64, UInt64, Int128, UInt128, Float16, Float32, Float64]
+    if T <: AbstractFloat
+        ops = [+, -]
+    else
+        ops = [+, -, *, /, %, &, |, ⊻, ⊼, max, min]
+    end
+    for op in ops
+        @eval @propagate_inbounds function atomic_modify!(::CPU, vec::Vector{$T}, idx, ::typeof($op), x::$T)
+            UnsafeAtomics.modify!(pointer(vec, idx), UnsafeAtomics.right, x, UnsafeAtomics.seq_cst)
+        end
+    end
+    @eval @propagate_inbounds function atomic_modify!(::CPU, vec::Vector{$T}, idx, ::typeof(overwrite), x::$T)
+        UnsafeAtomics.modify!(pointer(vec, idx), UnsafeAtomics.right, x, UnsafeAtomics.seq_cst)
+    end
+end

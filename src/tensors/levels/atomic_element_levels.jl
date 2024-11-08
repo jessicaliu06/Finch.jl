@@ -178,7 +178,8 @@ function lower_assign(ctx, fbr::VirtualSubFiber{VirtualAtomicElementLevel}, mode
     (lvl, pos) = (fbr.lvl, fbr.pos)
     op = ctx(op)
     rhs = ctx(rhs)
-    :(Base.unsafe_modify!(pointer($(lvl.val), ($(ctx(pos)),)), $op, $rhs, :sequentially_consistent))
+    device = ctx(virtual_get_device(get_task(ctx)))
+    :(Finch.atomic_modify!($device, $(lvl.val), $(ctx(pos)), $op, $rhs))
 end
 
 function lower_assign(ctx, fbr::VirtualHollowSubFiber{VirtualAtomicElementLevel}, mode::Updater, op, rhs)
@@ -188,5 +189,6 @@ function lower_assign(ctx, fbr::VirtualHollowSubFiber{VirtualAtomicElementLevel}
     end)
     op = ctx(op)
     rhs = ctx(rhs)
-    :(Base.unsafe_modify!(pointer($(lvl.val), ($(ctx(pos)),)), $op, $rhs, :sequentially_consistent))
+    device = ctx(virtual_get_device(get_task(ctx)))
+    :(Finch.atomic_modify!($device, $(lvl.val), $(ctx(pos)), $op, $rhs))
 end

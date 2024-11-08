@@ -5,7 +5,6 @@ version = "0.6.32"
 
 [deps]
 AbstractTrees = "1520ce14-60c1-5f80-bbc7-55ef81b5835c"
-Atomix = "a9b6321e-bd34-4604-b9c9-b65b8de01458"
 Compat = "34da2185-b29b-5c13-b0c7-acf172513d20"
 DataStructures = "864edb3b-99cc-5e75-8d2d-829cb0a9cfe8"
 Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
@@ -19,6 +18,7 @@ RewriteTools = "5969e224-3634-4c61-9f66-721b69e98b8a"
 SyntaxInterface = "b33eeca9-aacb-4496-a840-e75f1646a4fb"
 TOML = "fa267f1f-6049-4f14-aa54-33bafae1ed76"
 UUIDs = "cf7118a7-6976-5b1a-9a39-7adc72f591a4"
+UnsafeAtomics = "013be700-e6cd-48c3-b4a1-df204f14c38f"
 
 [weakdeps]
 HDF5 = "f67ccb44-e63f-5c2f-98bd-6dc0ccc4ba2f"
@@ -34,7 +34,6 @@ TensorMarketExt = "TensorMarket"
 
 [compat]
 AbstractTrees = "0.3.4, 0.4"
-Atomix = "0.1.0"
 Compat = "3.29, 4"
 DataStructures = "0.18"
 Distributions = "0.25"
@@ -50,6 +49,7 @@ SyntaxInterface = "0.2.1"
 TOML = "1.0"
 TensorMarket = "0.2"
 UUIDs = "1.4"
+UnsafeAtomics = "0.2.1"
 julia = "1.6.7"
 
 [extras]

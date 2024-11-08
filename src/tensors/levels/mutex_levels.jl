@@ -7,10 +7,14 @@ Mutex Level Protects the level directly below it with atomics
 Each position in the level below the Mutex level is protected by a lock.
 ```jldoctest
 julia> Tensor(Dense(Mutex(Element(0.0))), [1, 2, 3])
-Dense [1:3]
-├─[1]: Mutex -> 1.0
-├─[2]: Mutex -> 2.0
-├─[3]: Mutex -> 3.0
+3-Tensor
+└─ Dense [1:3]
+   ├─ [1]: Mutex ->
+   │  └─ 1.0
+   ├─ [2]: Mutex ->
+   │  └─ 2.0
+   └─ [3]: Mutex ->
+      └─ 3.0
 ```
 """
 struct MutexLevel{AVal, Lvl} <: AbstractLevel

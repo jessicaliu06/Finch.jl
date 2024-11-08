@@ -271,25 +271,25 @@ quote
                         C_val = (Main).f(0.0, val) + C_val
                     end
                     A_lvl_3_val = A_lvl_2_val[A_lvl_2_q]
-                    val = B[A_lvl_2_i, j_4]
-                    C_val += (Main).f(A_lvl_3_val, val)
+                    val_2 = B[A_lvl_2_i, j_4]
+                    C_val += (Main).f(A_lvl_3_val, val_2)
                     A_lvl_2_q += 1
                     i = A_lvl_2_i + 1
                 else
                     phase_stop_3 = min(phase_stop, A_lvl_2_i)
                     if A_lvl_2_i == phase_stop_3
                         for i_8 = i:-1 + phase_stop_3
-                            val = B[i_8, j_4]
-                            C_val += (Main).f(0.0, val)
+                            val_3 = B[i_8, j_4]
+                            C_val += (Main).f(0.0, val_3)
                         end
                         A_lvl_3_val = A_lvl_2_val[A_lvl_2_q]
-                        val = B[phase_stop_3, j_4]
-                        C_val += (Main).f(A_lvl_3_val, val)
+                        val_4 = B[phase_stop_3, j_4]
+                        C_val += (Main).f(A_lvl_3_val, val_4)
                         A_lvl_2_q += 1
                     else
                         for i_10 = i:phase_stop_3
-                            val = B[i_10, j_4]
-                            C_val += (Main).f(0.0, val)
+                            val_5 = B[i_10, j_4]
+                            C_val += (Main).f(0.0, val_5)
                         end
                     end
                     i = phase_stop_3 + 1
@@ -300,8 +300,8 @@ quote
         phase_start_3 = max(1, 1 + A_lvl_2_i1)
         if B_mode1_stop >= phase_start_3
             for i_12 = phase_start_3:B_mode1_stop
-                val = B[i_12, j_4]
-                C_val += (Main).f(0.0, val)
+                val_6 = B[i_12, j_4]
+                C_val += (Main).f(0.0, val_6)
             end
         end
     end

@@ -33,32 +33,67 @@ end
 freeze!(ctx::AbstractCompiler, arr::VirtualAbstractArray) = arr
 thaw!(ctx::AbstractCompiler, arr::VirtualAbstractArray) = arr
 
-function instantiate(ctx::AbstractCompiler, arr::VirtualAbstractArray, mode, subprotos, protos...)
-    val = freshen(ctx, :val)
-    function nest(idx...)
-        if length(idx) == arr.ndims
-            if mode === reader
-                Thunk(
-                    preamble = quote
-                        $val = $(arr.ex)[$(map(ctx, idx)...)]
-                    end,
-                    body = (ctx) -> VirtualScalar(nothing, arr.eltype, nothing#=We don't know what init is, but it won't be used here =#, gensym(), val)
-                )
+@kwdef struct VirtualAbstractArraySlice
+    arr::VirtualAbstractArray
+    idx
+end
+
+FinchNotation.finch_leaf(x::VirtualAbstractArraySlice) = virtual(x)
+
+function unfurl(ctx, tns::VirtualAbstractArraySlice, ext, mode, proto)
+    arr = tns.arr
+    idx = tns.idx
+    Lookup(
+        body = (ctx, i) -> begin
+            idx_2 = (i, idx...)
+            if length(idx_2) == arr.ndims
+                val = freshen(ctx, :val)
+                if mode === reader
+                    Thunk(
+                        preamble = quote
+                            $val = $(arr.ex)[$(map(ctx, idx_2)...)]
+                        end,
+                        body = (ctx) -> instantiate(ctx, VirtualScalar(nothing, arr.eltype, nothing#=We don't know what init is, but it won't be used here =#, gensym(), val), mode)
+                    )
+                else
+                    Thunk(
+                        body = (ctx,) -> instantiate(ctx, VirtualScalar(nothing, arr.eltype, nothing#=We don't know what init is, but it won't be used here=#, gensym(), :($(arr.ex)[$(map(ctx, idx_2)...)])), mode)
+                    )
+                end
             else
-                VirtualScalar(nothing, arr.eltype, nothing#=We don't know what init is, but it won't be used here=#, gensym(), :($(arr.ex)[$(map(ctx, idx)...)]))
-            end
-        else
-            Furlable(
-                body = (ctx, ext) -> Lookup(
-                    body = (ctx, i) -> nest(i, idx...)
+                Thunk(
+                    body = (ctx,)-> instantiate(ctx, VirtualAbstractArraySlice(arr, idx_2), mode)
                 )
+            end
+        end
+    )
+end
+
+#is_injective(ctx, tns::VirtualAbstractArraySlice) = is_injective(ctx, tns.body)
+#is_atomic(ctx, tns::VirtualAbstractArraySlice) = is_atomic(ctx, tns.body)
+#is_concurrent(ctx, tns::VirtualAbstractArraySlice) = is_concurrent(ctx, tns.body)
+
+function instantiate(ctx::AbstractCompiler, arr::VirtualAbstractArray, mode)
+    if arr.ndims == 0
+        val = freshen(ctx, :val)
+        if mode === reader
+            Thunk(
+                preamble = quote
+                    $val = $(arr.ex)[]
+                end,
+                body = (ctx) -> instantiate(ctx, VirtualScalar(nothing, arr.eltype, nothing#=We don't know what init is, but it won't be used here =#, gensym(), val), mode)
+            )
+        else
+            Thunk(
+                body = (ctx,) -> instantiate(ctx, VirtualScalar(nothing, arr.eltype, nothing#=We don't know what init is, but it won't be used here=#, gensym(), :($(arr.ex)[])), mode)
             )
         end
+    else 
+        Unfurled(
+            arr = arr,
+            body = VirtualAbstractArraySlice(arr, ())
+        )
     end
-    Unfurled(
-        arr = arr,
-        body = nest()
-    )
 end
 
 FinchNotation.finch_leaf(x::VirtualAbstractArray) = virtual(x)

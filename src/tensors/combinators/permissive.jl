@@ -68,8 +68,8 @@ virtual_resize!(ctx::AbstractCompiler, arr::VirtualPermissiveArray, dims...) =
 
 virtual_fill_value(ctx::AbstractCompiler, arr::VirtualPermissiveArray) = virtual_fill_value(ctx, arr.body)
 
-instantiate(ctx, arr::VirtualPermissiveArray, mode, protos) =
-    VirtualPermissiveArray(instantiate(ctx, arr.body, mode, protos), arr.dims)
+instantiate(ctx, arr::VirtualPermissiveArray, mode) =
+    VirtualPermissiveArray(instantiate(ctx, arr.body, mode), arr.dims)
 
 get_style(ctx, node::VirtualPermissiveArray, root) = get_style(ctx, node.body, root)
 
@@ -134,8 +134,8 @@ end
 
 getroot(tns::VirtualPermissiveArray) = getroot(tns.body)
 
-function unfurl(ctx, tns::VirtualPermissiveArray, ext, mode, protos...)
-    tns_2 = unfurl(ctx, tns.body, ext, mode, protos...)
+function unfurl(ctx, tns::VirtualPermissiveArray, ext, mode, proto)
+    tns_2 = unfurl(ctx, tns.body, ext, mode, proto)
     dims = virtual_size(ctx, tns.body)
     garb = (mode === reader) ? FillLeaf(literal(missing)) : FillLeaf(Null())
     if tns.dims[end] && dims[end] != dimless
@@ -163,9 +163,10 @@ function unfurl(ctx, tns::VirtualPermissiveArray, ext, mode, protos...)
     end
 end
 
-function lower_access(ctx::AbstractCompiler, node, tns::VirtualPermissiveArray)
-    if !isempty(node.idxs)
-        error("PermissiveArray not lowered completely")
-    end
-    lower_access(ctx, node, tns.body)
+function lower_access(ctx::AbstractCompiler, tns::VirtualPermissiveArray, mode)
+    lower_access(ctx, tns.body, mode)
+end
+
+function lower_assign(ctx::AbstractCompiler, tns::VirtualPermissiveArray, mode, op, rhs)
+    lower_assign(ctx, tns.body, mode, op, rhs)
 end

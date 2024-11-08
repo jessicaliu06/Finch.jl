@@ -113,20 +113,14 @@ thaw_level!(ctx, lvl::VirtualPatternLevel, pos) = lvl
 assemble_level!(ctx, lvl::VirtualPatternLevel, pos_start, pos_stop) = quote end
 reassemble_level!(ctx, lvl::VirtualPatternLevel, pos_start, pos_stop) = quote end
 
-instantiate(ctx, ::VirtualSubFiber{VirtualPatternLevel}, mode::Reader, protos) = FillLeaf(true)
+instantiate(ctx, ::VirtualSubFiber{VirtualPatternLevel}, mode::Reader) = FillLeaf(true)
 
-function instantiate(ctx, fbr::VirtualSubFiber{VirtualPatternLevel}, mode::Updater, protos)
+function instantiate(ctx, fbr::VirtualSubFiber{VirtualPatternLevel}, mode::Updater)
     val = freshen(ctx, :null)
     push_preamble!(ctx, :($val = false))
     VirtualScalar(nothing, Bool, false, gensym(), val)
 end
 
-function instantiate(ctx, fbr::VirtualHollowSubFiber{VirtualPatternLevel}, mode::Updater, protos)
+function instantiate(ctx, fbr::VirtualHollowSubFiber{VirtualPatternLevel}, mode::Updater)
     VirtualScalar(nothing, Bool, false, gensym(), fbr.dirty)
-end
-
-function lower_access(ctx::AbstractCompiler, node, tns::VirtualFiber{VirtualPatternLevel})
-    val = freshen(ctx, :null)
-    push_preamble!(ctx, :($val = false))
-    val
 end

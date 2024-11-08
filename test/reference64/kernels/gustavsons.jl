@@ -96,7 +96,7 @@ begin
                                 if A_lvl_2_i_2 == phase_stop_5
                                     A_lvl_3_val_2 = A_lvl_2_val[A_lvl_2_q_2]
                                     w_lvl_q_2 = (1 - 1) * A_lvl_2.shape + phase_stop_5
-                                    w_lvl_val[w_lvl_q_2] = A_lvl_3_val * A_lvl_3_val_2 + w_lvl_val[w_lvl_q_2]
+                                    w_lvl_val[w_lvl_q_2] += A_lvl_3_val * A_lvl_3_val_2
                                     if !(w_lvl_tbl[w_lvl_q_2])
                                         w_lvl_tbl[w_lvl_q_2] = true
                                         w_lvl_qos_fill += 1
@@ -134,10 +134,10 @@ begin
                                 A_lvl_2_i_3 = A_lvl_idx[A_lvl_2_q_3]
                                 if A_lvl_2_i_3 < phase_stop_8
                                     A_lvl_3_val_3 = A_lvl_2_val[A_lvl_2_q_3]
-                                    w_lvl_q_2 = (1 - 1) * A_lvl_2.shape + A_lvl_2_i_3
-                                    w_lvl_val[w_lvl_q_2] = A_lvl_3_val * A_lvl_3_val_3 + w_lvl_val[w_lvl_q_2]
-                                    if !(w_lvl_tbl[w_lvl_q_2])
-                                        w_lvl_tbl[w_lvl_q_2] = true
+                                    w_lvl_q_3 = (1 - 1) * A_lvl_2.shape + A_lvl_2_i_3
+                                    w_lvl_val[w_lvl_q_3] = A_lvl_3_val * A_lvl_3_val_3 + w_lvl_val[w_lvl_q_3]
+                                    if !(w_lvl_tbl[w_lvl_q_3])
+                                        w_lvl_tbl[w_lvl_q_3] = true
                                         w_lvl_qos_fill += 1
                                         if w_lvl_qos_fill > w_lvl_qos_stop
                                             w_lvl_qos_stop = max(w_lvl_qos_stop << 1, 1)
@@ -150,10 +150,10 @@ begin
                                     phase_stop_10 = min(phase_stop_8, A_lvl_2_i_3)
                                     if A_lvl_2_i_3 == phase_stop_10
                                         A_lvl_3_val_3 = A_lvl_2_val[A_lvl_2_q_3]
-                                        w_lvl_q_2 = (1 - 1) * A_lvl_2.shape + phase_stop_10
-                                        w_lvl_val[w_lvl_q_2] = A_lvl_3_val * A_lvl_3_val_3 + w_lvl_val[w_lvl_q_2]
-                                        if !(w_lvl_tbl[w_lvl_q_2])
-                                            w_lvl_tbl[w_lvl_q_2] = true
+                                        w_lvl_q_3 = (1 - 1) * A_lvl_2.shape + phase_stop_10
+                                        w_lvl_val[w_lvl_q_3] += A_lvl_3_val * A_lvl_3_val_3
+                                        if !(w_lvl_tbl[w_lvl_q_3])
+                                            w_lvl_tbl[w_lvl_q_3] = true
                                             w_lvl_qos_fill += 1
                                             if w_lvl_qos_fill > w_lvl_qos_stop
                                                 w_lvl_qos_stop = max(w_lvl_qos_stop << 1, 1)
@@ -206,8 +206,8 @@ begin
             while true
                 w_lvl_i_2 = last(w_lvl_srt[w_lvl_r_3])
                 if w_lvl_i_2 < phase_stop_13
-                    w_lvl_q_3 = (1 - 1) * A_lvl_2.shape + w_lvl_i_2
-                    w_lvl_2_val = w_lvl_val[w_lvl_q_3]
+                    w_lvl_q_4 = (1 - 1) * A_lvl_2.shape + w_lvl_i_2
+                    w_lvl_2_val = w_lvl_val[w_lvl_q_4]
                     if B_lvl_2_qos > B_lvl_2_qos_stop
                         B_lvl_2_qos_stop = max(B_lvl_2_qos_stop << 1, 1)
                         Finch.resize_if_smaller!(B_lvl_idx, B_lvl_2_qos_stop)
@@ -222,8 +222,8 @@ begin
                 else
                     phase_stop_15 = min(phase_stop_13, w_lvl_i_2)
                     if w_lvl_i_2 == phase_stop_15
-                        w_lvl_q_3 = (1 - 1) * A_lvl_2.shape + w_lvl_i_2
-                        w_lvl_2_val_2 = w_lvl_val[w_lvl_q_3]
+                        w_lvl_q_4 = (1 - 1) * A_lvl_2.shape + w_lvl_i_2
+                        w_lvl_2_val_2 = w_lvl_val[w_lvl_q_4]
                         if B_lvl_2_qos > B_lvl_2_qos_stop
                             B_lvl_2_qos_stop = max(B_lvl_2_qos_stop << 1, 1)
                             Finch.resize_if_smaller!(B_lvl_idx, B_lvl_2_qos_stop)

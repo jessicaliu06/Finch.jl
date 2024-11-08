@@ -8,19 +8,19 @@
 
     modifier_levels = [
         (key = "Separate", Lvl = Separate),
-        (key = "Atomic", Lvl = Atomic, repr = false),
+        (key = "Mutex", Lvl = Mutex, repr = false),
     ]
 
     basic_levels = [
         (key = "Dense", Lvl = Dense, pattern = false),
-        (key = "DenseRLE", Lvl = DenseRLE, pattern = false),
-        (key = "DenseRLELazy", Lvl = (base) -> DenseRLE(base; merge = false), pattern = false),
+        (key = "RunList", Lvl = RunList, pattern = false),
+        (key = "RunListLazy", Lvl = (base) -> RunList(base; merge = false), pattern = false),
         (key = "SparseList", Lvl = SparseList),
-        (key = "SparseVBL", Lvl = SparseVBL),
+        (key = "SparseBlockList", Lvl = SparseBlockList),
         (key = "SparseBand", Lvl = SparseBand, pattern = false),
         (key = "SparseByteMap", Lvl = SparseByteMap),
-        (key = "SparseRLE", Lvl = SparseRLE),
-        (key = "SparseRLELazy", Lvl = (base) -> SparseRLE(base, merge=false)),
+        (key = "SparseRunList", Lvl = SparseRunList),
+        (key = "SparseRunListLazy", Lvl = (base) -> SparseRunList(base, merge=false)),
         (key = "SparseDict", Lvl = SparseDict),
         (key = "SparsePoint", Lvl = SparsePoint, filter = (key) -> key in ["6x_one_bool"]),
         (key = "SparseInterval", Lvl = SparseInterval, filter = (key) -> key in ["6x_one_bool"]),

@@ -10,24 +10,12 @@ Afterwards the tensor is update-only.
 declare!(ctx, tns, init) = @assert virtual_fill_value(ctx, tns) == init
 
 """
-    instantiate(ctx, tns, mode, protos)
+    instantiate(ctx, tns, mode)
 
-Return an object (usually a looplet nest) capable of unfurling the
-virtual tensor `tns`. Before executing a statement, each
-subsequent in-scope access will be initialized with a separate call to
-`instantiate`. `protos` is the list of protocols in each case.
-
-The fallback for `instantiate` will iteratively move the last element of
-`protos` into the arguments of a function. This allows fibers to specialize on
-the last arguments of protos rather than the first, as Finch is column major.
+Process the tensor `tns` in the context `ctx`, just after it has been unfurled,
+declared, or thawed. The earliest opportunity to process `tns`.
 """
-function instantiate(ctx, tns, mode, subprotos, protos...)
-    if isempty(subprotos)
-        throw(FinchProtocolError("$(typeof(tns)) does not support reads with protocol $(protos)"))
-    else
-        instantiate(ctx, tns, mode, subprotos[1:end-1], subprotos[end], protos...)
-    end
-end
+instantiate(ctx, tns, mode) = tns
 
 """
     freeze!(ctx, tns)

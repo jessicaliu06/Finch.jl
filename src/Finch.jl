@@ -19,12 +19,13 @@ using Distributions: Binomial, Normal, Poisson
 using TOML
 using UUIDs
 using Preferences
+using UnsafeAtomics
 
 export @finch, @finch_program, @finch_code, @finch_kernel, value
 
 export Tensor
-export SparseRLE, SparseRLELevel
-export DenseRLE, DenseRLELevel
+export SparseRunList, SparseRunListLevel
+export RunList, RunListLevel
 export SparseInterval, SparseIntervalLevel
 export Sparse, SparseLevel
 export SparseList, SparseListLevel
@@ -33,11 +34,12 @@ export SparsePoint, SparsePointLevel
 export SparseBand, SparseBandLevel
 export SparseCOO, SparseCOOLevel
 export SparseByteMap, SparseByteMapLevel
-export SparseVBL, SparseVBLLevel
+export SparseBlockList, SparseBlockListLevel
 export Dense, DenseLevel
 export Element, ElementLevel
+export AtomicElement, AtomicElementLevel
 export Separate, SeparateLevel
-export Atomic, AtomicLevel
+export Mutex, MutexLevel
 export Pattern, PatternLevel
 export Scalar, SparseScalar, ShortCircuitScalar, SparseShortCircuitScalar
 export walk, gallop, follow, extrude, laminate
@@ -109,7 +111,6 @@ include("looplets/thunks.jl")
 include("looplets/short_circuits.jl")
 include("looplets/lookups.jl")
 include("looplets/nulls.jl")
-include("looplets/unfurl.jl")
 include("looplets/runs.jl")
 include("looplets/spikes.jl")
 include("looplets/switches.jl")
@@ -134,8 +135,9 @@ include("tensors/levels/sparse_vbl_levels.jl")
 include("tensors/levels/dense_levels.jl")
 include("tensors/levels/dense_rle_levels.jl")
 include("tensors/levels/element_levels.jl")
+include("tensors/levels/atomic_element_levels.jl")
 include("tensors/levels/separate_levels.jl")
-include("tensors/levels/atomic_levels.jl")
+include("tensors/levels/mutex_levels.jl")
 include("tensors/levels/pattern_levels.jl")
 include("tensors/masks.jl")
 include("tensors/abstract_combinator.jl")
@@ -186,6 +188,13 @@ include("interface/einsum.jl")
 @deprecate redefault! set_fill_value!
 @deprecate dropdefaults dropfills
 @deprecate dropdefaults! dropfills!
+
+@deprecate SparseRLE SparseRunList
+@deprecate SparseRLELevel SparseRunListLevel
+@deprecate DenseRLE RunList
+@deprecate DenseRLELevel RunListLevel
+@deprecate SparseVBL SparseBlockList
+@deprecate SparseVBLLevel SparseBlockListLevel
 
 @static if !isdefined(Base, :get_extension)
     function __init__()

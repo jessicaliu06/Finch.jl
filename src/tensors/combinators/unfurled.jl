@@ -3,10 +3,10 @@
     ndims = 0
     body
     Unfurled(arr, ndims, body) = begin
+        body = body isa Unfurled ? body.body : body
+        ndims = arr isa Unfurled ? arr.ndims : ndims
+        arr = arr isa Unfurled ? arr.arr : arr
         new(arr, ndims, body)
-    end
-    Unfurled(arr, ndims, body::Unfurled) = begin
-        Unfurled(arr, ndims, body.body)
     end
     Unfurled(arr, body) = Unfurled(arr, 0, body)
 end
@@ -31,7 +31,8 @@ virtual_size(ctx, tns::Unfurled) = virtual_size(ctx, tns.arr)[1 : end - tns.ndim
 virtual_resize!(ctx, tns::Unfurled, dims...) = virtual_resize!(ctx, tns.arr, dims...) # TODO SHOULD NOT HAPPEN BREAKS LIFECYCLES
 virtual_fill_value(ctx, tns::Unfurled) = virtual_fill_value(ctx, tns.arr)
 
-instantiate(ctx, tns::Unfurled, mode, protos) = tns
+instantiate(ctx, tns::Unfurled, mode) =
+    Unfurled(tns.arr, tns.ndims, instantiate(ctx, tns.body, mode))
 
 get_style(ctx, node::Unfurled, root) = get_style(ctx, node.body, root)
 
@@ -82,8 +83,8 @@ get_switch_cases(ctx, node::Unfurled) = map(get_switch_cases(ctx, node.body)) do
     guard => Unfurled(node.arr, node.ndims, body)
 end
 
-unfurl(ctx, tns::Unfurled, ext, mode, protos...) =
-    Unfurled(tns.arr, tns.ndims, unfurl(ctx, tns.body, ext, mode, protos...))
+unfurl(ctx, tns::Unfurled, ext, mode, proto) =
+    Unfurled(tns.arr, tns.ndims, unfurl(ctx, tns.body, ext, mode, proto))
 
 stepper_range(ctx, node::Unfurled, ext) = stepper_range(ctx, node.body, ext)
 stepper_body(ctx, node::Unfurled, ext, ext_2) = Unfurled(node.arr, node.ndims, stepper_body(ctx, node.body, ext, ext_2))
@@ -106,9 +107,10 @@ is_injective(ctx, lvl::Unfurled) = is_injective(ctx, lvl.arr)
 is_atomic(ctx, lvl::Unfurled) = is_atomic(ctx, lvl.arr)
 is_concurrent(ctx, lvl::Unfurled) = is_concurrent(ctx, lvl.arr)
 
-function lower_access(ctx::AbstractCompiler, node, tns::Unfurled)
-    if !isempty(node.idxs)
-        error("Unfurled not lowered completely")
-    end
-    lower_access(ctx, node, tns.body)
+function lower_access(ctx::AbstractCompiler, tns::Unfurled, mode)
+    lower_access(ctx, tns.body, mode)
+end
+
+function lower_assign(ctx::AbstractCompiler, tns::Unfurled, mode, op, rhs)
+    lower_assign(ctx, tns.body, mode, op, rhs)
 end

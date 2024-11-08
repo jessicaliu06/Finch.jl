@@ -56,7 +56,33 @@ let
             A, x = ($A, $x)
             @einsum y[i] += A[i, j] * x[j]
         end,
-        seconds = 10.0 #Bug in benchmarktools, will be fixed soon.
+    )
+end
+
+let
+    N = 1_000
+    K = 1_000
+    p = 0.001
+    A = Tensor(Dense(Dense(Element(0.0))), rand(N, K))
+    B = Tensor(Dense(Dense(Element(0.0))), rand(K, N))
+    M = Tensor(Dense(SparseList(Element(0.0))), fsprand(N, N, p))
+
+    SUITE["high-level"]["sddmm_fused"] = @benchmarkable(
+        begin
+            M = lazy($M)
+            A = lazy($A)
+            B = lazy($B)
+            compute(M .* (A * B))
+        end,
+    )
+
+    SUITE["high-level"]["sddmm_unfused"] = @benchmarkable(
+        begin
+            M = $M
+            A = $A
+            B = $B
+            M .* (A * B)
+        end,
     )
 end
 
@@ -242,3 +268,40 @@ for (key, mtx) in [
     SUITE["parallel"]["SpMV_serial"][key] = @benchmarkable spmv_serial($A, $x)
     SUITE["parallel"]["SpMV_threaded"][key] = @benchmarkable spmv_threaded($A, $x)
 end
+
+SUITE["structure"] = BenchmarkGroup()
+
+N = 100_000
+
+SUITE["structure"]["permutation"] = BenchmarkGroup()
+
+A_ref = Tensor(Dense(SparseList(Element(0.0))), fsparse(collect(1:N), collect(1:N), ones(N)))
+
+A = Tensor(Dense(SparsePoint(Element(0.0))), A_ref)
+
+x = rand(N)
+
+SUITE["structure"]["permutation"]["SparseList"] = @benchmarkable spmv_serial($A_ref, $x)
+SUITE["structure"]["permutation"]["SparsePoint"] = @benchmarkable spmv_serial($A, $x)
+
+SUITE["structure"]["banded"] = BenchmarkGroup()
+
+A_ref = Tensor(Dense(Sparse(Element(0.0))), N, N)
+
+@finch for i = _, j = _
+    if abs(i - j) < 2
+        A_ref[i, j] = 1.0
+    end
+end
+
+A = Tensor(Dense(SparseBand(Element(0.0))), A_ref)
+A2 = Tensor(Dense(SparseRunList(Element(0.0))), A_ref)
+A2 = Tensor(Dense(SparseInterval(Element(0.0))), A2)
+
+x = rand(N)
+
+SUITE["structure"]["banded"]["SparseList"] = @benchmarkable spmv_serial($A_ref, $x)
+SUITE["structure"]["banded"]["SparseBand"] = @benchmarkable spmv_serial($A, $x)
+SUITE["structure"]["banded"]["SparseInterval"] = @benchmarkable spmv_serial($A2, $x)
+
+SUITE = SUITE["structure"]

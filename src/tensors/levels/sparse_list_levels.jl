@@ -273,7 +273,7 @@ function virtual_moveto_level(ctx::AbstractCompiler, lvl::VirtualSparseListLevel
     virtual_moveto_level(ctx, lvl.lvl, arch)
 end
 
-function instantiate(ctx, fbr::VirtualSubFiber{VirtualSparseListLevel}, mode::Reader, subprotos, ::Union{typeof(defaultread), typeof(walk)})
+function unfurl(ctx, fbr::VirtualSubFiber{VirtualSparseListLevel}, ext, mode::Reader, ::Union{typeof(defaultread), typeof(walk)})
     (lvl, pos) = (fbr.lvl, fbr.pos)
     tag = lvl.ex
     Tp = postype(lvl)
@@ -283,73 +283,73 @@ function instantiate(ctx, fbr::VirtualSubFiber{VirtualSparseListLevel}, mode::Re
     my_q_stop = freshen(ctx, tag, :_q_stop)
     my_i1 = freshen(ctx, tag, :_i1)
 
-    Furlable(
-        body = (ctx, ext) -> Thunk(
-            preamble = quote
-                $my_q = $(lvl.ptr)[$(ctx(pos))]
-                $my_q_stop = $(lvl.ptr)[$(ctx(pos)) + $(Tp(1))]
-                if $my_q < $my_q_stop
-                    $my_i = $(lvl.idx)[$my_q]
-                    $my_i1 = $(lvl.idx)[$my_q_stop - $(Tp(1))]
-                else
-                    $my_i = $(Ti(1))
-                    $my_i1 = $(Ti(0))
-                end
-            end,
-            body = (ctx) -> Sequence([
-                Phase(
-                    stop = (ctx, ext) -> value(my_i1),
-                    body = (ctx, ext) -> Stepper(
-                        seek = (ctx, ext) -> quote
-                            if $(lvl.idx)[$my_q] < $(ctx(getstart(ext)))
-                                $my_q = Finch.scansearch($(lvl.idx), $(ctx(getstart(ext))), $my_q, $my_q_stop - 1)
-                            end
-                        end,
-                        preamble = :($my_i = $(lvl.idx)[$my_q]),
-                        stop = (ctx, ext) -> value(my_i),
-                        chunk = Spike(
-                            body = FillLeaf(virtual_level_fill_value(lvl)),
-                            tail = Simplify(instantiate(ctx, VirtualSubFiber(lvl.lvl, value(my_q, Ti)), mode, subprotos))
-                        ),
-                        next = (ctx, ext) -> :($my_q += $(Tp(1)))
-                    )
-                ),
-                Phase(
-                    body = (ctx, ext) -> Run(FillLeaf(virtual_level_fill_value(lvl)))
+    Thunk(
+        preamble = quote
+            $my_q = $(lvl.ptr)[$(ctx(pos))]
+            $my_q_stop = $(lvl.ptr)[$(ctx(pos)) + $(Tp(1))]
+            if $my_q < $my_q_stop
+                $my_i = $(lvl.idx)[$my_q]
+                $my_i1 = $(lvl.idx)[$my_q_stop - $(Tp(1))]
+            else
+                $my_i = $(Ti(1))
+                $my_i1 = $(Ti(0))
+            end
+        end,
+        body = (ctx) -> Sequence([
+            Phase(
+                stop = (ctx, ext) -> value(my_i1),
+                body = (ctx, ext) -> Stepper(
+                    seek = (ctx, ext) -> quote
+                        if $(lvl.idx)[$my_q] < $(ctx(getstart(ext)))
+                            $my_q = Finch.scansearch($(lvl.idx), $(ctx(getstart(ext))), $my_q, $my_q_stop - 1)
+                        end
+                    end,
+                    preamble = :($my_i = $(lvl.idx)[$my_q]),
+                    stop = (ctx, ext) -> value(my_i),
+                    chunk = Spike(
+                        body = FillLeaf(virtual_level_fill_value(lvl)),
+                        tail = Simplify(instantiate(ctx, VirtualSubFiber(lvl.lvl, value(my_q, Ti)), mode))
+                    ),
+                    next = (ctx, ext) -> :($my_q += $(Tp(1)))
                 )
-            ])
-        )
+            ),
+            Phase(
+                body = (ctx, ext) -> Run(FillLeaf(virtual_level_fill_value(lvl)))
+            )
+        ])
     )
 end
 
 
-function instantiate(ctx, fbr::VirtualSubFiber{VirtualSparseListLevel}, mode::Reader, subprotos, ::typeof(follow))
+function unfurl(ctx, fbr::VirtualSubFiber{VirtualSparseListLevel}, ext, mode::Reader, ::typeof(follow))
     (lvl, pos) = (fbr.lvl, fbr.pos)
     tag = lvl.ex
     Tp = postype(lvl)
     my_q = freshen(ctx, tag, :_q)
     my_q_stop = freshen(ctx, tag, :_q_stop)
     my_qos = freshen(ctx, tag, :_qos)
-
-    Furlable(
-        body = (ctx, ext) ->
-            Lookup(
-                body = (ctx, i) -> Thunk(
-                    preamble = quote
-                        $my_q = $(lvl.ptr)[$(ctx(pos))]
-                        $my_q_stop = $(lvl.ptr)[$(ctx(pos)) + $(Tp(1))]
-                        $my_qos = bin_scansearch($(lvl.idx), $(ctx(i)), $my_q, $my_q_stop-1)
-                    end,
-                    body = (ctx) -> Switch([
-                        value(:($my_qos < $my_q_stop && $(lvl.idx)[$my_qos] == $(ctx(i)))) => instantiate(ctx, VirtualSubFiber(lvl.lvl, value(my_qos, Tp)), mode, subprotos),
-                        literal(true) => FillLeaf(virtual_level_fill_value(lvl))
-                    ])
-                )
+    Thunk(
+        preamble = quote
+            $my_q = $(lvl.ptr)[$(ctx(pos))]
+        end,
+        body = (ctx) -> Lookup(
+            body = (ctx, i) -> Thunk(
+                preamble = quote
+                    $my_q = max($my_q, $(lvl.ptr)[$(ctx(pos))])
+                    $my_q_stop = $(lvl.ptr)[$(ctx(pos)) + $(Tp(1))]
+                    $my_qos = scansearch($(lvl.idx), $(ctx(i)), $my_q, $my_q_stop-1)
+                    $my_q = min($my_q_stop-1, $my_qos)
+                end,
+                body = (ctx) -> Switch([
+                    value(:($my_qos < $my_q_stop && $(lvl.idx)[$my_qos] == $(ctx(i)))) => VirtualSubFiber(lvl.lvl, value(my_qos, Tp)),
+                    literal(true) => FillLeaf(virtual_level_fill_value(lvl))
+                ])
             )
+        )
     )
 end
 
-function instantiate(ctx, fbr::VirtualSubFiber{VirtualSparseListLevel}, mode::Reader, subprotos, ::typeof(gallop))
+function unfurl(ctx, fbr::VirtualSubFiber{VirtualSparseListLevel}, ext, mode::Reader, ::typeof(gallop))
     (lvl, pos) = (fbr.lvl, fbr.pos)
     tag = lvl.ex
     Tp = postype(lvl)
@@ -362,49 +362,47 @@ function instantiate(ctx, fbr::VirtualSubFiber{VirtualSparseListLevel}, mode::Re
     my_i3 = freshen(ctx, tag, :_i3)
     my_i4 = freshen(ctx, tag, :_i4)
 
-    Furlable(
-        body = (ctx, ext) -> Thunk(
-            preamble = quote
-                $my_q = $(lvl.ptr)[$(ctx(pos))]
-                $my_q_stop = $(lvl.ptr)[$(ctx(pos)) + 1]
-                if $my_q < $my_q_stop
-                    $my_i = $(lvl.idx)[$my_q]
-                    $my_i1 = $(lvl.idx)[$my_q_stop - $(Tp(1))]
-                else
-                    $my_i = $(Ti(1))
-                    $my_i1 = $(Ti(0))
-                end
-            end,
-            body = (ctx) -> Sequence([
-                Phase(
-                    stop = (ctx, ext) -> value(my_i1),
-                    body = (ctx, ext) -> Jumper(
-                        seek = (ctx, ext) -> quote
-                            if $(lvl.idx)[$my_q] < $(ctx(getstart(ext)))
-                                $my_q = Finch.scansearch($(lvl.idx), $(ctx(getstart(ext))), $my_q, $my_q_stop - 1)
-                            end
-                        end,
-                        preamble = :($my_i2 = $(lvl.idx)[$my_q]),
-                        stop = (ctx, ext) -> value(my_i2),
-                        chunk =  Spike(
-                            body = FillLeaf(virtual_level_fill_value(lvl)),
-                            tail = instantiate(ctx, VirtualSubFiber(lvl.lvl, value(my_q, Ti)), mode, subprotos),
-                        ),
-                        next = (ctx, ext) -> :($my_q += $(Tp(1))),
-                    )
-                ),
-                Phase(
-                    body = (ctx, ext) -> Run(FillLeaf(virtual_level_fill_value(lvl)))
+    Thunk(
+        preamble = quote
+            $my_q = $(lvl.ptr)[$(ctx(pos))]
+            $my_q_stop = $(lvl.ptr)[$(ctx(pos)) + 1]
+            if $my_q < $my_q_stop
+                $my_i = $(lvl.idx)[$my_q]
+                $my_i1 = $(lvl.idx)[$my_q_stop - $(Tp(1))]
+            else
+                $my_i = $(Ti(1))
+                $my_i1 = $(Ti(0))
+            end
+        end,
+        body = (ctx) -> Sequence([
+            Phase(
+                stop = (ctx, ext) -> value(my_i1),
+                body = (ctx, ext) -> Jumper(
+                    seek = (ctx, ext) -> quote
+                        if $(lvl.idx)[$my_q] < $(ctx(getstart(ext)))
+                            $my_q = Finch.scansearch($(lvl.idx), $(ctx(getstart(ext))), $my_q, $my_q_stop - 1)
+                        end
+                    end,
+                    preamble = :($my_i2 = $(lvl.idx)[$my_q]),
+                    stop = (ctx, ext) -> value(my_i2),
+                    chunk =  Spike(
+                        body = FillLeaf(virtual_level_fill_value(lvl)),
+                        tail = instantiate(ctx, VirtualSubFiber(lvl.lvl, value(my_q, Ti)), mode),
+                    ),
+                    next = (ctx, ext) -> :($my_q += $(Tp(1))),
                 )
-            ])
-        )
+            ),
+            Phase(
+                body = (ctx, ext) -> Run(FillLeaf(virtual_level_fill_value(lvl)))
+            )
+        ])
     )
 end
 
-instantiate(ctx, fbr::VirtualSubFiber{VirtualSparseListLevel}, mode::Updater, protos) = begin
-    instantiate(ctx, VirtualHollowSubFiber(fbr.lvl, fbr.pos, freshen(ctx, :null)), mode, protos)
+unfurl(ctx, fbr::VirtualSubFiber{VirtualSparseListLevel}, ext, mode::Updater, proto) = begin
+    unfurl(ctx, VirtualHollowSubFiber(fbr.lvl, fbr.pos, freshen(ctx, :null)), ext, mode, proto)
 end
-function instantiate(ctx, fbr::VirtualHollowSubFiber{VirtualSparseListLevel}, mode::Updater, subprotos, ::Union{typeof(defaultupdate), typeof(extrude)})
+function unfurl(ctx, fbr::VirtualHollowSubFiber{VirtualSparseListLevel}, ext, mode::Updater, ::Union{typeof(defaultupdate), typeof(extrude)})
     (lvl, pos) = (fbr.lvl, fbr.pos)
     tag = lvl.ex
     Tp = postype(lvl)
@@ -413,45 +411,43 @@ function instantiate(ctx, fbr::VirtualHollowSubFiber{VirtualSparseListLevel}, mo
     qos_stop = lvl.qos_stop
     dirty = freshen(ctx, tag, :dirty)
 
-    Furlable(
-        body = (ctx, ext) -> Thunk(
-            preamble = quote
-                $qos = $qos_fill + 1
-                $(if issafe(get_mode_flag(ctx))
-                    quote
-                        $(lvl.prev_pos) < $(ctx(pos)) || throw(FinchProtocolError("SparseListLevels cannot be updated multiple times"))
+    Thunk(
+        preamble = quote
+            $qos = $qos_fill + 1
+            $(if issafe(get_mode_flag(ctx))
+                quote
+                    $(lvl.prev_pos) < $(ctx(pos)) || throw(FinchProtocolError("SparseListLevels cannot be updated multiple times"))
+                end
+            end)
+        end,
+        body = (ctx) -> Lookup(
+            body = (ctx, idx) -> Thunk(
+                preamble = quote
+                    if $qos > $qos_stop
+                        $qos_stop = max($qos_stop << 1, 1)
+                        Finch.resize_if_smaller!($(lvl.idx), $qos_stop)
+                        $(contain(ctx_2->assemble_level!(ctx_2, lvl.lvl, value(qos, Tp), value(qos_stop, Tp)), ctx))
                     end
-                end)
-            end,
-            body = (ctx) -> Lookup(
-                body = (ctx, idx) -> Thunk(
-                    preamble = quote
-                        if $qos > $qos_stop
-                            $qos_stop = max($qos_stop << 1, 1)
-                            Finch.resize_if_smaller!($(lvl.idx), $qos_stop)
-                            $(contain(ctx_2->assemble_level!(ctx_2, lvl.lvl, value(qos, Tp), value(qos_stop, Tp)), ctx))
-                        end
-                        $dirty = false
-                    end,
-                    body = (ctx) -> instantiate(ctx, VirtualHollowSubFiber(lvl.lvl, value(qos, Tp), dirty), mode, subprotos),
-                    epilogue = quote
-                        if $dirty
-                            $(fbr.dirty) = true
-                            $(lvl.idx)[$qos] = $(ctx(idx))
-                            $qos += $(Tp(1))
-                            $(if issafe(get_mode_flag(ctx))
-                                quote
-                                    $(lvl.prev_pos) = $(ctx(pos))
-                                end
-                            end)
-                        end
+                    $dirty = false
+                end,
+                body = (ctx) -> instantiate(ctx, VirtualHollowSubFiber(lvl.lvl, value(qos, Tp), dirty), mode),
+                epilogue = quote
+                    if $dirty
+                        $(fbr.dirty) = true
+                        $(lvl.idx)[$qos] = $(ctx(idx))
+                        $qos += $(Tp(1))
+                        $(if issafe(get_mode_flag(ctx))
+                            quote
+                                $(lvl.prev_pos) = $(ctx(pos))
+                            end
+                        end)
                     end
-                )
-            ),
-            epilogue = quote
-                $(lvl.ptr)[$(ctx(pos)) + 1] += $qos - $qos_fill - 1
-                $qos_fill = $qos - 1
-            end
-        )
+                end
+            )
+        ),
+        epilogue = quote
+            $(lvl.ptr)[$(ctx(pos)) + 1] += $qos - $qos_fill - 1
+            $qos_fill = $qos - 1
+        end
     )
 end

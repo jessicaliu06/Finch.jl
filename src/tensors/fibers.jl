@@ -127,9 +127,8 @@ function declare!(ctx::AbstractCompiler, fbr::VirtualFiber, init)
     fbr = VirtualFiber(lvl)
 end
 
-function instantiate(ctx::AbstractCompiler, fbr::VirtualFiber, mode, protos)
-    return Unfurled(fbr, instantiate(ctx, VirtualSubFiber(fbr.lvl, literal(1)), mode, protos))
-end
+unfurl(ctx::AbstractCompiler, arr::VirtualFiber, ext, mode, proto) =
+    unfurl(ctx, VirtualSubFiber(arr.lvl, literal(1)), ext, mode, proto)
 
 function virtual_moveto(ctx::AbstractCompiler, fbr::VirtualFiber, arch)
     virtual_moveto_level(ctx, fbr.lvl, arch)
@@ -156,12 +155,18 @@ function virtualize(ctx, ex, ::Type{<:HollowSubFiber{Lvl, Pos, Dirty}}, tag=fres
     dirty = virtualize(ctx, :($ex.dirty), Dirty)
     VirtualHollowSubFiber(lvl, pos, dirty)
 end
-lower(ctx::AbstractCompiler, fbr::VirtualHollowSubFiber, ::DefaultStyle) = :(HollowSubFiber($(ctx(fbr.lvl)), $(ctx(fbr.pos))))
+lower(ctx::AbstractCompiler, fbr::VirtualHollowSubFiber, ::DefaultStyle) = :(HollowSubFiber($(ctx(fbr.lvl)), $(ctx(fbr.pos)), $(ctx(fbr.dirty))))
 FinchNotation.finch_leaf(x::VirtualHollowSubFiber) = virtual(x)
 
 function virtual_moveto(ctx::AbstractCompiler, fbr::VirtualHollowSubFiber, arch)
     return VirtualHollowSubFiber(virtual_moveto_level(ctx, fbr.lvl, arch), fbr.pos, fbr.dirty)
 end
+
+instantiate(ctx, fbr::VirtualFiber, mode) = 
+    instantiate(ctx, VirtualSubFiber(fbr.lvl, literal(1)), mode)
+
+unfurl(ctx, fbr::VirtualFiber, ext, mode, proto) =
+    unfurl(ctx, VirtualSubFiber(fbr.lvl, literal(1)), ext, mode, proto)
 
 """
     set_fill_value!(fbr, init)

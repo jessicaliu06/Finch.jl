@@ -28,7 +28,7 @@ Finch is even trickier to benchmark, for a few reasons:
 3. Runtime for sparse code often depends on the sparsity pattern, so it's
    important to benchmark with representative data. Using standard matrices or tensors from
    [MatrixDepot.jl](https://github.com/JuliaLinearAlgebra/MatrixDepot.jl) or
-   [TensorDepot.jl](https://github.com/willow-ahrens/TensorDepot.jl) is a good
+   [TensorDepot.jl](https://github.com/finch-tensor/TensorDepot.jl) is a good
    way to do this.
 
 ````julia

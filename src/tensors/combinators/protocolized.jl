@@ -63,8 +63,8 @@ virtual_size(ctx::AbstractCompiler, arr::VirtualProtocolizedArray) =
 virtual_resize!(ctx::AbstractCompiler, arr::VirtualProtocolizedArray, dim) =
     virtual_resize!(ctx, arr.body, dim)
 
-instantiate(ctx, arr::VirtualProtocolizedArray, mode, protos) =
-    VirtualProtocolizedArray(instantiate(ctx, arr.body, mode, map(something, arr.protos, protos)), arr.protos)
+instantiate(ctx, arr::VirtualProtocolizedArray, mode) =
+    VirtualProtocolizedArray(instantiate(ctx, arr.body, mode), arr.protos)
 
 get_style(ctx, node::VirtualProtocolizedArray, root) = get_style(ctx, node.body, root)
 
@@ -113,8 +113,8 @@ get_switch_cases(ctx, node::VirtualProtocolizedArray) = map(get_switch_cases(ctx
     guard => VirtualProtocolizedArray(body, node.protos)
 end
 
-unfurl(ctx, tns::VirtualProtocolizedArray, ext, mode, protos...) =
-    VirtualProtocolizedArray(unfurl(ctx, tns.body, ext, mode, map(something, tns.protos, protos)...), tns.protos)
+unfurl(ctx, tns::VirtualProtocolizedArray, ext, mode, proto) =
+    VirtualProtocolizedArray(unfurl(ctx, tns.body, ext, mode, something(tns.protos[end], proto)), tns.protos)
 
 stepper_range(ctx, node::VirtualProtocolizedArray, ext) = stepper_range(ctx, node.body, ext)
 stepper_body(ctx, node::VirtualProtocolizedArray, ext, ext_2) = VirtualProtocolizedArray(stepper_body(ctx, node.body, ext, ext_2), node.protos)

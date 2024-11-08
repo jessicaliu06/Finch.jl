@@ -13,7 +13,7 @@ end
 """
     instantiate!(ctx, prgm)
 
-A transformation to instantiate readers and updaters before executing an
+A transformation to call `instantiate` on tensors before executing an
 expression.
 """
 function instantiate!(ctx, prgm)
@@ -43,8 +43,7 @@ function (ctx::InstantiateTensors)(node::FinchNode)
         node
     elseif (@capture node access(~tns, ~mode, ~idxs...)) && !(getroot(tns) in ctx.escape)
         #@assert get(ctx.ctx.modes, tns, reader) === node.mode.val
-        protos = [(mode.val === reader ? defaultread : defaultupdate) for _ in idxs]
-        tns_2 = instantiate(ctx.ctx, tns, mode.val, protos)
+        tns_2 = instantiate(ctx.ctx, tns, mode.val)
         access(tns_2, mode, idxs...)
     elseif istree(node)
         return similarterm(node, operation(node), map(ctx, arguments(node)))

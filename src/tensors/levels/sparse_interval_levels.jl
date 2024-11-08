@@ -1,8 +1,8 @@
 """
     SparseIntervalLevel{[Ti=Int], [Ptr, Left, Right]}(lvl, [dim])
 
-The single RLE level represent runs of equivalent slices `A[:, ..., :, i]`
-which are not entirely [`fill_value`](@ref). A main difference compared to SparseRLE
+The SparseIntervalLevel represent runs of equivalent slices `A[:, ..., :, i]`
+which are not entirely [`fill_value`](@ref). A main difference compared to SparseRunList
 level is that SparseInterval level only stores a 'single' non-fill run. It emits
 an error if the program tries to write multiple (>=2) runs into SparseInterval.
 
@@ -264,7 +264,7 @@ function thaw_level!(ctx::AbstractCompiler, lvl::VirtualSparseIntervalLevel, pos
     return lvl
 end
 
-function instantiate(ctx, fbr::VirtualSubFiber{VirtualSparseIntervalLevel}, mode::Reader, subprotos, ::Union{typeof(defaultread), typeof(walk)})
+function unfurl(ctx, fbr::VirtualSubFiber{VirtualSparseIntervalLevel}, ext, mode::Reader, ::Union{typeof(defaultread), typeof(walk)})
     (lvl, pos) = (fbr.lvl, fbr.pos)
     tag = lvl.ex
     Tp = postype(lvl)
@@ -275,42 +275,40 @@ function instantiate(ctx, fbr::VirtualSubFiber{VirtualSparseIntervalLevel}, mode
     my_q = freshen(ctx, tag, :_q)
     my_q_stop = freshen(ctx, tag, :_q_stop)
 
-    Furlable(
-        body = (ctx, ext) -> Thunk(
-            preamble = quote
-                $my_q = $(lvl.ptr)[$(ctx(pos))]
-                $my_q_stop = $(lvl.ptr)[$(ctx(pos)) + $(Tp(1))]
-                if $my_q < $my_q_stop
-                    $my_i_start = $(lvl.left)[$my_q]
-                    $my_i_stop = $(lvl.right)[$my_q]
-                else
-                    $my_i_start= $(Ti(1))
-                    $my_i_stop= $(Ti(0))
-                end
-            end,
-            body = (ctx) -> Sequence([
-                Phase(
-                    start = (ctx, ext) -> literal(lvl.Ti(1)),
-                    stop = (ctx, ext) -> call(-, value(my_i_start, lvl.Ti), getunit(ext)),
-                    body = (ctx, ext) -> Run(FillLeaf(virtual_level_fill_value(lvl))),
-                ),
-                Phase(
-                    stop = (ctx, ext) -> value(my_i_stop, lvl.Ti),
-                    body = (ctx, ext) -> Run(Simplify(instantiate(ctx, VirtualSubFiber(lvl.lvl, value(my_q)), mode, subprotos))),
-                ),
-                Phase(
-                    stop = (ctx, ext) -> lvl.shape,
-                    body = (ctx, ext) -> Run(FillLeaf(virtual_level_fill_value(lvl)))
-                )
-            ])
-        )
+    Thunk(
+        preamble = quote
+            $my_q = $(lvl.ptr)[$(ctx(pos))]
+            $my_q_stop = $(lvl.ptr)[$(ctx(pos)) + $(Tp(1))]
+            if $my_q < $my_q_stop
+                $my_i_start = $(lvl.left)[$my_q]
+                $my_i_stop = $(lvl.right)[$my_q]
+            else
+                $my_i_start= $(Ti(1))
+                $my_i_stop= $(Ti(0))
+            end
+        end,
+        body = (ctx) -> Sequence([
+            Phase(
+                start = (ctx, ext) -> literal(lvl.Ti(1)),
+                stop = (ctx, ext) -> call(-, value(my_i_start, lvl.Ti), getunit(ext)),
+                body = (ctx, ext) -> Run(FillLeaf(virtual_level_fill_value(lvl))),
+            ),
+            Phase(
+                stop = (ctx, ext) -> value(my_i_stop, lvl.Ti),
+                body = (ctx, ext) -> Run(Simplify(instantiate(ctx, VirtualSubFiber(lvl.lvl, value(my_q)), mode))),
+            ),
+            Phase(
+                stop = (ctx, ext) -> lvl.shape,
+                body = (ctx, ext) -> Run(FillLeaf(virtual_level_fill_value(lvl)))
+            )
+        ])
     )
 end
 
-instantiate(ctx, fbr::VirtualSubFiber{VirtualSparseIntervalLevel}, mode::Updater, protos) =
-    instantiate(ctx, VirtualHollowSubFiber(fbr.lvl, fbr.pos, freshen(ctx, :null)), mode, protos)
+unfurl(ctx, fbr::VirtualSubFiber{VirtualSparseIntervalLevel}, ext, mode::Updater, proto) =
+    unfurl(ctx, VirtualHollowSubFiber(fbr.lvl, fbr.pos, freshen(ctx, :null)), ext, mode, proto)
 
-function instantiate(ctx, fbr::VirtualHollowSubFiber{VirtualSparseIntervalLevel}, mode::Updater, subprotos, ::Union{typeof(defaultupdate), typeof(extrude)})
+function unfurl(ctx, fbr::VirtualHollowSubFiber{VirtualSparseIntervalLevel}, ext, mode::Updater, ::Union{typeof(defaultupdate), typeof(extrude)})
     (lvl, pos) = (fbr.lvl, fbr.pos)
     tag = lvl.ex
     Tp = postype(lvl)
@@ -320,46 +318,44 @@ function instantiate(ctx, fbr::VirtualHollowSubFiber{VirtualSparseIntervalLevel}
     qos_stop = lvl.qos_stop
     dirty = freshen(ctx, tag, :dirty)
 
-    Furlable(
-        body = (ctx, ext) -> Thunk(
-            preamble = quote
-                $qos = $qos_fill + 1
-                $(lvl.ptr)[$(ctx(pos)) + 1] == 0 ||
-                  throw(FinchProtocolError("SparseIntervalLevels can only be updated once"))
-            end,
+    Thunk(
+        preamble = quote
+            $qos = $qos_fill + 1
+            $(lvl.ptr)[$(ctx(pos)) + 1] == 0 ||
+                throw(FinchProtocolError("SparseIntervalLevels can only be updated once"))
+        end,
 
-            body = (ctx) -> AcceptRun(
-                body = (ctx, ext) -> Thunk(
-                    preamble = quote
-                        if $qos > $qos_stop
-                            $qos_stop = max($qos_stop << 1, 1)
-                            Finch.resize_if_smaller!($(lvl.left), $qos_stop)
-                            Finch.resize_if_smaller!($(lvl.right), $qos_stop)
-                            $(contain(ctx_2->assemble_level!(ctx_2, lvl.lvl, value(qos, Tp), value(qos_stop, Tp)), ctx))
-                        end
-                        $dirty = false
-                    end,
-                    body = (ctx) -> instantiate(ctx, VirtualHollowSubFiber(lvl.lvl, value(qos, Tp), dirty), mode, subprotos),
-                    epilogue = quote
-                        if $dirty
-                            $(fbr.dirty) = true
-                            $qos == $qos_fill + 1 || throw(FinchProtocolError("SparseIntervalLevels can only be updated once"))
-                            $(lvl.left)[$qos] = $(ctx(getstart(ext)))
-                            $(lvl.right)[$qos] = $(ctx(getstop(ext)))
-                            $(qos) += $(Tp(1))
-                            $(if issafe(get_mode_flag(ctx))
-                                quote
-                                    $(lvl.prev_pos) = $(ctx(pos))
-                                end
-                            end)
-                        end
+        body = (ctx) -> AcceptRun(
+            body = (ctx, ext) -> Thunk(
+                preamble = quote
+                    if $qos > $qos_stop
+                        $qos_stop = max($qos_stop << 1, 1)
+                        Finch.resize_if_smaller!($(lvl.left), $qos_stop)
+                        Finch.resize_if_smaller!($(lvl.right), $qos_stop)
+                        $(contain(ctx_2->assemble_level!(ctx_2, lvl.lvl, value(qos, Tp), value(qos_stop, Tp)), ctx))
                     end
-                )
-            ),
-            epilogue = quote
-                $(lvl.ptr)[$(ctx(pos)) + 1] = $qos - $qos_fill - 1
-                $qos_fill = $qos - 1
-            end
-        )
+                    $dirty = false
+                end,
+                body = (ctx) -> instantiate(ctx, VirtualHollowSubFiber(lvl.lvl, value(qos, Tp), dirty), mode),
+                epilogue = quote
+                    if $dirty
+                        $(fbr.dirty) = true
+                        $qos == $qos_fill + 1 || throw(FinchProtocolError("SparseIntervalLevels can only be updated once"))
+                        $(lvl.left)[$qos] = $(ctx(getstart(ext)))
+                        $(lvl.right)[$qos] = $(ctx(getstop(ext)))
+                        $(qos) += $(Tp(1))
+                        $(if issafe(get_mode_flag(ctx))
+                            quote
+                                $(lvl.prev_pos) = $(ctx(pos))
+                            end
+                        end)
+                    end
+                end
+            )
+        ),
+        epilogue = quote
+            $(lvl.ptr)[$(ctx(pos)) + 1] = $qos - $qos_fill - 1
+            $qos_fill = $qos - 1
+        end
     )
 end

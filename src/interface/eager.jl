@@ -49,7 +49,7 @@ function Base.reduce(op::Function, bc::Broadcasted{FinchStyle{N}}; dims=:, init 
     end
 end
 
-function tensordot(A::AbstractTensor, B::AbstractTensor, idxs; kw...)
+function tensordot(A::Union{AbstractTensor, AbstractArray}, B::Union{AbstractTensor, AbstractArray}, idxs; kw...)
     compute(tensordot(lazy(A), lazy(B), idxs; kw...))
 end
 
@@ -78,6 +78,19 @@ Base.:*(
     y::AbstractTensor,
     z::Number...
 ) = map(*, y, x, z...)
+
+Base.:*(
+    A::AbstractTensor,
+    B::Union{AbstractTensor, AbstractArray}
+) = tensordot(A, B, (2, 1))
+Base.:*(
+    A::Union{AbstractTensor, AbstractArray},
+    B::AbstractTensor
+) = tensordot(A, B, (2, 1))
+Base.:*(
+    A::AbstractTensor,
+    B::AbstractTensor
+) = tensordot(A, B, (2, 1))
 
 Base.:-(x::AbstractTensor) = map(-, x)
 

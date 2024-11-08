@@ -22,11 +22,11 @@ begin
             for i_6 = 1:A_mode1_stop
                 val = X[i_6, j_4]
                 for l_4 = 1:A_mode2_stop
-                    val_2 = A[i_6, l_4, k_4]
+                    val_3 = A[i_6, l_4, k_4]
                     phase_stop = min(i_6, l_4 + -1)
                     if phase_stop >= i_6
                         for s_5 = i_6:phase_stop
-                            C[i_6, j_4, k_4] = val_2 * val + C[i_6, j_4, k_4]
+                            C[i_6, j_4, k_4] = val_3 * val + C[i_6, j_4, k_4]
                         end
                     end
                 end

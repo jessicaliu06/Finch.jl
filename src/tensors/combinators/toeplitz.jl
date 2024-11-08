@@ -79,8 +79,8 @@ end
 virtual_resize!(ctx::AbstractCompiler, arr::VirtualToeplitzArray, dims...) =
     virtual_resize!(ctx, arr.body, dims[1:arr.dim - 1]..., dimless, dims[arr.dim + 2:end]...)
 
-instantiate(ctx, arr::VirtualToeplitzArray, mode, protos) =
-    VirtualToeplitzArray(instantiate(ctx, arr.body, mode, [protos[1:arr.dim]; protos[arr.dim + 2:end]]), arr.dim)
+instantiate(ctx, arr::VirtualToeplitzArray, mode) =
+    VirtualToeplitzArray(instantiate(ctx, arr.body, mode), arr.dim)
 
 get_style(ctx, node::VirtualToeplitzArray, root) = get_style(ctx, node.body, root)
 
@@ -144,7 +144,7 @@ short_circuit_cases(ctx, node::VirtualToeplitzArray, op) =
 
 getroot(tns::VirtualToeplitzArray) = getroot(tns.body)
 
-function unfurl(ctx, tns::VirtualToeplitzArray, ext, mode, protos...)
+function unfurl(ctx, tns::VirtualToeplitzArray, ext, mode, proto)
     if length(virtual_size(ctx, tns)) == tns.dim + 1
         Unfurled(tns,
             Lookup(
@@ -152,6 +152,6 @@ function unfurl(ctx, tns::VirtualToeplitzArray, ext, mode, protos...)
             )
         )
     else
-        VirtualToeplitzArray(unfurl(ctx, tns.body, ext, mode, protos...), tns.dim)
+        VirtualToeplitzArray(unfurl(ctx, tns.body, ext, mode, proto), tns.dim)
     end
 end

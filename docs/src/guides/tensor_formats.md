@@ -78,19 +78,19 @@ some general descriptions.
 |----------------------|----------|-----------------------|:------------------:|:------------:|:------------------------:|:------------------:|:--------------:|:------:|
 | Dense                | Core     | Dense                 | ✅                  | ✅            | ✅                        | ✅                  | ✅              | ✅     |
 | SparseTree           | Core     | Sparse                | ✅                  | ✅            | ✅                        | ✅                  | ✅              | ⚙️    |
-| SparseRLETree        | Core     | Sparse Runs           | ✅                  | ✅            | ✅                        | ✅                  | ✅              | ⚙️    |
+| SparseRunListTree        | Core     | Sparse Runs           | ✅                  | ✅            | ✅                        | ✅                  | ✅              | ⚙️    |
 | Element              | Core     | Leaf                  | ✅                  | ✅            | ✅                        | ✅                  | ✅              | ✅     |
 | Pattern              | Core     | Leaf                  | ✅                  | ✅            | ✅                        | ✅                  | ✅              | ✅     |
 | SparseList           | Advanced | Sparse                | ✅                  | ❌            | ✅                        | ❌                  | ❌              | ✅     |
-| SparseRLE            | Advanced | Sparse Runs           | ✅                  | ❌            | ✅                        | ❌                  | ❌              | ✅     |
-| SparseVBL            | Advanced | Sparse Blocks         | ✅                  | ❌            | ✅                        | ❌                  | ❌              | ✅     |
+| SparseRunList            | Advanced | Sparse Runs           | ✅                  | ❌            | ✅                        | ❌                  | ❌              | ✅     |
+| SparseBlockList            | Advanced | Sparse Blocks         | ✅                  | ❌            | ✅                        | ❌                  | ❌              | ✅     |
 | SparsePoint          | Advanced | Single Sparse         | ✅                  | ✅            | ✅                        | ❌                  | ❌              | ✅     |
 | SparseInterval       | Advanced | Single Sparse Run     | ✅                  | ✅            | ✅                        | ❌                  | ❌              | ✅     |
 | SparseBand           | Advanced | Single Sparse Block   | ✅                  | ✅            | ✅                        | ❌                  | ❌              | ⚙️     |
-| DenseRLE             | Advanced | Dense Runs            | ✅                  | ❌            | ✅                        | ❌                  | ❌              | ⚙     |
+| RunList             | Advanced | Dense Runs            | ✅                  | ❌            | ✅                        | ❌                  | ❌              | ⚙️     |
 | SparseBytemap        | Advanced | Sparse                | ✅                  | ✅            | ✅                        | ✅                  | ❌              | ✅     |
 | SparseDict           | Advanced | Sparse                | ✅                  | ✅            | ✅                        | ✅                  | ❌              | ✅️     |
-| AtomicLevel          | Modifier | No Data               | ✅                  | ✅            | ✅                        | ✅                  | ✅              | ⚙️ |
+| MutexLevel          | Modifier | No Data               | ✅                  | ✅            | ✅                        | ✅                  | ✅              | ⚙️ |
 | SeperationLevel      | Modifier | No Data               | ✅                  | ✅            | ✅                        | ✅                  | ✅              | ⚙️ |
 | SparseCOO            | Legacy   | Sparse                | ✅                  | ✅            | ✅                        | ❌                  | ✅              | ✅️    |
 
@@ -158,7 +158,7 @@ Finch levels can be used to construct a variety of popular sparse formats. A few
 | DCSC (Hypersparse) Matrix    | `Tensor(SparseList(SparseList(Element(0.0))), args...)`        |
 | COO Matrix                   | `Tensor(SparseCOO{2}(Element(0.0)), args...)`                  |
 | COO 3-Tensor                 | `Tensor(SparseCOO{3}(Element(0.0)), args...)`                  |
-| Run-Length-Encoded Image     | `Tensor(Dense(DenseRLE(Element(0.0))), args...)`            |
+| Run-Length-Encoded Image     | `Tensor(Dense(RunList(Element(0.0))), args...)`            |
 
 # Tensor Constructors
 
@@ -184,19 +184,14 @@ PatternLevel
 ## Advanced Levels
 ```@docs
 SparseListLevel
-DenseRLELevel
-SparseRLELevel
-SparseVBLLevel
+RunListLevel
+SparseRunListLevel
+SparseBlockListLevel
 SparseBandLevel
 SparsePointLevel
 SparseIntervalLevel
 SparseByteMapLevel
 SparseDictLevel
-```
-
-## Modifier Levels
-```@docs
-SeparateLevel
 ```
 
 ## Legacy Levels

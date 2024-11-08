@@ -1,7 +1,7 @@
 We welcome contributions to Finch, and follow the [Julia contributing
 guidelines](https://github.com/JuliaLang/julia/blob/master/CONTRIBUTING.md).  If
 you use or want to use Finch and have a question or bug, please do file a
-[Github issue](https://github.com/willow-ahrens/Finch.jl/issues)!  If you want
+[Github issue](https://github.com/finch-tensor/Finch.jl/issues)!  If you want
 to contribute to Finch, please first file an issue to double check that there is
 interest from a contributor in the feature.
 
@@ -51,7 +51,7 @@ suite directly as `./test/runtests.jl`.
 Finch compares compiler output against reference versions.
 
 If you have the appropriate permissions, you can run the
-[FixBot](https://github.com/willow-ahrens/Finch.jl/actions/workflows/FixBot.yml)
+[FixBot](https://github.com/finch-tensor/Finch.jl/actions/workflows/FixBot.yml)
 github action on your PR branch to automatically generate output for both 32-bit
 and 64-bit builds.
 
@@ -80,15 +80,15 @@ This information is summarized with `./test/runtests.jl --help`
 
 ### Python test suite
 
-[finch-tensor](https://github.com/willow-ahrens/finch-tensor) contains
+[finch-tensor-python](https://github.com/finch-tensor/finch-tensor-python) contains
 a separate Array API compatible test suite written in Python. It requires
 Python 3.10 or later and Poetry installed.
 
 It can be run with:
 
 ```sh
-git clone https://github.com/willow-ahrens/finch-tensor.git
-cd finch-tensor
+git clone https://github.com/finch-tensor/finch-tensor-python.git
+cd finch-tensor-python
 poetry install --with test
 FINCH_REPO_PATH=<PATH_TO_FINCH_REPO> poetry run pytest tests/
 ```

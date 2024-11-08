@@ -129,6 +129,12 @@ struct ParallelDimension
     device
 end
 
+"""
+    parallel(ext, device=CPU(nthreads()))
+
+A dimension `ext` that is parallelized over `device`. The `ext` field is usually
+`_`, or dimensionless, but can be any standard dimension argument.
+"""
 parallel(dim, device=CPU(nthreads())) = ParallelDimension(dim, device)
 
 function virtual_call(ctx, ::typeof(parallel), ext)

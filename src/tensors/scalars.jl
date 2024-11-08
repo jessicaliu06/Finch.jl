@@ -64,11 +64,15 @@ function freeze!(ctx, tns::VirtualScalar)
     end)
     return tns
 end
-instantiate(ctx, tns::VirtualScalar, mode, subprotos) = tns
 
-function lower_access(ctx::AbstractCompiler, node, tns::VirtualScalar)
-    @assert isempty(node.idxs)
+function lower_access(ctx::AbstractCompiler, tns::VirtualScalar, mode)
     return tns.val
+end
+
+function lower_assign(ctx, tns::VirtualScalar, mode, op, rhs)
+    lhs = value(tns.val, tns.Tv)
+    lhs_2 = ctx(simplify(ctx, call(op, lhs, rhs)))
+    :($(tns.val) = $lhs_2)
 end
 
 function short_circuit_cases(ctx, tns::VirtualScalar, op)
@@ -150,8 +154,7 @@ function freeze!(ctx, tns::VirtualSparseScalar)
     return tns
 end
 
-instantiate(ctx, tns::VirtualSparseScalar, mode::Updater, subprotos) = tns
-function instantiate(ctx, tns::VirtualSparseScalar, mode::Reader, subprotos)
+function instantiate(ctx, tns::VirtualSparseScalar, mode::Reader)
     Switch(
         tns.dirty => tns,
         true => Simplify(FillLeaf(tns.Vf)),
@@ -160,13 +163,19 @@ end
 
 FinchNotation.finch_leaf(x::VirtualSparseScalar) = virtual(x)
 
-function lower_access(ctx::AbstractCompiler, node, tns::VirtualSparseScalar)
-    @assert isempty(node.idxs)
+function lower_access(ctx::AbstractCompiler, tns::VirtualSparseScalar, mode)
+    return tns.val
+end
+
+function lower_assign(ctx, tns::VirtualSparseScalar, mode, op, rhs)
     push_preamble!(ctx, quote
         $(tns.dirty) = true
     end)
-    return tns.val
+    lhs = value(tns.val, tns.Tv)
+    lhs_2 = ctx(simplify(ctx, call(op, lhs, rhs)))
+    :($(tns.val) = $lhs_2)
 end
+
 
 mutable struct ShortCircuitScalar{Vf, Tv} <: AbstractTensor
     val::Tv
@@ -232,11 +241,15 @@ function freeze!(ctx, tns::VirtualShortCircuitScalar)
     end)
     return tns
 end
-instantiate(ctx, tns::VirtualShortCircuitScalar, mode, subprotos) = tns
 
-function lower_access(ctx::AbstractCompiler, node, tns::VirtualShortCircuitScalar)
-    @assert isempty(node.idxs)
+function lower_access(ctx::AbstractCompiler, tns::VirtualShortCircuitScalar, mode)
     return tns.val
+end
+
+function lower_assign(ctx, tns::VirtualShortCircuitScalar, mode, op, rhs)
+    lhs = value(tns.val, tns.Tv)
+    lhs_2 = ctx(simplify(ctx, call(op, lhs, rhs)))
+    :($(tns.val) = $lhs_2)
 end
 
 virtual_moveto(ctx, lvl::VirtualShortCircuitScalar, arch) = lvl
@@ -316,8 +329,7 @@ function freeze!(ctx, tns::VirtualSparseShortCircuitScalar)
     return tns
 end
 
-instantiate(ctx, tns::VirtualSparseShortCircuitScalar, mode::Updater, subprotos) = tns
-function instantiate(ctx, tns::VirtualSparseShortCircuitScalar, mode::Reader, subprotos)
+function instantiate(ctx, tns::VirtualSparseShortCircuitScalar, mode::Reader)
     Switch([
         value(tns.dirty, Bool) => tns,
         true => Simplify(FillLeaf(tns.Vf)),
@@ -326,12 +338,17 @@ end
 
 FinchNotation.finch_leaf(x::VirtualSparseShortCircuitScalar) = virtual(x)
 
-function lower_access(ctx::AbstractCompiler, node, tns::VirtualSparseShortCircuitScalar)
-    @assert isempty(node.idxs)
+function lower_access(ctx::AbstractCompiler, tns::VirtualSparseShortCircuitScalar, mode)
+    return tns.val
+end
+
+function lower_assign(ctx, tns::VirtualSparseShortCircuitScalar, mode, op, rhs)
     push_preamble!(ctx, quote
         $(tns.dirty) = true
     end)
-    return tns.val
+    lhs = value(tns.val, tns.Tv)
+    lhs_2 = ctx(simplify(ctx, call(op, lhs, rhs)))
+    :($(tns.val) = $lhs_2)
 end
 
 function short_circuit_cases(ctx, tns::VirtualSparseShortCircuitScalar, op)

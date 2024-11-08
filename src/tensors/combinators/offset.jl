@@ -59,8 +59,8 @@ end
 
 virtual_fill_value(ctx::AbstractCompiler, arr::VirtualOffsetArray) = virtual_fill_value(ctx, arr.body)
 
-instantiate(ctx, arr::VirtualOffsetArray, mode, protos) =
-    VirtualOffsetArray(instantiate(ctx, arr.body, mode, protos), arr.delta)
+instantiate(ctx, arr::VirtualOffsetArray, mode) =
+    VirtualOffsetArray(instantiate(ctx, arr.body, mode), arr.delta)
 
 get_style(ctx, node::VirtualOffsetArray, root) = get_style(ctx, node.body, root)
 
@@ -131,12 +131,13 @@ short_circuit_cases(ctx, node::VirtualOffsetArray, op) =
 
 getroot(tns::VirtualOffsetArray) = getroot(tns.body)
 
-unfurl(ctx, tns::VirtualOffsetArray, ext, mode, protos...) =
-    VirtualOffsetArray(unfurl(ctx, tns.body, shiftdim(ext, tns.delta[end]), mode, protos...), tns.delta)
+unfurl(ctx, tns::VirtualOffsetArray, ext, mode, proto) =
+    VirtualOffsetArray(unfurl(ctx, tns.body, shiftdim(ext, tns.delta[end]), mode, proto), tns.delta)
 
-function lower_access(ctx::AbstractCompiler, node, tns::VirtualOffsetArray)
-    if !isempty(node.idxs)
-        error("OffsetArray not lowered completely")
-    end
-    lower_access(ctx, node, tns.body)
+function lower_access(ctx::AbstractCompiler, tns::VirtualOffsetArray, mode)
+    lower_access(ctx, tns.body, mode)
+end
+
+function lower_assign(ctx::AbstractCompiler, tns::VirtualOffsetArray, mode, op, rhs)
+    lower_assign(ctx, tns.body, mode, op, rhs)
 end

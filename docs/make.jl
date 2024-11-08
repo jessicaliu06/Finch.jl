@@ -15,11 +15,11 @@ DocMeta.setdocmeta!(Finch, :DocTestSetup, :(using Finch; using SparseArrays); re
 makedocs(;
     modules=[Finch],
     authors="Willow Ahrens",
-    repo=Remotes.GitHub("willow-ahrens", "Finch.jl"),
+    repo=Remotes.GitHub("finch-tensor", "Finch.jl"),
     sitename="Finch.jl",
     format=Documenter.HTML(;
         prettyurls=get(ENV, "CI", "false") == "true",
-        canonical="https://willow-ahrens.github.io/Finch.jl",
+        canonical="https://finch-tensor.github.io/Finch.jl",
         assets=["assets/favicon.ico"],
         size_threshold = 1_000_000,
     ),
@@ -39,7 +39,7 @@ makedocs(;
             "Iteration Protocols" => "guides/iteration_protocols.md",
             "User-Defined Functions" => "guides/user-defined_functions.md",
             "High-Level Array API" => "guides/array_api.md",
-            #"Parallelization and Architectures" => "guides/parallelization.md",
+            "Parallelization" => "guides/parallelization.md",
             "FileIO" => "guides/fileio.md",
             "Interoperability" => "guides/interoperability.md",
             "Optimization Tips" => "guides/optimization_tips.md",
@@ -70,6 +70,6 @@ makedocs(;
 )
 
 deploydocs(;
-    repo="github.com/willow-ahrens/Finch.jl",
+    repo="github.com/finch-tensor/Finch.jl",
     devbranch="main",
 )

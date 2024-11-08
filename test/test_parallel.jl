@@ -309,7 +309,7 @@
         At = Tensor(AFormat, A)
         BFormat = Dense(SparseList(Element(UInt(0))))
         Bt = Tensor(BFormat, B)
-        Ct = Tensor(Dense(Dense(Atomic(Element(UInt(0))))), undef, 42, 42)
+        Ct = Tensor(Dense(Dense(Mutex(Element(UInt(0))))), undef, 42, 42)
         CBad = Tensor(Dense(Dense((Element(UInt(0))))), undef, 42, 42)
 
         #=
@@ -394,7 +394,7 @@
         io = IOBuffer()
         A = Tensor(Dense(SparseList(Element(0))), [1 2; 3 4])
         x = Tensor(Dense(Element(0)), [1, 1])
-        y = Tensor(Dense(Atomic(Element(0))))
+        y = Tensor(Dense(Mutex(Element(0))))
         @repl io @finch_code begin
             y .= 0
             for j = parallel(_)
@@ -420,7 +420,7 @@
         io = IOBuffer()
 
         x = Tensor(Dense(Element(0)), undef, 100)
-        y = Tensor(Dense(Atomic(Element(0))), undef, 5)
+        y = Tensor(Dense(Mutex(Element(0))), undef, 5)
         @repl io @finch_code begin
             x .= 0
             for j = _
@@ -513,7 +513,7 @@
         end
     end
 
-    #https://github.com/willow-ahrens/Finch.jl/issues/317
+    #https://github.com/finch-tensor/Finch.jl/issues/317
     let
         A = rand(5, 5)
         B = rand(5, 5)
@@ -575,7 +575,7 @@
     end
 
     let
-        y = Tensor(Dense(Atomic(Element(0.0))))
+        y = Tensor(Dense(Mutex(Element(0.0))))
         A = Tensor(Dense(SparseList(Element(0.0))))
         x = Tensor(Dense(Element(0.0)))
         diag = Tensor(Dense(Element(0.0)))
@@ -596,4 +596,34 @@
             end
         end)
     end
+
+
+    let
+        A = Tensor(Dense(SparseList(Element(0.0))), fsprand(UInt, 42, 42, 0.1))
+        x = Tensor(Dense(Element(0.0)), rand(UInt, 42))
+        y = Tensor(Dense(AtomicElement(0.0)))
+
+        check_output("parallel/parallel_spmv_atomic.txt", @finch_code begin
+            y .= 0
+            for j = parallel(_)
+                for i = _
+                    y[i] += A[i, j] * x[j]
+                end
+            end
+        end)
+
+        @finch begin
+            y .= 0
+            for j = parallel(_)
+                for i = _
+                    y[i] += A[i, j] * x[j]
+                end
+            end
+        end
+
+        @test norm(y - A * x)/norm(A * x) < 1e-10
+
+
+    end
+
 end

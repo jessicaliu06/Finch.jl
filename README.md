@@ -1,15 +1,15 @@
 # Finch.jl
 
-[docs]:https://willow-ahrens.github.io/Finch.jl/stable
-[ddocs]:https://willow-ahrens.github.io/Finch.jl/dev
-[ci]:https://github.com/willow-ahrens/Finch.jl/actions/workflows/CI.yml?query=branch%3Amain
-[cov]:https://codecov.io/gh/willow-ahrens/Finch.jl
-[example]:https://github.com/willow-ahrens/Finch.jl/tree/main/docs/examples
+[docs]:https://finch-tensor.github.io/Finch.jl/stable
+[ddocs]:https://finch-tensor.github.io/Finch.jl/dev
+[ci]:https://github.com/finch-tensor/Finch.jl/actions/workflows/CI.yml?query=branch%3Amain
+[cov]:https://codecov.io/gh/finch-tensor/Finch.jl
+[example]:https://github.com/finch-tensor/Finch.jl/tree/main/docs/examples
 
 [docs_ico]:https://img.shields.io/badge/docs-stable-blue.svg
 [ddocs_ico]:https://img.shields.io/badge/docs-dev-blue.svg
-[ci_ico]:https://github.com/willow-ahrens/Finch.jl/actions/workflows/CI.yml/badge.svg?branch=main
-[cov_ico]:https://codecov.io/gh/willow-ahrens/Finch.jl/branch/main/graph/badge.svg
+[ci_ico]:https://github.com/finch-tensor/Finch.jl/actions/workflows/CI.yml/badge.svg?branch=main
+[cov_ico]:https://codecov.io/gh/finch-tensor/Finch.jl/branch/main/graph/badge.svg
 [example_ico]:https://img.shields.io/badge/examples-docs%2Fexamples-blue.svg
 
 | **Documentation**                             | **Build Status**                      | **Examples**    |

@@ -65,7 +65,7 @@ begin
                             if arr_2_lvl_i_2 == phase_stop_5
                                 arr_2_lvl_2_val = arr_2_lvl_val[arr_2_lvl_q_2]
                                 fmt_lvl_2_q = (fmt_lvl_q - 1) * fmt_lvl_2.shape + phase_stop_5
-                                fmt_lvl_2_val[fmt_lvl_2_q] = arr_2_lvl_2_val + fmt_lvl_2_val[fmt_lvl_2_q]
+                                fmt_lvl_2_val[fmt_lvl_2_q] += arr_2_lvl_2_val
                                 if !(fmt_lvl_tbl[fmt_lvl_2_q])
                                     fmt_lvl_tbl[fmt_lvl_2_q] = true
                                     fmt_lvl_2_qos_fill += 1
@@ -86,22 +86,22 @@ begin
                 phase_stop_7 = min(phase_stop, arr_2_lvl_i)
                 if arr_2_lvl_i == phase_stop_7
                     fmt_lvl_q = (1 - 1) * fmt_lvl.shape + phase_stop_7
-                    arr_2_lvl_q_2 = arr_2_lvl_q
+                    arr_2_lvl_q_3 = arr_2_lvl_q
                     if arr_2_lvl_q < arr_2_lvl_q_step
-                        arr_2_lvl_i_stop_2 = arr_2_lvl_tbl1[arr_2_lvl_q_step - 1]
+                        arr_2_lvl_i_stop_3 = arr_2_lvl_tbl1[arr_2_lvl_q_step - 1]
                     else
-                        arr_2_lvl_i_stop_2 = 0
+                        arr_2_lvl_i_stop_3 = 0
                     end
-                    phase_stop_8 = min(arr_2_lvl.shape[1], arr_2_lvl_i_stop_2)
+                    phase_stop_8 = min(arr_2_lvl.shape[1], arr_2_lvl_i_stop_3)
                     if phase_stop_8 >= 1
                         if arr_2_lvl_tbl1[arr_2_lvl_q] < 1
-                            arr_2_lvl_q_2 = Finch.scansearch(arr_2_lvl_tbl1, 1, arr_2_lvl_q, arr_2_lvl_q_step - 1)
+                            arr_2_lvl_q_3 = Finch.scansearch(arr_2_lvl_tbl1, 1, arr_2_lvl_q, arr_2_lvl_q_step - 1)
                         end
                         while true
-                            arr_2_lvl_i_2 = arr_2_lvl_tbl1[arr_2_lvl_q_2]
-                            if arr_2_lvl_i_2 < phase_stop_8
-                                arr_2_lvl_2_val_2 = arr_2_lvl_val[arr_2_lvl_q_2]
-                                fmt_lvl_2_q_2 = (fmt_lvl_q - 1) * fmt_lvl_2.shape + arr_2_lvl_i_2
+                            arr_2_lvl_i_3 = arr_2_lvl_tbl1[arr_2_lvl_q_3]
+                            if arr_2_lvl_i_3 < phase_stop_8
+                                arr_2_lvl_2_val_2 = arr_2_lvl_val[arr_2_lvl_q_3]
+                                fmt_lvl_2_q_2 = (fmt_lvl_q - 1) * fmt_lvl_2.shape + arr_2_lvl_i_3
                                 fmt_lvl_2_val[fmt_lvl_2_q_2] = arr_2_lvl_2_val_2 + fmt_lvl_2_val[fmt_lvl_2_q_2]
                                 if !(fmt_lvl_tbl[fmt_lvl_2_q_2])
                                     fmt_lvl_tbl[fmt_lvl_2_q_2] = true
@@ -110,15 +110,15 @@ begin
                                         fmt_lvl_2_qos_stop = max(fmt_lvl_2_qos_stop << 1, 1)
                                         Finch.resize_if_smaller!(fmt_lvl_srt, fmt_lvl_2_qos_stop)
                                     end
-                                    fmt_lvl_srt[fmt_lvl_2_qos_fill] = (fmt_lvl_q, arr_2_lvl_i_2)
+                                    fmt_lvl_srt[fmt_lvl_2_qos_fill] = (fmt_lvl_q, arr_2_lvl_i_3)
                                 end
-                                arr_2_lvl_q_2 += 1
+                                arr_2_lvl_q_3 += 1
                             else
-                                phase_stop_10 = min(arr_2_lvl_i_2, phase_stop_8)
-                                if arr_2_lvl_i_2 == phase_stop_10
-                                    arr_2_lvl_2_val_2 = arr_2_lvl_val[arr_2_lvl_q_2]
+                                phase_stop_10 = min(phase_stop_8, arr_2_lvl_i_3)
+                                if arr_2_lvl_i_3 == phase_stop_10
+                                    arr_2_lvl_2_val_2 = arr_2_lvl_val[arr_2_lvl_q_3]
                                     fmt_lvl_2_q_2 = (fmt_lvl_q - 1) * fmt_lvl_2.shape + phase_stop_10
-                                    fmt_lvl_2_val[fmt_lvl_2_q_2] = arr_2_lvl_2_val_2 + fmt_lvl_2_val[fmt_lvl_2_q_2]
+                                    fmt_lvl_2_val[fmt_lvl_2_q_2] += arr_2_lvl_2_val_2
                                     if !(fmt_lvl_tbl[fmt_lvl_2_q_2])
                                         fmt_lvl_tbl[fmt_lvl_2_q_2] = true
                                         fmt_lvl_2_qos_fill += 1
@@ -128,7 +128,7 @@ begin
                                         end
                                         fmt_lvl_srt[fmt_lvl_2_qos_fill] = (fmt_lvl_q, phase_stop_10)
                                     end
-                                    arr_2_lvl_q_2 += 1
+                                    arr_2_lvl_q_3 += 1
                                 end
                                 break
                             end

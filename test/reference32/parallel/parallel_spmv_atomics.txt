@@ -42,8 +42,6 @@ quote
                                 if phase_stop_2 >= phase_start_2
                                     for j_6 = phase_start_2:phase_stop_2
                                         y_lvl_q = (1 - 1) * A_lvl.shape + j_6
-                                        y_lvl_2atomicArraysAcc = Finch.get_lock(CPU(Threads.nthreads()), y_lvl_locks, y_lvl_q, eltype(Vector{Base.Threads.SpinLock}))
-                                        Finch.aquire_lock!(CPU(Threads.nthreads()), y_lvl_2atomicArraysAcc)
                                         A_lvl_q = (1 - 1) * A_lvl.shape + j_6
                                         A_lvl_2_q = A_lvl_ptr[A_lvl_q]
                                         A_lvl_2_q_stop = A_lvl_ptr[A_lvl_q + 1]
@@ -63,7 +61,10 @@ quote
                                                     A_lvl_3_val = A_lvl_2_val[A_lvl_2_q]
                                                     x_lvl_q = (1 - 1) * x_lvl.shape + A_lvl_2_i
                                                     x_lvl_2_val = x_lvl_val[x_lvl_q]
-                                                    y_lvl_2_val[y_lvl_q] += A_lvl_3_val * x_lvl_2_val
+                                                    y_lvl_2atomicArraysAcc = Finch.get_lock(CPU(Threads.nthreads()), y_lvl_locks, y_lvl_q, eltype(Vector{Base.Threads.SpinLock}))
+                                                    Finch.aquire_lock!(CPU(Threads.nthreads()), y_lvl_2atomicArraysAcc)
+                                                    y_lvl_2_val[y_lvl_q] = A_lvl_3_val * x_lvl_2_val + y_lvl_2_val[y_lvl_q]
+                                                    Finch.release_lock!(CPU(Threads.nthreads()), y_lvl_2atomicArraysAcc)
                                                     A_lvl_2_q += 1
                                                 else
                                                     phase_stop_5 = min(phase_stop_3, A_lvl_2_i)
@@ -71,14 +72,16 @@ quote
                                                         A_lvl_3_val = A_lvl_2_val[A_lvl_2_q]
                                                         x_lvl_q = (1 - 1) * x_lvl.shape + phase_stop_5
                                                         x_lvl_2_val_2 = x_lvl_val[x_lvl_q]
+                                                        y_lvl_2atomicArraysAcc_2 = Finch.get_lock(CPU(Threads.nthreads()), y_lvl_locks, y_lvl_q, eltype(Vector{Base.Threads.SpinLock}))
+                                                        Finch.aquire_lock!(CPU(Threads.nthreads()), y_lvl_2atomicArraysAcc_2)
                                                         y_lvl_2_val[y_lvl_q] += A_lvl_3_val * x_lvl_2_val_2
+                                                        Finch.release_lock!(CPU(Threads.nthreads()), y_lvl_2atomicArraysAcc_2)
                                                         A_lvl_2_q += 1
                                                     end
                                                     break
                                                 end
                                             end
                                         end
-                                        Finch.release_lock!(CPU(Threads.nthreads()), y_lvl_2atomicArraysAcc)
                                     end
                                 end
                                 phase_start_6 = max(1, 1 + fld(A_lvl.shape * i_4, Threads.nthreads()))

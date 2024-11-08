@@ -86,7 +86,7 @@ begin
                                                             input_lvl_3_val = input_lvl_2_val[input_lvl_2_q]
                                                             input_lvl_3_val_3 = input_lvl_2_val[input_lvl_2_q_3]
                                                             tmp_lvl_q = (1 - 1) * input_lvl_2.shape + phase_stop_4
-                                                            tmp_lvl_val[tmp_lvl_q] = input_lvl_3_val_2 + tmp_lvl_val[tmp_lvl_q] + input_lvl_3_val + input_lvl_3_val_3
+                                                            tmp_lvl_val[tmp_lvl_q] = input_lvl_3_val + input_lvl_3_val_2 + input_lvl_3_val_3 + tmp_lvl_val[tmp_lvl_q]
                                                             input_lvl_2_q += 1
                                                             input_lvl_2_q_2 += 1
                                                             input_lvl_2_q_3 += 1
@@ -94,37 +94,37 @@ begin
                                                             input_lvl_3_val_2 = input_lvl_2_val[input_lvl_2_q_2]
                                                             input_lvl_3_val_3 = input_lvl_2_val[input_lvl_2_q_3]
                                                             tmp_lvl_q = (1 - 1) * input_lvl_2.shape + phase_stop_4
-                                                            tmp_lvl_val[tmp_lvl_q] = input_lvl_3_val_2 + tmp_lvl_val[tmp_lvl_q] + input_lvl_3_val_3
+                                                            tmp_lvl_val[tmp_lvl_q] = tmp_lvl_val[tmp_lvl_q] + input_lvl_3_val_3 + input_lvl_3_val_2
                                                             input_lvl_2_q_2 += 1
                                                             input_lvl_2_q_3 += 1
                                                         elseif input_lvl_2_i == -1 + phase_stop_4 && input_lvl_2_i_3 == 1 + phase_stop_4
                                                             input_lvl_3_val = input_lvl_2_val[input_lvl_2_q]
                                                             input_lvl_3_val_3 = input_lvl_2_val[input_lvl_2_q_3]
                                                             tmp_lvl_q = (1 - 1) * input_lvl_2.shape + phase_stop_4
-                                                            tmp_lvl_val[tmp_lvl_q] = input_lvl_3_val_3 + input_lvl_3_val + tmp_lvl_val[tmp_lvl_q]
+                                                            tmp_lvl_val[tmp_lvl_q] = tmp_lvl_val[tmp_lvl_q] + input_lvl_3_val_3 + input_lvl_3_val
                                                             input_lvl_2_q += 1
                                                             input_lvl_2_q_3 += 1
                                                         elseif input_lvl_2_i_3 == 1 + phase_stop_4
                                                             input_lvl_3_val_3 = input_lvl_2_val[input_lvl_2_q_3]
                                                             tmp_lvl_q = (1 - 1) * input_lvl_2.shape + phase_stop_4
-                                                            tmp_lvl_val[tmp_lvl_q] = input_lvl_3_val_3 + tmp_lvl_val[tmp_lvl_q]
+                                                            tmp_lvl_val[tmp_lvl_q] += input_lvl_3_val_3
                                                             input_lvl_2_q_3 += 1
                                                         elseif input_lvl_2_i == -1 + phase_stop_4 && input_lvl_2_i_2 == phase_stop_4
                                                             input_lvl_3_val_2 = input_lvl_2_val[input_lvl_2_q_2]
                                                             input_lvl_3_val = input_lvl_2_val[input_lvl_2_q]
                                                             tmp_lvl_q = (1 - 1) * input_lvl_2.shape + phase_stop_4
-                                                            tmp_lvl_val[tmp_lvl_q] = input_lvl_3_val + input_lvl_3_val_2 + tmp_lvl_val[tmp_lvl_q]
+                                                            tmp_lvl_val[tmp_lvl_q] = tmp_lvl_val[tmp_lvl_q] + input_lvl_3_val + input_lvl_3_val_2
                                                             input_lvl_2_q += 1
                                                             input_lvl_2_q_2 += 1
                                                         elseif input_lvl_2_i_2 == phase_stop_4
                                                             input_lvl_3_val_2 = input_lvl_2_val[input_lvl_2_q_2]
                                                             tmp_lvl_q = (1 - 1) * input_lvl_2.shape + phase_stop_4
-                                                            tmp_lvl_val[tmp_lvl_q] = input_lvl_3_val_2 + tmp_lvl_val[tmp_lvl_q]
+                                                            tmp_lvl_val[tmp_lvl_q] += input_lvl_3_val_2
                                                             input_lvl_2_q_2 += 1
                                                         elseif input_lvl_2_i == -1 + phase_stop_4
                                                             input_lvl_3_val = input_lvl_2_val[input_lvl_2_q]
                                                             tmp_lvl_q = (1 - 1) * input_lvl_2.shape + phase_stop_4
-                                                            tmp_lvl_val[tmp_lvl_q] = input_lvl_3_val + tmp_lvl_val[tmp_lvl_q]
+                                                            tmp_lvl_val[tmp_lvl_q] += input_lvl_3_val
                                                             input_lvl_2_q += 1
                                                         end
                                                         x = phase_stop_4 + 1
@@ -148,18 +148,18 @@ begin
                                                             input_lvl_3_val_5 = input_lvl_2_val[input_lvl_2_q_3]
                                                             input_lvl_3_val_4 = input_lvl_2_val[input_lvl_2_q_2]
                                                             tmp_lvl_q = (1 - 1) * input_lvl_2.shape + phase_stop_6
-                                                            tmp_lvl_val[tmp_lvl_q] = input_lvl_3_val_5 + tmp_lvl_val[tmp_lvl_q] + input_lvl_3_val_4
+                                                            tmp_lvl_val[tmp_lvl_q] = tmp_lvl_val[tmp_lvl_q] + input_lvl_3_val_4 + input_lvl_3_val_5
                                                             input_lvl_2_q_2 += 1
                                                             input_lvl_2_q_3 += 1
                                                         elseif input_lvl_2_i_3 == 1 + phase_stop_6
                                                             input_lvl_3_val_5 = input_lvl_2_val[input_lvl_2_q_3]
                                                             tmp_lvl_q = (1 - 1) * input_lvl_2.shape + phase_stop_6
-                                                            tmp_lvl_val[tmp_lvl_q] = input_lvl_3_val_5 + tmp_lvl_val[tmp_lvl_q]
+                                                            tmp_lvl_val[tmp_lvl_q] += input_lvl_3_val_5
                                                             input_lvl_2_q_3 += 1
                                                         elseif input_lvl_2_i_2 == phase_stop_6
                                                             input_lvl_3_val_4 = input_lvl_2_val[input_lvl_2_q_2]
                                                             tmp_lvl_q = (1 - 1) * input_lvl_2.shape + phase_stop_6
-                                                            tmp_lvl_val[tmp_lvl_q] = input_lvl_3_val_4 + tmp_lvl_val[tmp_lvl_q]
+                                                            tmp_lvl_val[tmp_lvl_q] += input_lvl_3_val_4
                                                             input_lvl_2_q_2 += 1
                                                         end
                                                         x = phase_stop_6 + 1
@@ -183,18 +183,18 @@ begin
                                                             input_lvl_3_val_7 = input_lvl_2_val[input_lvl_2_q_3]
                                                             input_lvl_3_val_6 = input_lvl_2_val[input_lvl_2_q]
                                                             tmp_lvl_q = (1 - 1) * input_lvl_2.shape + phase_stop_8
-                                                            tmp_lvl_val[tmp_lvl_q] = input_lvl_3_val_7 + tmp_lvl_val[tmp_lvl_q] + input_lvl_3_val_6
+                                                            tmp_lvl_val[tmp_lvl_q] = tmp_lvl_val[tmp_lvl_q] + input_lvl_3_val_6 + input_lvl_3_val_7
                                                             input_lvl_2_q += 1
                                                             input_lvl_2_q_3 += 1
                                                         elseif input_lvl_2_i_3 == 1 + phase_stop_8
                                                             input_lvl_3_val_7 = input_lvl_2_val[input_lvl_2_q_3]
                                                             tmp_lvl_q = (1 - 1) * input_lvl_2.shape + phase_stop_8
-                                                            tmp_lvl_val[tmp_lvl_q] = input_lvl_3_val_7 + tmp_lvl_val[tmp_lvl_q]
+                                                            tmp_lvl_val[tmp_lvl_q] += input_lvl_3_val_7
                                                             input_lvl_2_q_3 += 1
                                                         elseif input_lvl_2_i == -1 + phase_stop_8
                                                             input_lvl_3_val_6 = input_lvl_2_val[input_lvl_2_q]
                                                             tmp_lvl_q = (1 - 1) * input_lvl_2.shape + phase_stop_8
-                                                            tmp_lvl_val[tmp_lvl_q] = input_lvl_3_val_6 + tmp_lvl_val[tmp_lvl_q]
+                                                            tmp_lvl_val[tmp_lvl_q] += input_lvl_3_val_6
                                                             input_lvl_2_q += 1
                                                         end
                                                         x = phase_stop_8 + 1
@@ -212,14 +212,14 @@ begin
                                                         if phase_stop_10 < phase_stop_9
                                                             input_lvl_3_val_8 = input_lvl_2_val[input_lvl_2_q_3]
                                                             tmp_lvl_q = (1 - 1) * input_lvl_2.shape + phase_stop_10
-                                                            tmp_lvl_val[tmp_lvl_q] = input_lvl_3_val_8 + tmp_lvl_val[tmp_lvl_q]
+                                                            tmp_lvl_val[tmp_lvl_q] += input_lvl_3_val_8
                                                             input_lvl_2_q_3 += 1
                                                         else
                                                             phase_stop_11 = min(-1 + input_lvl_2_i_3, phase_stop_9)
                                                             if input_lvl_2_i_3 == 1 + phase_stop_11
                                                                 input_lvl_3_val_8 = input_lvl_2_val[input_lvl_2_q_3]
                                                                 tmp_lvl_q = (1 - 1) * input_lvl_2.shape + phase_stop_11
-                                                                tmp_lvl_val[tmp_lvl_q] = input_lvl_3_val_8 + tmp_lvl_val[tmp_lvl_q]
+                                                                tmp_lvl_val[tmp_lvl_q] += input_lvl_3_val_8
                                                                 input_lvl_2_q_3 += 1
                                                             end
                                                             break
@@ -244,18 +244,18 @@ begin
                                                             input_lvl_3_val_9 = input_lvl_2_val[input_lvl_2_q]
                                                             input_lvl_3_val_10 = input_lvl_2_val[input_lvl_2_q_2]
                                                             tmp_lvl_q = (1 - 1) * input_lvl_2.shape + phase_stop_13
-                                                            tmp_lvl_val[tmp_lvl_q] = input_lvl_3_val_9 + tmp_lvl_val[tmp_lvl_q] + input_lvl_3_val_10
+                                                            tmp_lvl_val[tmp_lvl_q] = tmp_lvl_val[tmp_lvl_q] + input_lvl_3_val_10 + input_lvl_3_val_9
                                                             input_lvl_2_q_2 += 1
                                                             input_lvl_2_q += 1
                                                         elseif input_lvl_2_i == -1 + phase_stop_13
                                                             input_lvl_3_val_9 = input_lvl_2_val[input_lvl_2_q]
                                                             tmp_lvl_q = (1 - 1) * input_lvl_2.shape + phase_stop_13
-                                                            tmp_lvl_val[tmp_lvl_q] = input_lvl_3_val_9 + tmp_lvl_val[tmp_lvl_q]
+                                                            tmp_lvl_val[tmp_lvl_q] += input_lvl_3_val_9
                                                             input_lvl_2_q += 1
                                                         elseif input_lvl_2_i_2 == phase_stop_13
                                                             input_lvl_3_val_10 = input_lvl_2_val[input_lvl_2_q_2]
                                                             tmp_lvl_q = (1 - 1) * input_lvl_2.shape + phase_stop_13
-                                                            tmp_lvl_val[tmp_lvl_q] = input_lvl_3_val_10 + tmp_lvl_val[tmp_lvl_q]
+                                                            tmp_lvl_val[tmp_lvl_q] += input_lvl_3_val_10
                                                             input_lvl_2_q_2 += 1
                                                         end
                                                         x = phase_stop_13 + 1
@@ -272,14 +272,14 @@ begin
                                                         if input_lvl_2_i_2 < phase_stop_14
                                                             input_lvl_3_val_11 = input_lvl_2_val[input_lvl_2_q_2]
                                                             tmp_lvl_q = (1 - 1) * input_lvl_2.shape + input_lvl_2_i_2
-                                                            tmp_lvl_val[tmp_lvl_q] = input_lvl_3_val_11 + tmp_lvl_val[tmp_lvl_q]
+                                                            tmp_lvl_val[tmp_lvl_q] += input_lvl_3_val_11
                                                             input_lvl_2_q_2 += 1
                                                         else
                                                             phase_stop_16 = min(input_lvl_2_i_2, phase_stop_14)
                                                             if input_lvl_2_i_2 == phase_stop_16
                                                                 input_lvl_3_val_11 = input_lvl_2_val[input_lvl_2_q_2]
                                                                 tmp_lvl_q = (1 - 1) * input_lvl_2.shape + phase_stop_16
-                                                                tmp_lvl_val[tmp_lvl_q] = input_lvl_3_val_11 + tmp_lvl_val[tmp_lvl_q]
+                                                                tmp_lvl_val[tmp_lvl_q] += input_lvl_3_val_11
                                                                 input_lvl_2_q_2 += 1
                                                             end
                                                             break
@@ -298,14 +298,14 @@ begin
                                                         if phase_stop_18 < phase_stop_17
                                                             input_lvl_3_val_12 = input_lvl_2_val[input_lvl_2_q]
                                                             tmp_lvl_q = (1 - 1) * input_lvl_2.shape + phase_stop_18
-                                                            tmp_lvl_val[tmp_lvl_q] = input_lvl_3_val_12 + tmp_lvl_val[tmp_lvl_q]
+                                                            tmp_lvl_val[tmp_lvl_q] += input_lvl_3_val_12
                                                             input_lvl_2_q += 1
                                                         else
                                                             phase_stop_19 = min(1 + input_lvl_2_i, phase_stop_17)
                                                             if input_lvl_2_i == -1 + phase_stop_19
                                                                 input_lvl_3_val_12 = input_lvl_2_val[input_lvl_2_q]
                                                                 tmp_lvl_q = (1 - 1) * input_lvl_2.shape + phase_stop_19
-                                                                tmp_lvl_val[tmp_lvl_q] = input_lvl_3_val_12 + tmp_lvl_val[tmp_lvl_q]
+                                                                tmp_lvl_val[tmp_lvl_q] += input_lvl_3_val_12
                                                                 input_lvl_2_q += 1
                                                             end
                                                             break

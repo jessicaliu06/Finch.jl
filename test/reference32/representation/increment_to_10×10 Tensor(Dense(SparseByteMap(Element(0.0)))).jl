@@ -65,7 +65,7 @@ begin
                             if arr_2_lvl_i_2 == phase_stop_5
                                 arr_2_lvl_2_val = arr_2_lvl_val[arr_2_lvl_q_2]
                                 fmt_lvl_2_q = (fmt_lvl_q - 1) * fmt_lvl_2.shape + phase_stop_5
-                                fmt_lvl_2_val[fmt_lvl_2_q] = arr_2_lvl_2_val + fmt_lvl_2_val[fmt_lvl_2_q]
+                                fmt_lvl_2_val[fmt_lvl_2_q] += arr_2_lvl_2_val
                                 if !(fmt_lvl_tbl[fmt_lvl_2_q])
                                     fmt_lvl_tbl[fmt_lvl_2_q] = true
                                     fmt_lvl_2_qos_fill += 1
@@ -118,7 +118,7 @@ begin
                                 if arr_2_lvl_i_3 == phase_stop_10
                                     arr_2_lvl_2_val_2 = arr_2_lvl_val[arr_2_lvl_q_3]
                                     fmt_lvl_2_q_2 = (fmt_lvl_q - 1) * fmt_lvl_2.shape + phase_stop_10
-                                    fmt_lvl_2_val[fmt_lvl_2_q_2] = arr_2_lvl_2_val_2 + fmt_lvl_2_val[fmt_lvl_2_q_2]
+                                    fmt_lvl_2_val[fmt_lvl_2_q_2] += arr_2_lvl_2_val_2
                                     if !(fmt_lvl_tbl[fmt_lvl_2_q_2])
                                         fmt_lvl_tbl[fmt_lvl_2_q_2] = true
                                         fmt_lvl_2_qos_fill += 1

@@ -268,3 +268,40 @@ for (key, mtx) in [
     SUITE["parallel"]["SpMV_serial"][key] = @benchmarkable spmv_serial($A, $x)
     SUITE["parallel"]["SpMV_threaded"][key] = @benchmarkable spmv_threaded($A, $x)
 end
+
+SUITE["structure"] = BenchmarkGroup()
+
+N = 100_000
+
+SUITE["structure"]["permutation"] = BenchmarkGroup()
+
+A_ref = Tensor(Dense(SparseList(Element(0.0))), fsparse(collect(1:N), collect(1:N), ones(N)))
+
+A = Tensor(Dense(SparsePoint(Element(0.0))), A_ref)
+
+x = rand(N)
+
+SUITE["structure"]["permutation"]["SparseList"] = @benchmarkable spmv_serial($A_ref, $x)
+SUITE["structure"]["permutation"]["SparsePoint"] = @benchmarkable spmv_serial($A, $x)
+
+SUITE["structure"]["banded"] = BenchmarkGroup()
+
+A_ref = Tensor(Dense(Sparse(Element(0.0))), N, N)
+
+@finch for i = _, j = _
+    if abs(i - j) < 2
+        A_ref[i, j] = 1.0
+    end
+end
+
+A = Tensor(Dense(SparseBand(Element(0.0))), A_ref)
+A2 = Tensor(Dense(SparseRunList(Element(0.0))), A_ref)
+A2 = Tensor(Dense(SparseInterval(Element(0.0))), A2)
+
+x = rand(N)
+
+SUITE["structure"]["banded"]["SparseList"] = @benchmarkable spmv_serial($A_ref, $x)
+SUITE["structure"]["banded"]["SparseBand"] = @benchmarkable spmv_serial($A, $x)
+SUITE["structure"]["banded"]["SparseInterval"] = @benchmarkable spmv_serial($A2, $x)
+
+SUITE = SUITE["structure"]

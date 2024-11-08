@@ -111,12 +111,15 @@ function Base.show(io::IO, node::FinchNodeInstance)
 end
 
 function Base.show(io::IO, mime::MIME"text/plain", node::FinchNodeInstance)
-    print(io, "Finch program instance: ")
+    print(io, "Finch program instance")
+    show(io, Finch.striplines(finch_unparse_program(Finch.FinchCompiler(), node)))
+	#=
     if isstateful(node)
         display_statement(io, mime, node, 0)
     else
         display_expression(io, mime, node)
     end
+	=#
 end
 
 Base.:(==)(a::VariableInstance, b::VariableInstance) = false

@@ -171,13 +171,13 @@ function moveto(vec::CPULocalVector, task::CPUThread)
     return temp
 end
 
-function atomic_modify!(::Serial, vec, idx, op, x)
+@propagate_inbounds function atomic_modify!(::Serial, vec, idx, op, x)
     @inbounds begin
         vec[idx] = op(vec[idx], x)
     end
 end
 
-function atomic_modify!(::CPU, vec, idx, op, x)
+@propagate_inbounds function atomic_modify!(::CPU, vec, idx, op, x)
     Base.unsafe_modify!(pointer(vec, idx), op, x, :sequentially_consistent)
 end
 

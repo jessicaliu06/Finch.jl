@@ -6,7 +6,7 @@ is given as input to the program.
 """
 function defer_tables(ex, node::LogicNode)
     if @capture node table(~tns::isimmediate, ~idxs...)
-        table(deferred(:($ex.tns.val), typeof(tns.val)), map(enumerate(node.idxs)) do (i, idx)
+        table(deferred(:($ex.tns.val), typeof(tns.val), tns.val), map(enumerate(node.idxs)) do (i, idx)
             defer_tables(:($ex.idxs[$i]), idx)
         end)
     elseif istree(node)
@@ -29,7 +29,7 @@ function cache_deferred!(ctx, root::LogicNode)
         get!(seen, node.val) do
             var = freshen(ctx, :V)
             push_preamble!(ctx, :($var = $(node.ex)::$(node.type)))
-            deferred(var, node.type)
+            deferred(var, node.type, node.imm)
         end
     end))(root)
 end

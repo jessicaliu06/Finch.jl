@@ -205,6 +205,8 @@ function LogicNode(kind::LogicNodeKind, args::Vector)
         return LogicNode(kind, args[1], Any, LogicNode[])
     elseif kind === deferred && length(args) == 2
         return LogicNode(kind, args[1], args[2], LogicNode[])
+    elseif kind === deferred && length(args) == 3
+        return LogicNode(kind, (args[1], args[3]), args[2], LogicNode[])
     else
         args = LogicNode_concatenate_args(args)
         if (kind === table && length(args) >= 1) ||
@@ -231,7 +233,8 @@ end
 function Base.getproperty(node::LogicNode, sym::Symbol)
     if sym === :kind || sym === :val || sym === :type || sym === :children
         return Base.getfield(node, sym)
-    elseif node.kind === deferred && sym === :ex node.val
+    elseif node.kind === deferred && sym === :ex node.val isa Tuple ? node.val[1] : node.val[2]
+    elseif node.kind === deferred && sym === :imm node.val[2]
     elseif node.kind === field && sym === :name node.val::Symbol
     elseif node.kind === alias && sym === :name node.val::Symbol
     elseif node.kind === table && sym === :tns node.children[1]

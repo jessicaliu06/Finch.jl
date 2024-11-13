@@ -329,7 +329,6 @@ end
 
 function Base.show(io::IO, mime::MIME"text/plain", node::FinchNode)
     print(io, "Finch program: ")
-    show(io, finch_unparse_program(JuliaContext(), node))
     if isstateful(node)
         display_statement(io, mime, node, 0)
     else

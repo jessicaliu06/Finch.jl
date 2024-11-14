@@ -5,10 +5,10 @@ CurrentModule = Finch
 # Tensor Formats
 
 ### Creating Tensors
-You can create Finch tensors using the `Tensor` constructor. The first argument specifies the storage format.
+You can create Finch tensors using the [`Tensor`](@ref) constructor. The first argument specifies the storage format.
 
 ```jldoctest tensorformats; setup = :(using Finch)
-julia> A_fbr = Tensor(Dense(SparseList(Element(0.0))), 4, 3)
+julia> A = Tensor(Dense(SparseList(Element(0.0))), 4, 3)
 4×3-Tensor
 └─ Dense [:,1:3]
    ├─ [:, 1]: SparseList (0.0) [1:4]
@@ -21,7 +21,7 @@ To initialize a tensor with data:
 
 ```jldoctest tensorformats
 julia> A = [0.0 0.0 4.4; 1.1 0.0 0.0; 2.2 0.0 5.5; 3.3 0.0 0.0]
-julia> A_fbr = Tensor(Dense(SparseList(Element(0.0))), A)
+julia> B = Tensor(Dense(SparseList(Element(0.0))), A)
 4×3-Tensor
 └─ Dense [:,1:3]
    ├─ [:, 1]: SparseList (0.0) [1:4]
@@ -38,6 +38,7 @@ julia> A_fbr = Tensor(Dense(SparseList(Element(0.0))), A)
 
 ### Basic Array Operations
 Finch tensors support indexing, slicing, mapping, broadcasting, and reducing.
+Many functions in the Julia standard array library are supported.
 
 ```jldoctest arrayapi; setup = :(using Finch)
 julia> A = fsparse([1, 1, 2, 3], [2, 4, 5, 6], [1.0, 2.0, 3.0])
@@ -72,7 +73,8 @@ julia> A .+ 1
 # Sparse and Structured Utilities
 
 ### Sparse Constructors
-Convenient constructors for sparse tensors include `fsparse`, `fspzeros`, and others.
+Convenient constructors for sparse tensors include [`fsparse`](@ref), [`fspzeros`](@ref), and [`fsprand`](@ref).
+To get a list of the nonzero coordinates, use [`ffindnz`](@ref).
 
 ```jldoctest sparseutils; setup = :(using Finch)
 julia> I = ([1, 2, 3], [1, 2, 3])
@@ -88,9 +90,9 @@ julia> S = fsparse(I, V)
 ### Fill Values
 Fill values represent default values for uninitialized elements.
 
-- **`getfill`**: Retrieve the fill value.
-- **`setfill`**: Set a new fill value.
-- **`dropfill!`**: Remove elements matching the fill value.
+- **[`get_fill_value`](@ref)**: Retrieve the fill value.
+- **[`set_fill_value`](@ref)**: Set a new fill value.
+- **[`dropfill!`](@ref)**: Remove elements matching the fill value.
 
 ```jldoctest sparseutils
 julia> t = Tensor(Dense(SparseList(Element(0.0))), 3, 3)
@@ -106,6 +108,8 @@ julia> dropfill!(t)
 Finch supports composing operations into a single kernel with `lazy` and `compute`.
 
 ```jldoctest fusion; setup = :(using Finch)
+julia> A = fsparse([1, 1, 2, 3], [2, 4, 5, 6], [1.0, 2.0, 3.0]);
+julia> B = A .* 2;
 julia> C = lazy(A)
 julia> D = lazy(B)
 julia> E = (C .+ D) ./ 2

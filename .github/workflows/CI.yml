@@ -125,5 +125,7 @@ jobs:
             path: 'Galley'
         - name: Run Galley tests 
           run: |
+            pwd
+            ls
             cd Galley
-            julia --project=test/ -e 'import Pkg; Pkg.develop(path="${GITHUB_WORKSPACE}"); include("test/runtests.jl")'
+            julia --project=test/ -e 'import Pkg; Pkg.develop(path=""); include("test/runtests.jl")'

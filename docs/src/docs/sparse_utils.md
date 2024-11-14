@@ -17,7 +17,7 @@ ffindnz
 
 ## Fill Values
 
-Finch tensors support an arbitrary "background" value for sparse arrays. While most arrays use `0` as the background value, this is not always the case. For example, a sparse array of `Int` might use `typemin(Int)` as the background value. The `default` function returns the background value of a tensor. If you ever want to change the background value of an existing array, you can use the `set_fill_value!` function. The `countstored` function returns the number of stored elements in a tensor, and calling `pattern!` on a tensor returns tensor which is true whereever the original tensor stores a value. Note that countstored doesn't always return the number of non-zero elements in a tensor, as it counts the number of stored elements, and stored elements may include the background value. You can call `dropfills!` to remove explicitly stored background values from a tensor.
+Finch tensors support an arbitrary "background" value for sparse arrays. While most arrays use `0` as the background value, this is not always the case. For example, a sparse array of `Int` might use `typemin(Int)` as the background value. The `get_fill_value` function returns the background value of a tensor. If you ever want to change the background value of an existing array, you can use the `set_fill_value!` function. The `countstored` function returns the number of stored elements in a tensor, and calling `pattern!` on a tensor returns tensor which is true whereever the original tensor stores a value. Note that countstored doesn't always return the number of non-zero elements in a tensor, as it counts the number of stored elements, and stored elements may include the background value. You can call `dropfills!` to remove explicitly stored background values from a tensor.
 
 ```jldoctest example1; setup = :(using Finch)
 julia> A = fsparse([1, 1, 2, 3], [2, 4, 5, 6], [1.0, 2.0, 3.0])
@@ -81,6 +81,7 @@ julia> pattern!(A)
 ```
 
 ```@docs
+get_fill_value
 set_fill_value!
 pattern!
 countstored
@@ -123,5 +124,4 @@ julia> sum(map(last, B))
 
 julia> sum(map(first, B))
 4.0
-
 ```

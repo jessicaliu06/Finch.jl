@@ -105,7 +105,7 @@ julia> dropfill!(t)
 
 # Array Fusion
 
-Finch supports composing operations into a single kernel with `lazy` and `compute`.
+Finch supports composing operations into a single kernel with [`lazy`](@ref) and [`compute`](@ref).
 
 ```jldoctest fusion; setup = :(using Finch)
 julia> A = fsparse([1, 1, 2, 3], [2, 4, 5, 6], [1.0, 2.0, 3.0]);
@@ -123,11 +123,6 @@ julia> compute(E)
    │  └─ [1]: 3.0
    └─ [:, 5]: SparseDict (0.0) [1:3]
       └─ [2]: 4.5
-```
-
-```@docs
-lazy
-compute
 ```
 
 # File I/O

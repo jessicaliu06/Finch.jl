@@ -126,4 +126,4 @@ jobs:
         - name: Run Galley tests 
           run: |
             cd Galley
-            julia --project=test/ -e 'import Pkg; Pkg.develop(path="../Finch.jl"); include("test/runtests.jl")'
+            julia --project=test/ -e 'import Pkg; Pkg.develop(path="${GITHUB_WORKSPACE}"); include("test/runtests.jl")'

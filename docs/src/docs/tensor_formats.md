@@ -63,7 +63,7 @@ leftmost dimension `i_1` corresponds to the leaf level.
 
 Our example could be visualized as follows:
 
-![CSC Format Index Tree](../assets/levels-A-d-sl-e.png)
+![CSC Format Index Tree](../assets/LevelsVsFibers-matrix.png)
 
 # Types of Level Storage
 

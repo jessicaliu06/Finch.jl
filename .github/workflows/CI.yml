@@ -123,6 +123,4 @@ jobs:
             repository: kylebd99/Galley
             ref: 'main'
             path: 'Galley'
-        - name: Run finch-tensor-python tests
-          run: |
-            julia test/runtests
+        - uses: julia-actions/julia-runtest@v1

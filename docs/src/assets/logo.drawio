@@ -1,6 +1,6 @@
 <mxfile host="Electron" agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/24.7.17 Chrome/128.0.6613.36 Electron/32.0.1 Safari/537.36" version="24.7.17">
   <diagram id="kj-T1o_AgSEZvzhv4TZD" name="Figure">
-    <mxGraphModel dx="1195" dy="1075" grid="1" gridSize="10" guides="0" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1100" pageHeight="850" math="0" shadow="0">
+    <mxGraphModel dx="142" dy="796" grid="1" gridSize="10" guides="0" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1100" pageHeight="850" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -366,12 +366,6 @@
         </mxCell>
         <mxCell id="W86Jo-8nj4oamTTUEr1X-247" value="2" style="whiteSpace=wrap;html=1;aspect=fixed;fontSize=24;container=0;fillColor=#bf7f40;strokeColor=none;" parent="1" vertex="1">
           <mxGeometry x="1640" y="960" width="40" height="40" as="geometry" />
-        </mxCell>
-        <mxCell id="ZXeO2RZwS9lXnq2quLe2-2" value="" style="shape=curlyBracket;whiteSpace=wrap;html=1;rounded=1;labelPosition=left;verticalLabelPosition=middle;align=right;verticalAlign=middle;strokeWidth=3;" vertex="1" parent="1">
-          <mxGeometry x="1560" y="640" width="30" height="430" as="geometry" />
-        </mxCell>
-        <mxCell id="ZXeO2RZwS9lXnq2quLe2-3" value="" style="shape=curlyBracket;whiteSpace=wrap;html=1;rounded=1;labelPosition=left;verticalLabelPosition=middle;align=right;verticalAlign=middle;strokeWidth=3;direction=west;" vertex="1" parent="1">
-          <mxGeometry x="2050" y="640" width="30" height="430" as="geometry" />
         </mxCell>
       </root>
     </mxGraphModel>

@@ -15,6 +15,7 @@ OUTPUTS = \
     Structures-examples.png \
     Structures-levels.png \
 	icon.png \
+	logo.png \
 	favicon.ico \
 
 all: $(OUTPUTS)
@@ -58,8 +59,11 @@ Structures-examples.png: Structures.drawio
 Structures-levels.png: Structures.drawio
 	$(DRAWIO) --export --page-index 2 --output "$@" "$<"
 
-icon.png: icon.drawio
-	$(DRAWIO) --export --page-index 0 --output "$@" "$<"
+logo.png: logo.drawio
+	$(DRAWIO) --export --page-index 0 --scale=2.0 --output "$@" "$<"
+
+icon.png: logo.drawio
+	$(DRAWIO) --export --page-index 0 --scale=0.5 --output "$@" "$<"
 
 favicon.ico: icon.png # requires ImageMagick
 	magick -background transparent $^ -define icon:auto-resize=16,24,32,48,64,72,96,128,256 $@

@@ -128,4 +128,4 @@ jobs:
             pwd
             ls
             cd Galley
-            julia --project=test/ -e 'import Pkg; Pkg.develop(path=""); include("test/runtests.jl")'
+            julia --project=test/ -e 'import Pkg; Pkg.develop(path=".."); include("test/runtests.jl")'

@@ -11,8 +11,9 @@ OUTPUTS = \
     Looplets-thunk.png \
     LevelsVsFibers-tensor.png \
     LevelsVsFibers-matrix.png \
-    Structures.png \
+    Structures-structures.png \
     Structures-examples.png \
+    Structures-levels.png \
 	icon.png \
 	favicon.ico \
 
@@ -48,11 +49,14 @@ LevelsVsFibers-tensor.png: LevelsVsFibers.drawio
 LevelsVsFibers-matrix.png: LevelsVsFibers.drawio
 	$(DRAWIO) --export --page-index 1 --output "$@" "$<"
 
-Structures.png: Structures.drawio
+Structures-structures.png: Structures.drawio
 	$(DRAWIO) --export --page-index 0 --output "$@" "$<"
 
 Structures-examples.png: Structures.drawio
 	$(DRAWIO) --export --page-index 1 --output "$@" "$<"
+
+Structures-levels.png: Structures.drawio
+	$(DRAWIO) --export --page-index 2 --output "$@" "$<"
 
 icon.png: icon.drawio
 	$(DRAWIO) --export --page-index 0 --output "$@" "$<"

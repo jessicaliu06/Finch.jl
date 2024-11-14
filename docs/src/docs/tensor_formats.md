@@ -146,6 +146,16 @@ Note that the `Single` sparse levels store a single instance of each nonzero, ru
 | **Column-Major Random Update**| Indicates efficient writing of data in random-access order, the total time roughly linear to the size of the tensor. |
 | **Random Update**             | Indicates efficient writing of data in random-access order, the total time roughly linear to the number of updates. |
 
+### Diagrams
+
+The following diagrams illustrate the structure of the levels individually.
+
+![Diagram of Core Level Structures](../assets/structures-levels.png)
+
+The following diagrams illustrate the way that levels can be combined to form a tensor tree.
+
+![Diagram of Core Level Structures](../assets/structures-structures.png)
+
 # Examples of Popular Formats in Finch
 
 Finch levels can be used to construct a variety of popular sparse formats. A few examples follow:

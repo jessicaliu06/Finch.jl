@@ -123,7 +123,7 @@ jobs:
             repository: kylebd99/Galley
             ref: 'main'
             path: 'Galley'
-        - name: Run Galley tests
+        - name: Run Galley tests 
           run: |
             cd Galley
             julia test/runtests.jl

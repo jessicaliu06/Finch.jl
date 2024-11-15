@@ -19,6 +19,11 @@ julia> A_fbr = Tensor(Dense(SparseList(Element(0.0))), 4, 3)
  0.0  0.0  0.0
 
 julia> tensor_tree(A_fbr)
+4×3-Tensor
+└─ Dense [:,1:3]
+   ├─ [:, 1]: SparseList (0.0) [1:4]
+   ├─ [:, 2]: SparseList (0.0) [1:4]
+   └─ [:, 3]: SparseList (0.0) [1:4]
 
 ```
 
@@ -40,6 +45,16 @@ julia> A_fbr = Tensor(Dense(SparseList(Element(0.0))), A)
  3.3  0.0  0.0
 
 julia> tensor_tree(A_fbr)
+4×3-Tensor
+└─ Dense [:,1:3]
+   ├─ [:, 1]: SparseList (0.0) [1:4]
+   │  ├─ [2]: 1.1
+   │  ├─ [3]: 2.2
+   │  └─ [4]: 3.3
+   ├─ [:, 2]: SparseList (0.0) [1:4]
+   └─ [:, 3]: SparseList (0.0) [1:4]
+      ├─ [1]: 4.4
+      └─ [3]: 5.5
 
 ```
 

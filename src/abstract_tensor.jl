@@ -173,6 +173,24 @@ end
 
 range_label(start = nothing, stop = nothing) = RangeLabel(start, stop)
 
+"""
+    tensor_tree(tns; nmax = 2)
+
+Print a tree representation of the tensor `tns` to the standard output.
+`nmax` is half the maximum number of children to show before truncating.
+"""
+tensor_tree(tns::AbstractTensor; kwargs...) = tensor_tree(stdout, tns; kwargs...)
+
+"""
+    tensor_tree(io::IO, tns; nmax = 2)
+
+Print a tree representation of the tensor `tns` to `io`.
+`nmax` is half the maximum number of children to show before truncating.
+"""
+function tensor_tree(io::IO, tns::AbstractTensor; nmax = 2)
+    print_tree(io, TruncatedTree(LabelledTree(tns), nmax = nmax))
+end
+
 function Base.show(io::IO, key::RangeLabel)
     if key.start !== nothing
         print(io, something(key.start))
@@ -187,6 +205,6 @@ function Base.show(io::IO, mime::MIME"text/plain", tns::AbstractTensor)
     if get(io, :compact, false)
         summary(io, tns)
     else
-        print_tree(io, TruncatedTree(LabelledTree(tns)))
+        show(io, mime, AsArray(tns))
     end
 end

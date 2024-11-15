@@ -95,6 +95,13 @@ julia> idx_jl = reinterpret(CIndex{Int}, idx_c)
  3
 
 julia> A = Tensor(Dense(SparseList{CIndex{Int}}(Element{0.0, Float64, CIndex{Int}}(val_c), m, ptr_jl, idx_jl), n))
+CIndex{Int64}(4)×3 Tensor{DenseLevel{Int64, SparseListLevel{CIndex{Int64}, Base.ReinterpretArray{CIndex{Int64}, 1, Int64, Vector{Int64}, false}, Base.ReinterpretArray{CIndex{Int64}, 1, Int64, Vector{Int64}, false}, ElementLevel{0.0, Float64, CIndex{Int64}, Vector{Float64}}}}}:
+ 0.0  0.0  4.4
+ 1.1  0.0  0.0
+ 2.2  0.0  5.5
+ 3.3  0.0  0.0
+
+julia> tensor_tree(A)
 CIndex{Int64}(4)×3-Tensor
 └─ Dense [:,1:3]
    ├─ [:, 1]: SparseList (0.0) [1:CIndex{Int64}(4)]

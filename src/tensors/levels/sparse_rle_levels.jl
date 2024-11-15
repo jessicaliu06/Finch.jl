@@ -13,7 +13,7 @@ The `merge` keyword argument is used to specify whether the level should merge
 duplicate consecutive runs.
 
 ```jldoctest
-julia> Tensor(Dense(SparseRunListLevel(Element(0.0))), [10 0 20; 30 0 0; 0 0 40])
+julia> tensor_tree(Tensor(Dense(SparseRunListLevel(Element(0.0))), [10 0 20; 30 0 0; 0 0 40]))
 3×3-Tensor
 └─ Dense [:,1:3]
    ├─ [:, 1]: SparseRunList (0.0) [1:3]

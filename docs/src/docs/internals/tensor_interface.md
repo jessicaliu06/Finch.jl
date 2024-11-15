@@ -39,6 +39,13 @@ julia> A = [0.0 0.0 4.4; 1.1 0.0 0.0; 2.2 0.0 5.5; 3.3 0.0 0.0]
  3.3  0.0  0.0
 
 julia> A_fbr = Tensor(Dense(Dense(Element(0.0))), A)
+4×3 Tensor{DenseLevel{Int64, DenseLevel{Int64, ElementLevel{0.0, Float64, Int64, Vector{Float64}}}}}:
+ 0.0  0.0  4.4
+ 1.1  0.0  0.0
+ 2.2  0.0  5.5
+ 3.3  0.0  0.0
+
+julia> tensor_tree(A_fbr)
 4×3-Tensor
 └─ Dense [:,1:3]
    ├─ [:, 1]: Dense [1:4]
@@ -56,7 +63,6 @@ julia> A_fbr = Tensor(Dense(Dense(Element(0.0))), A)
       ├─ [2]: 0.0
       ├─ [3]: 5.5
       └─ [4]: 0.0
-
 ```
 
 We refer to a node in the tree as a subfiber. All of the nodes at the same level
@@ -71,14 +77,14 @@ instructional purposes, you can use parentheses to call a subfiber on an index t
 select among children of a subfiber.
 
 ```jldoctest example1
-julia> Finch.SubFiber(A_fbr.lvl.lvl, 3)
+julia> tensor_tree(Finch.SubFiber(A_fbr.lvl.lvl, 3))
 Dense [1:4]
 ├─ [1]: 4.4
 ├─ [2]: 0.0
 ├─ [3]: 5.5
 └─ [4]: 0.0
 
-julia> A_fbr[:, 3]
+julia> tensor_tree(A_fbr[:, 3])
 4-Tensor
 └─ Dense [1:4]
    ├─ [1]: 4.4
@@ -86,7 +92,7 @@ julia> A_fbr[:, 3]
    ├─ [3]: 5.5
    └─ [4]: 0.0
 
-julia> A_fbr(3)
+julia> tensor_tree(A_fbr(3))
 Dense [1:4]
 ├─ [1]: 4.4
 ├─ [2]: 0.0
@@ -94,6 +100,7 @@ Dense [1:4]
 └─ [4]: 0.0
 
 julia> Finch.SubFiber(A_fbr.lvl.lvl.lvl, 9)
+ Finch.SubFiber{ElementLevel{0.0, Float64, Int64, Vector{Float64}}, Int64}:
 4.4
 
 julia> A_fbr[1, 3]
@@ -114,6 +121,13 @@ nonzeros") instead of `d` (for "`Dense`"):
 
 ```jldoctest example1
 julia> A_fbr = Tensor(Dense(SparseList(Element(0.0))), A)
+4×3 Tensor{DenseLevel{Int64, SparseListLevel{Int64, Vector{Int64}, Vector{Int64}, ElementLevel{0.0, Float64, Int64, Vector{Float64}}}}}:
+ 0.0  0.0  4.4
+ 1.1  0.0  0.0
+ 2.2  0.0  5.5
+ 3.3  0.0  0.0
+
+julia> tensor_tree(A_fbr)
 4×3-Tensor
 └─ Dense [:,1:3]
    ├─ [:, 1]: SparseList (0.0) [1:4]
@@ -124,6 +138,7 @@ julia> A_fbr = Tensor(Dense(SparseList(Element(0.0))), A)
    └─ [:, 3]: SparseList (0.0) [1:4]
       ├─ [1]: 4.4
       └─ [3]: 5.5
+
 ```
 
 Our `Dense(SparseList(Element(0.0)))` format is also known as
@@ -138,6 +153,13 @@ hypersparsity), it is better to compress the root level as well:
 
 ```jldoctest example1
 julia> A_fbr = Tensor(SparseList(SparseList(Element(0.0))), A)
+4×3 Tensor{SparseListLevel{Int64, Vector{Int64}, Vector{Int64}, SparseListLevel{Int64, Vector{Int64}, Vector{Int64}, ElementLevel{0.0, Float64, Int64, Vector{Float64}}}}}:
+ 0.0  0.0  4.4
+ 1.1  0.0  0.0
+ 2.2  0.0  5.5
+ 3.3  0.0  0.0
+
+julia> tensor_tree(A_fbr)
 4×3-Tensor
 └─ SparseList (0.0) [:,1:3]
    ├─ [:, 1]: SparseList (0.0) [1:4]
@@ -147,6 +169,7 @@ julia> A_fbr = Tensor(SparseList(SparseList(Element(0.0))), A)
    └─ [:, 3]: SparseList (0.0) [1:4]
       ├─ [1]: 4.4
       └─ [3]: 5.5
+
 ```
 
 Here we see that the entirely zero column has also been compressed. The
@@ -164,6 +187,13 @@ declare the number of indices handled by the level:
 
 ```jldoctest example1
 julia> A_fbr = Tensor(SparseCOO{2}(Element(0.0)), A)
+4×3 Tensor{SparseCOOLevel{2, Tuple{Int64, Int64}, Vector{Int64}, Tuple{Vector{Int64}, Vector{Int64}}, ElementLevel{0.0, Float64, Int64, Vector{Float64}}}}:
+ 0.0  0.0  4.4
+ 1.1  0.0  0.0
+ 2.2  0.0  5.5
+ 3.3  0.0  0.0
+
+julia> tensor_tree(A_fbr)
 4×3-Tensor
 └─ SparseCOO{2} (0.0) [:,1:3]
    ├─ [2, 1]: 1.1
@@ -171,6 +201,7 @@ julia> A_fbr = Tensor(SparseCOO{2}(Element(0.0)), A)
    ├─ ⋮
    ├─ [1, 3]: 4.4
    └─ [3, 3]: 5.5
+
 ```
 
 The COO format is compact and straightforward, but doesn't support random

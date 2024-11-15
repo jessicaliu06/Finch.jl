@@ -12,11 +12,11 @@ For example, to construct an empty sparse matrix:
 
 ```jldoctest example1; setup=:(using Finch)
 julia> A_fbr = Tensor(Dense(SparseList(Element(0.0))), 4, 3)
-4×3-Tensor
-└─ Dense [:,1:3]
-   ├─ [:, 1]: SparseList (0.0) [1:4]
-   ├─ [:, 2]: SparseList (0.0) [1:4]
-   └─ [:, 3]: SparseList (0.0) [1:4]
+4×3 Tensor{DenseLevel{Int64, SparseListLevel{Int64, Vector{Int64}, Vector{Int64}, ElementLevel{0.0, Float64, Int64, Vector{Float64}}}}}:
+ 0.0  0.0  0.0
+ 0.0  0.0  0.0
+ 0.0  0.0  0.0
+ 0.0  0.0  0.0
 ```
 
 To initialize a sparse matrix with some values:
@@ -30,16 +30,11 @@ julia> A = [0.0 0.0 4.4; 1.1 0.0 0.0; 2.2 0.0 5.5; 3.3 0.0 0.0]
  3.3  0.0  0.0
 
 julia> A_fbr = Tensor(Dense(SparseList(Element(0.0))), A)
-4×3-Tensor
-└─ Dense [:,1:3]
-   ├─ [:, 1]: SparseList (0.0) [1:4]
-   │  ├─ [2]: 1.1
-   │  ├─ [3]: 2.2
-   │  └─ [4]: 3.3
-   ├─ [:, 2]: SparseList (0.0) [1:4]
-   └─ [:, 3]: SparseList (0.0) [1:4]
-      ├─ [1]: 4.4
-      └─ [3]: 5.5
+4×3 Tensor{DenseLevel{Int64, SparseListLevel{Int64, Vector{Int64}, Vector{Int64}, ElementLevel{0.0, Float64, Int64, Vector{Float64}}}}}:
+ 0.0  0.0  4.4
+ 1.1  0.0  0.0
+ 2.2  0.0  5.5
+ 3.3  0.0  0.0
 ```
 
 
@@ -53,7 +48,12 @@ Finch represents tensors hierarchically in a tree, where each node in the tree
 is a vector of subtensors and the leaves are the elements.  Thus, a matrix is
 analogous to a vector of vectors, and a 3-tensor is analogous to a vector of
 vectors of vectors.  The vectors at each level of the tensor all have the same
-structure, which can be selected by the user.
+structure, which can be selected by the user. You can visualize the tree using the [`tensor_tree`](@ref) function.
+
+```@docs
+tensor_tree(::AbstractTensor)
+tensor_tree(::IO, ::AbstractTensor)
+```
 
 In a Finch tensor tree, the child of each node is selected by an array index.
 All of the children at the same level will use the same format and share the

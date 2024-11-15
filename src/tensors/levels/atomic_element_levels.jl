@@ -4,12 +4,12 @@
 Like an [`ElementLevel`](@ref), but updates to the level are performed atomically.
 
 ```jldoctest
-julia> Tensor(Dense(AtomicElement(0.0)), [1, 2, 3])
-3-Tensor
-└─ Dense [1:3]
-   ├─ [1]: 1.0
-   ├─ [2]: 2.0
-   └─ [3]: 3.0
+julia> tensor_Tree(Tensor(Dense(AtomicElement(0.0)), [1, 2, 3]))
+ERROR: UndefVarError: `tensor_Tree` not defined in `Main`
+Suggestion: check for spelling errors or missing imports.
+Stacktrace:
+ [1] top-level scope
+   @ none:1
 ```
 """
 struct AtomicElementLevel{Vf, Tv, Tp, Val} <: AbstractLevel

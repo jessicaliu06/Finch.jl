@@ -82,10 +82,12 @@ initwrite(z) = InitWriter{z}()
 
 ```jldoctest setup=:(using Finch)
 julia> a = Tensor(SparseList(Element(0.0)), [0, 1.1, 0, 4.4, 0])
-5-Tensor
-└─ SparseList (0.0) [1:5]
-   ├─ [2]: 1.1
-   └─ [4]: 4.4
+5 Tensor{SparseListLevel{Int64, Vector{Int64}, Vector{Int64}, ElementLevel{0.0, Float64, Int64, Vector{Float64}}}}:
+ 0.0
+ 1.1
+ 0.0
+ 4.4
+ 0.0
 
 julia> x = Scalar(0.0); @finch for i=_; x[] <<overwrite>>= a[i] end;
 

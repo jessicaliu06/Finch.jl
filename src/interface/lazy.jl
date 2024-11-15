@@ -11,6 +11,11 @@ mutable struct LazyTensor{T, N}
 end
 LazyTensor{T}(data, extrude::NTuple{N, Bool}, fill_value) where {T, N} = LazyTensor{T, N}(data, extrude, fill_value)
 
+function Base.show(io::IO, tns::LazyTensor)
+    join(io, [x ? "1" : "?" for x in tns.extrude], "×")
+    print(io, "-LazyTensor{", eltype(tns), "}")
+end
+
 Base.ndims(::Type{LazyTensor{T, N}}) where {T, N} = N
 Base.ndims(tns::LazyTensor) = ndims(typeof(tns))
 Base.eltype(::Type{<:LazyTensor{T}}) where {T} = T

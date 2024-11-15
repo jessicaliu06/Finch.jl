@@ -21,67 +21,45 @@ Finch tensors support an arbitrary "background" value for sparse arrays. While m
 
 ```jldoctest example1; setup = :(using Finch)
 julia> A = fsparse([1, 1, 2, 3], [2, 4, 5, 6], [1.0, 2.0, 3.0])
-3×6-Tensor
-└─ SparseCOO{2} (0.0) [:,1:6]
-   ├─ [1, 2]: 1.0
-   ├─ [1, 4]: 2.0
-   └─ [2, 5]: 3.0
+3×6 Tensor{SparseCOOLevel{2, Tuple{Int64, Int64}, Vector{Int64}, Tuple{Vector{Int64}, Vector{Int64}}, ElementLevel{0.0, Float64, Int64, Vector{Float64}}}}:
+ 0.0  1.0  0.0  2.0  0.0  0.0
+ 0.0  0.0  0.0  0.0  3.0  0.0
+ 0.0  0.0  0.0  0.0  0.0  0.0
 
 julia> min.(A, -1)
-3×6-Tensor
-└─ Dense [:,1:6]
-   ├─ [:, 1]: Dense [1:3]
-   │  ├─ [1]: -1.0
-   │  ├─ [2]: -1.0
-   │  └─ [3]: -1.0
-   ├─ [:, 2]: Dense [1:3]
-   │  ├─ [1]: -1.0
-   │  ├─ [2]: -1.0
-   │  └─ [3]: -1.0
-   ├─ ⋮
-   ├─ [:, 5]: Dense [1:3]
-   │  ├─ [1]: -1.0
-   │  ├─ [2]: -1.0
-   │  └─ [3]: -1.0
-   └─ [:, 6]: Dense [1:3]
-      ├─ [1]: -1.0
-      ├─ [2]: -1.0
-      └─ [3]: -1.0
+3×6 Tensor{DenseLevel{Int64, DenseLevel{Int64, ElementLevel{-1.0, Float64, Int64, Vector{Float64}}}}}:
+ -1.0  -1.0  -1.0  -1.0  -1.0  -1.0
+ -1.0  -1.0  -1.0  -1.0  -1.0  -1.0
+ -1.0  -1.0  -1.0  -1.0  -1.0  -1.0
 
 julia> fill_value(A)
 0.0
 
 julia> B = set_fill_value!(A, -Inf)
-3×6-Tensor
-└─ SparseCOO{2} (-Inf) [:,1:6]
-   ├─ [1, 2]: 1.0
-   ├─ [1, 4]: 2.0
-   └─ [2, 5]: 3.0
+3×6 Tensor{SparseCOOLevel{2, Tuple{Int64, Int64}, Vector{Int64}, Tuple{Vector{Int64}, Vector{Int64}}, ElementLevel{-Inf, Float64, Int64, Vector{Float64}}}}:
+ -Inf    1.0  -Inf    2.0  -Inf   -Inf
+ -Inf  -Inf   -Inf  -Inf     3.0  -Inf
+ -Inf  -Inf   -Inf  -Inf   -Inf   -Inf
 
 julia> min.(B, -1)
-3×6-Tensor
-└─ SparseDict (-Inf) [:,1:6]
-   ├─ [:, 2]: SparseDict (-Inf) [1:3]
-   │  └─ [1]: -1.0
-   ├─ [:, 4]: SparseDict (-Inf) [1:3]
-   │  └─ [1]: -1.0
-   └─ [:, 5]: SparseDict (-Inf) [1:3]
-      └─ [2]: -1.0
+3×6 Tensor{SparseDictLevel{Int64, Vector{Int64}, Vector{Int64}, Vector{Int64}, Dict{Tuple{Int64, Int64}, Int64}, Vector{Int64}, SparseDictLevel{Int64, Vector{Int64}, Vector{Int64}, Vector{Int64}, Dict{Tuple{Int64, Int64}, Int64}, Vector{Int64}, ElementLevel{-Inf, Float64, Int64, Vector{Float64}}}}}:
+ -Inf   -1.0  -Inf   -1.0  -Inf   -Inf
+ -Inf  -Inf   -Inf  -Inf    -1.0  -Inf
+ -Inf  -Inf   -Inf  -Inf   -Inf   -Inf
 
 julia> countstored(A)
 3
 
 julia> pattern!(A)
-3×6-Tensor
-└─ SparseCOO{2} (false) [:,1:6]
-   ├─ [1, 2]: true
-   ├─ [1, 4]: true
-   └─ [2, 5]: true
+3×6 Tensor{SparseCOOLevel{2, Tuple{Int64, Int64}, Vector{Int64}, Tuple{Vector{Int64}, Vector{Int64}}, PatternLevel{Int64}}}:
+ 0  1  0  1  0  0
+ 0  0  0  0  1  0
+ 0  0  0  0  0  0
 
 ```
 
 ```@docs
-get_fill_value
+fill_value
 set_fill_value!
 pattern!
 countstored
@@ -102,22 +80,16 @@ instead store a tensor of tuples of the form `(value, is_fill)`. For example,
 
 ```jldoctest example3; setup = :(using Finch)
 julia> A = fsparse([1, 1, 2, 3], [2, 4, 5, 6], [(1.0, false), (0.0, true), (3.0, false)]; fill_value=(0.0, true))
-3×6-Tensor
-└─ SparseCOO{2} ((0.0, true)) [:,1:6]
-   ├─ [1, 2]: (1.0, false)
-   ├─ [1, 4]: (0.0, true)
-   └─ [2, 5]: (3.0, false)
+3×6 Tensor{SparseCOOLevel{2, Tuple{Int64, Int64}, Vector{Int64}, Tuple{Vector{Int64}, Vector{Int64}}, ElementLevel{(0.0, true), Tuple{Float64, Bool}, Int64, Vector{Tuple{Float64, Bool}}}}}:
+ (0.0, 1)  (1.0, 0)  (0.0, 1)  (0.0, 1)  (0.0, 1)  (0.0, 1)
+ (0.0, 1)  (0.0, 1)  (0.0, 1)  (0.0, 1)  (3.0, 0)  (0.0, 1)
+ (0.0, 1)  (0.0, 1)  (0.0, 1)  (0.0, 1)  (0.0, 1)  (0.0, 1)
 
 julia> B = Tensor(Dense(SparseList(Element((0.0, true)))), A)
-3×6-Tensor
-└─ Dense [:,1:6]
-   ├─ [:, 1]: SparseList ((0.0, true)) [1:3]
-   ├─ [:, 2]: SparseList ((0.0, true)) [1:3]
-   │  └─ [1]: (1.0, false)
-   ├─ ⋮
-   ├─ [:, 5]: SparseList ((0.0, true)) [1:3]
-   │  └─ [2]: (3.0, false)
-   └─ [:, 6]: SparseList ((0.0, true)) [1:3]
+3×6 Tensor{DenseLevel{Int64, SparseListLevel{Int64, Vector{Int64}, Vector{Int64}, ElementLevel{(0.0, true), Tuple{Float64, Bool}, Int64, Vector{Tuple{Float64, Bool}}}}}}:
+ (0.0, 1)  (1.0, 0)  (0.0, 1)  (0.0, 1)  (0.0, 1)  (0.0, 1)
+ (0.0, 1)  (0.0, 1)  (0.0, 1)  (0.0, 1)  (3.0, 0)  (0.0, 1)
+ (0.0, 1)  (0.0, 1)  (0.0, 1)  (0.0, 1)  (0.0, 1)  (0.0, 1)
 
 julia> sum(map(last, B))
 16

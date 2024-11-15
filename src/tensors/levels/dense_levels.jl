@@ -12,7 +12,7 @@ julia> ndims(Tensor(Dense(Element(0.0))))
 julia> ndims(Tensor(Dense(Dense(Element(0.0)))))
 2
 
-julia> Tensor(Dense(Dense(Element(0.0))), [1 2; 3 4])
+julia> tensor_tree(Tensor(Dense(Dense(Element(0.0))), [1 2; 3 4]))
 2×2-Tensor
 └─ Dense [:,1:2]
    ├─ [:, 1]: Dense [1:2]

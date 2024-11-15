@@ -14,7 +14,6 @@ freeze!
 thaw!
 unfurl
 instantiate
-fill_value
 virtual_eltype
 virtual_fill_value
 virtual_size

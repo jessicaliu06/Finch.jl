@@ -17,6 +17,9 @@ julia> A_fbr = Tensor(Dense(SparseList(Element(0.0))), 4, 3)
  0.0  0.0  0.0
  0.0  0.0  0.0
  0.0  0.0  0.0
+
+julia> tensor_tree(A_fbr)
+
 ```
 
 To initialize a sparse matrix with some values:
@@ -35,6 +38,9 @@ julia> A_fbr = Tensor(Dense(SparseList(Element(0.0))), A)
  1.1  0.0  0.0
  2.2  0.0  5.5
  3.3  0.0  0.0
+
+julia> tensor_tree(A_fbr)
+
 ```
 
 

@@ -83,7 +83,7 @@ julia> S = fsparse(I..., V)
 Fill values represent default values for uninitialized elements.
 
 - **[`fill_value`](@ref)**: Retrieve the fill value.
-- **[`set_fill_value`](@ref)**: Set a new fill value.
+- **[`set_fill_value!`](@ref)**: Set a new fill value.
 - **[`dropfills`](@ref)** or **[`dropfills!`](@ref)**: Remove elements matching the fill value.
 
 ```jldoctest sparseutils; setup = :(using Finch)

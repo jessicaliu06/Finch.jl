@@ -23,8 +23,36 @@ Finch is a Julia-to-Julia compiler for sparse or structured multidimensional arr
 Finch was built to make sparse and structured array programming easier and more efficient.  Finch.jl leverages compiler technology to automatically generate customized, fused sparse kernels for each specific
 use case. This allows users to write readable, high-level sparse array programs without worrying about the performance of the generated code. Finch can automatically generate efficient implementations even for unique problems that lack existing library solutions.
 
+# Installation
+
+At the [Julia](https://julialang.org/downloads/) REPL, install the latest stable version by running:
+
+```julia
+julia> using Pkg; Pkg.add("Finch")
+```
+
+## Quickstart
+
+```julia
+julia> using Finch
+
+# Create a sparse tensor
+julia> A = Tensor(Dense(SparseList(Element(0.0))), [1 0 0; 0 2 0; 0 0 3])
+3×3 Tensor{DenseLevel{Int64, SparseListLevel{Int64, Vector{Int64}, Vector{Int64}, ElementLevel{0.0, Float64, Int64, Vector{Float64}}}}}:
+ 1.0  0.0  0.0
+ 0.0  2.0  0.0
+ 0.0  0.0  3.0
+
+# Perform a simple operation
+julia> B = A + A
+3×3 Tensor{DenseLevel{Int64, SparseDictLevel{Int64, Vector{Int64}, Vector{Int64}, Vector{Int64}, Dict{Tuple{Int64, Int64}, Int64}, Vector{Int64}, ElementLevel{0.0, Float64, Int64, Vector{Float64}}}}}:
+ 2.0  0.0  0.0
+ 0.0  4.0  0.0
+ 0.0  0.0  6.0
+```
+
 ### How it Works
-Finch uses state-of-the-art schedulers to compile high-level programs such as matrix addition or multiplication into a custom intermediate representation (IR) called Finch IR. Finch IR is then lowered into efficient, sparse code. Finch can specialize each program to each combination of sparse formats and algebraic properties, such as `x * 0 => 0`, eliminating unnecessary computations in sparse code automatically. 
+Finch first translates high-level array code into **FinchLogic**, a custom intermediate representation that captures operator fusion and enables loop ordering optimizations. Using advanced schedulers, Finch optimizes FinchLogic and lowers it to **FinchNotation**, a more refined representation that precisely defines control flow. This optimized FinchNotation is then compiled into highly efficient, sparsity-aware code. Finch can specialize to each combination of sparse formats and algebraic properties, such as `x * 0 => 0`, eliminating unnecessary computations in sparse code automatically. 
 
 ### Sparse and Structured Tensors
 
@@ -39,50 +67,25 @@ Finch supports many high-level array operations out of the box, such as `+`, `*`
 ```julia
 julia> using Finch
 
+# Define sparse tensor A
 julia> A = Tensor(Dense(SparseList(Element(0.0))), [0 1.1 0; 2.2 0 3.3; 4.4 0 0; 0 0 5.5])
-4×3 Tensor{DenseLevel{Int64, SparseListLevel{Int64, Vector{Int64}, Vector{Int64}, ElementLevel{0.0, Float64, Int64, Vector{Float64}}}}}:
- 0.0  1.1  0.0
- 2.2  0.0  3.3
- 4.4  0.0  0.0
- 0.0  0.0  5.5
 
+# Define sparse tensor B
 julia> B = Tensor(Dense(SparseList(Element(0.0))), [0 1 1; 1 0 0; 0 0 1; 0 0 1])
-4×3 Tensor{DenseLevel{Int64, SparseListLevel{Int64, Vector{Int64}, Vector{Int64}, ElementLevel{0.0, Float64, Int64, Vector{Float64}}}}}:
- 0.0  1.0  1.0
- 1.0  0.0  0.0
- 0.0  0.0  1.0
- 0.0  0.0  1.0
 
+# Element-wise multiplication
 julia> C = A .* B
-4×3 Tensor{DenseLevel{Int64, SparseDictLevel{Int64, Vector{Int64}, Vector{Int64}, Vector{Int64}, Dict{Tuple{Int64, Int64}, Int64}, Vector{Int64}, ElementLevel{0.0, Float64, Int64, Vector{Float64}}}}}:
- 0.0  1.1  0.0
- 2.2  0.0  0.0
- 0.0  0.0  0.0
- 0.0  0.0  5.5
 
+# Sum over rows
 julia> D = sum(C, dims=2)
-4 Tensor{SparseDictLevel{Int64, Vector{Int64}, Vector{Int64}, Vector{Int64}, Dict{Tuple{Int64, Int64}, Int64}, Vector{Int64}, ElementLevel{0.0, Float64, Int64, Vector{Float64}}}}:
- 1.1
- 2.2
- 0.0
- 5.5
 ```
 
 For situations where more complex operations are needed, Finch supports an `@einsum` syntax on sparse and structured tensors.
 ```julia
 julia> @einsum E[i] += A[i, j] * B[i, j]
-4 Tensor{SparseDictLevel{Int64, Vector{Int64}, Vector{Int64}, Vector{Int64}, Dict{Tuple{Int64, Int64}, Int64}, Vector{Int64}, ElementLevel{0.0, Float64, Int64, Vector{Float64}}}}:
- 1.1
- 2.2
- 0.0
- 5.5
 
 julia> @einsum F[i] <<max>>= A[i, j] + B[i, j]
-4 Tensor{DenseLevel{Int64, ElementLevel{-Inf, Float64, Int64, Vector{Float64}}}}:
- 2.1
- 3.3
- 4.4
- 6.5
+
 ```
 
 Finch even allows users to fuse multiple operations into a single kernel with `lazy` and `compute`.
@@ -101,14 +104,6 @@ julia> compute(D)
  5.4
  6.5
 ```
-
-# Installation
-
-At the [Julia](https://julialang.org/downloads/) REPL, install the latest stable version by running:
-
-````julia
-julia> using Pkg; Pkg.add("Finch")
-````
 
 ## Learn More
 
@@ -132,3 +127,7 @@ Jaeyeon Won, Willow Ahrens, Joel S. Emer, Saman Amarasinghe.
 
 [Galley: Modern Query Optimization for Sparse Tensor Programs](https://arxiv.org/abs/2408.14706). [Galley.jl](https://github.com/kylebd99/Galley.jl).
 Kyle Deeds, Willow Ahrens, Magda Balazinska, Dan Suciu.
+
+## Contributing
+
+Contributions are welcome! Please see our [contribution guidelines](CONTRIBUTING.md) for more information.

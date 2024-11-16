@@ -7,6 +7,8 @@ CurrentModule = Finch
 Finch programs are written in Julia, but they are not Julia programs.
 Instead, they are an abstraction description of a tensor computation.
 
+Several examples are given in the [examples directory](https://github.com/finch-tensor/Finch.jl/blob/main/docs/examples).
+
 Finch programs are blocks of tensor operations, joined by control flow. Finch
 is an imperative language. The AST is separated into statements and expressions,
 where statements can modify the state of the program but expressions cannot.

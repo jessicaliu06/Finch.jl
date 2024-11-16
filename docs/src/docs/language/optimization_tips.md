@@ -320,3 +320,7 @@ type-stable. In situations where tensors have nonuniform index or element types,
 or the computation itself might involve multiple types, one should check that
 the output of `@finch_kernel` code is type-stable with
 [`@code_warntype`](https://docs.julialang.org/en/v1/stdlib/InteractiveUtils/#InteractiveUtils.@code_warntype).
+
+## Dense Arrays
+
+Finch is currently optimized for sparse code and does not implement traditional dense optimizations. We are currently adding these features, but if you need dense performance, you may want to look at [JuliaGPU](https://github.com/JuliaGPU) instead.

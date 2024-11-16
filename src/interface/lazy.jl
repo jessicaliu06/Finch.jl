@@ -119,6 +119,9 @@ function initial_value(op, T)
     throw(ArgumentError("Please supply initial value for reduction of $T with $op."))
 end
 
+initial_value(::typeof(max), T) = typemin(T)
+initial_value(::typeof(min), T) = typemax(T)
+
 function fixpoint_type(op, z, T)
     S = Union{}
     R = typeof(z)

@@ -7,6 +7,26 @@ CurrentModule = Finch
 You can build a finch tensor with the `Tensor` constructor. In general, the
 `Tensor` constructor mirrors Julia's [`Array`](https://docs.julialang.org/en/v1/base/arrays/#Core.Array) constructor, but with an additional
 prefixed argument which specifies the formatted storage for the tensor.
+```@docs
+Tensor
+Tensor(lvl::AbstractLevel)
+Tensor(lvl::AbstractLevel, dims::Number...)
+Tensor(lvl::AbstractLevel, init::UndefInitializer)
+Tensor(lvl::AbstractLevel, arr)
+Tensor(arr)
+```
+
+A few predefined formats are available for use in the first argument to the `Tensor` constructor:
+```@docs
+DenseFormat
+CSCFormat
+CSFFormat
+DCSCFormat
+DCSFFormat
+COOFormat
+HashFormat
+ByteMapFormat
+```
 
 For example, to construct an empty sparse matrix:
 
@@ -58,8 +78,7 @@ julia> tensor_tree(A_fbr)
 
 ```
 
-
-# Storage Tree Level Formats
+# Custom Storage Tree Level Formats
 
 This section describes the formatted storage for Finch tensors, the first
 argument to the [`Tensor`](@ref) constructor. Level storage types holds all of
@@ -191,16 +210,7 @@ Finch levels can be used to construct a variety of popular sparse formats. A few
 | COO 3-Tensor                 | `Tensor(SparseCOO{3}(Element(0.0)), args...)`                  |
 | Run-Length-Encoded Image     | `Tensor(Dense(RunList(Element(0.0))), args...)`            |
 
-# Tensor Constructors
 
-```@docs
-Tensor
-Tensor(lvl::AbstractLevel)
-Tensor(lvl::AbstractLevel, dims::Number...)
-Tensor(lvl::AbstractLevel, init::UndefInitializer)
-Tensor(lvl::AbstractLevel, arr)
-Tensor(arr)
-```
 
 # Level Constructors
 
@@ -229,5 +239,3 @@ SparseDictLevel
 ```@docs
 SparseCOOLevel
 ```
-
-

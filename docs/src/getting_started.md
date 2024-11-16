@@ -16,6 +16,19 @@ julia> A = Tensor(Dense(SparseList(Element(0.0))), 4, 3)
  0.0  0.0  0.0
 ```
 
+Some pre-defined formats include:
+|**Signature**|**Description**|
+|-------------|---------------|
+|[`DenseFormat`](@ref)`(N, z = 0.0, T = typeof(z))`|A dense format with a fill value of `z`.|
+|[`CSFFormat`](@ref)`(N, z = 0.0, T = typeof(z))`|An `N`-dimensional CSC format for sparse tensors.|
+|[`CSCFormat`](@ref)`(z = 0.0, T = typeof(z))`|A 2D CSC format storing matrices as dense lists.|
+|[`DCSFFormat`](@ref)`(N, z = 0.0, T = typeof(z))`|A DCSF format storing tensors as nested lists.|
+|[`HashFormat`](@ref)`(N, z = 0.0, T = typeof(z))`|A hash-table-based format for sparse data.|
+|[`ByteMapFormat`](@ref)`(N, z = 0.0, T = typeof(z))`|A byte-map-based format for compact storage.|
+|[`DCSCFormat`](@ref)`(z = 0.0, T = typeof(z))`|A 2D DCSC format storing matrices as lists.|
+|[`COOFormat`](@ref)`(N, T = Float64, z = zero(T))`|An `N`-dimensional COO format for coordinate lists.|
+
+
 ### Initializing with Data
 To initialize a tensor with data:
 

@@ -40,11 +40,13 @@ julia> A = [0.0 0.0 4.4; 1.1 0.0 0.0; 2.2 0.0 5.5; 3.3 0.0 0.0]
  3.3  0.0  0.0
 
 julia> B = Tensor(CSCFormat(Element(0.0))), A)
-4×3 Tensor{DenseLevel{Int64, SparseListLevel{Int64, Vector{Int64}, Vector{Int64}, ElementLevel{0.0, Float64, Int64, Vector{Float64}}}}}:
- 0.0  0.0  4.4
- 1.1  0.0  0.0
- 2.2  0.0  5.5
- 3.3  0.0  0.0
+ERROR: ParseError:
+# Error @ none:1:39
+B = Tensor(CSCFormat(Element(0.0))), A)
+#                                     ╙ ── extra tokens after end of expression
+Stacktrace:
+ [1] top-level scope
+   @ none:1
 
 ```
 

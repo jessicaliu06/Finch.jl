@@ -28,7 +28,6 @@ Some pre-defined formats include:
 |[`DCSCFormat`](@ref)`(z = 0.0, T = typeof(z))`|A 2D DCSC format storing matrices as lists.|
 |[`COOFormat`](@ref)`(N, T = Float64, z = zero(T))`|An `N`-dimensional COO format for coordinate lists.|
 
-
 ### Initializing with Data
 To initialize a tensor with data:
 
@@ -40,7 +39,7 @@ julia> A = [0.0 0.0 4.4; 1.1 0.0 0.0; 2.2 0.0 5.5; 3.3 0.0 0.0]
  2.2  0.0  5.5
  3.3  0.0  0.0
 
-julia> B = Tensor(Dense(SparseList(Element(0.0))), A)
+julia> B = Tensor(CSCFormat(Element(0.0))), A)
 4×3 Tensor{DenseLevel{Int64, SparseListLevel{Int64, Vector{Int64}, Vector{Int64}, ElementLevel{0.0, Float64, Int64, Vector{Float64}}}}}:
  0.0  0.0  4.4
  1.1  0.0  0.0

@@ -10,7 +10,7 @@ an error if the program tries to write multiple (>=2) runs into SparseInterval.
 are the types of the arrays used to store positions and endpoints.
 
 ```jldoctest
-julia> Tensor(SparseInterval(Element(0)), [0, 10, 0])
+julia> tensor_tree(Tensor(SparseInterval(Element(0)), [0, 10, 0]))
 3-Tensor
 └─ SparseInterval (0) [1:3]
    └─ [2:2]: 10
@@ -19,7 +19,7 @@ julia> x = Tensor(SparseInterval(Element(0)), 10);
 
 julia> @finch begin for i = extent(3,6); x[~i] = 1 end end;
 
-julia> x
+julia> tensor_tree(x)
 10-Tensor
 └─ SparseInterval (0) [1:10]
    └─ [3:6]: 1

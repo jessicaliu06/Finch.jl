@@ -9,7 +9,7 @@ of type `Val` with `eltype(Val) = Tv`. The type `Tp` is the index type used to
 access Val.
 
 ```jldoctest
-julia> Tensor(Dense(Element(0.0)), [1, 2, 3])
+julia> tensor_tree(Tensor(Dense(Element(0.0)), [1, 2, 3]))
 3-Tensor
 └─ Dense [1:3]
    ├─ [1]: 1.0

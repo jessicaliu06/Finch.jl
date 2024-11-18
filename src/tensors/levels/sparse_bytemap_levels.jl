@@ -8,7 +8,7 @@ which slices are stored. This allows the ByteMap level to support random access.
 positions in the level.
 
 ```jldoctest
-julia> Tensor(Dense(SparseByteMap(Element(0.0))), [10 0 20; 30 0 0; 0 0 40])
+julia> tensor_tree(Tensor(Dense(SparseByteMap(Element(0.0))), [10 0 20; 30 0 0; 0 0 40]))
 3×3-Tensor
 └─ Dense [:,1:3]
    ├─ [:, 1]: SparseByteMap (0.0) [1:3]
@@ -19,7 +19,7 @@ julia> Tensor(Dense(SparseByteMap(Element(0.0))), [10 0 20; 30 0 0; 0 0 40])
       ├─ [1]: 0.0
       └─ [3]: 0.0
 
-julia> Tensor(SparseByteMap(SparseByteMap(Element(0.0))), [10 0 20; 30 0 0; 0 0 40])
+julia> tensor_tree(Tensor(SparseByteMap(SparseByteMap(Element(0.0))), [10 0 20; 30 0 0; 0 0 40]))
 3×3-Tensor
 └─ SparseByteMap (0.0) [:,1:3]
    ├─ [:, 1]: SparseByteMap (0.0) [1:3]

@@ -7,7 +7,7 @@ own memory space.
 Each sublevel is stored in a vector of type `Val` with `eltype(Val) = Lvl`.
 
 ```jldoctest
-julia> Tensor(Dense(Separate(Element(0.0))), [1, 2, 3])
+julia> tensor_tree(Tensor(Dense(Separate(Element(0.0))), [1, 2, 3]))
 3-Tensor
 └─ Dense [1:3]
    ├─ [1]: Pointer ->

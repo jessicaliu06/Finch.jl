@@ -231,13 +231,28 @@ See also: (`spzeros`)(https://docs.julialang.org/en/v1/stdlib/SparseArrays/#Spar
 
 # Examples
 ```jldoctest
-julia> fspzeros(Bool, 3, 3)
-3×3-Tensor
-└─ SparseCOO{2} (false) [:,1:3]
+julia> A = fspzeros(Bool, 3, 3)
+3×3 Tensor{SparseCOOLevel{2, Tuple{Int64, Int64}, Vector{Int64}, Tuple{Vector{Int64}, Vector{Int64}}, ElementLevel{false, Bool, Int64, Vector{Bool}}}}:
+ 0  0  0
+ 0  0  0
+ 0  0  0
 
-julia> fspzeros(Float64, 2, 2, 2)
-2×2×2-Tensor
-└─ SparseCOO{3} (0.0) [:,:,1:2]
+julia> countstored(A)
+0
+
+julia> B = fspzeros(Float64, 2, 2, 2)
+2×2×2 Tensor{SparseCOOLevel{3, Tuple{Int64, Int64, Int64}, Vector{Int64}, Tuple{Vector{Int64}, Vector{Int64}, Vector{Int64}}, ElementLevel{0.0, Float64, Int64, Vector{Float64}}}}:
+[:, :, 1] =
+ 0.0  0.0
+ 0.0  0.0
+
+[:, :, 2] =
+ 0.0  0.0
+ 0.0  0.0
+
+julia> countstored(B)
+0
+
 ```
 """
 fspzeros(M...) = fspzeros(Float64, M...)

@@ -3,6 +3,57 @@ using SparseArrays
 @testset "issues" begin
     @info "Testing Github Issues"
 
+    #https://github.com/finch-tensor/Finch.jl/issues/603
+    let 
+        # Test DenseFormat
+        fmt_dense = DenseFormat(2, 0.0)
+        tensor_dense = Tensor(fmt_dense, undef, 4, 4)
+        @test size(tensor_dense) == (4, 4)
+        @test fill_value(tensor_dense) == 0.0
+
+        # Test CSFFormat
+        fmt_csf = CSFFormat(3, 0.0)
+        tensor_csf = Tensor(fmt_csf, undef, 4, 4, 4)
+        @test size(tensor_csf) == (4, 4, 4)
+        @test fill_value(tensor_csf) == 0.0
+
+        # Test CSCFormat
+        fmt_csc = CSCFormat(0.0)
+        tensor_csc = Tensor(fmt_csc, undef, 4, 4)
+        @test size(tensor_csc) == (4, 4)
+        @test fill_value(tensor_csc) == 0.0
+
+        # Test DCSFFormat
+        fmt_dcsf = DCSFFormat(2, 0.0)
+        tensor_dcsf = Tensor(fmt_dcsf, undef, 4, 4)
+        @test size(tensor_dcsf) == (4, 4)
+        @test fill_value(tensor_dcsf) == 0.0
+
+        # Test HashFormat
+        fmt_hash = HashFormat(2, 0.0)
+        tensor_hash = Tensor(fmt_hash, undef, 4, 4)
+        @test size(tensor_hash) == (4, 4)
+        @test fill_value(tensor_hash) == 0.0
+
+        # Test ByteMapFormat
+        fmt_bytemap = ByteMapFormat(2, 0.0)
+        tensor_bytemap = Tensor(fmt_bytemap, undef, 4, 4)
+        @test size(tensor_bytemap) == (4, 4)
+        @test fill_value(tensor_bytemap) == 0.0
+
+        # Test DCSCFormat
+        fmt_dcsc = DCSCFormat(0.0)
+        tensor_dcsc = Tensor(fmt_dcsc, undef, 4, 4)
+        @test size(tensor_dcsc) == (4, 4)
+        @test fill_value(tensor_dcsc) == 0.0
+
+        # Test COOFormat
+        fmt_coo = COOFormat(2, 0.0)
+        tensor_coo = Tensor(fmt_coo, undef, 4, 4)
+        @test size(tensor_coo) == (4, 4)
+        @test fill_value(tensor_coo) == 0.0
+    end
+
     #https://github.com/finch-tensor/Finch.jl/issues/579
     for fmt in [
         Tensor(Dense(SparseDict(Element(0.0))))

@@ -137,3 +137,29 @@ fld1_nothrow(x, y) = iszero(y) ? (@warn("Division by zero in fld1"); one(promote
 Returns `cld(x, y)` normally, returns zero and issues a warning if `y` is zero.
 """
 cld_nothrow(x, y) = iszero(y) ? (@warn("Division by zero in cld"); zero(promote_type(typeof(x), typeof(y)))) : cld(x, y)
+
+
+struct InitMin{D} end
+(f::InitMin{D})(x) where {D} = x
+
+"""
+    InitMin{D}(x, y)
+
+Returns min(x, y, D). Used to add an init parameter to a minimum operation.
+"""
+@inline function (f::InitMin{D})(x, y) where {D}
+    min(x, y, D)
+end
+initmin(z) = InitMin{z}()
+
+struct InitMax{D} end
+(f::InitMax{D})(x) where {D} = x
+"""
+    InitMax{D}(x, y)
+
+Returns max(x, y, D). Used to add an init parameter to a maximum operation.
+"""
+@inline function (f::InitMax{D})(x, y) where {D}
+    max(x, y, D)
+end
+initmax(z) = InitMax{z}()

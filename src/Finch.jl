@@ -187,6 +187,8 @@ include("interface/einsum.jl")
 include("Galley/Galley.jl")
 using .Galley
 
+export galley_scheduler
+
 @deprecate default fill_value
 @deprecate redefault! set_fill_value!
 @deprecate dropdefaults dropfills

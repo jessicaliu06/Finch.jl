@@ -190,11 +190,11 @@ Note that the `Single` sparse levels store a single instance of each nonzero, ru
 
 The following diagrams illustrate the structure of the levels individually.
 
-![Diagram of Core Level Structures](../assets/structures-levels.png)
+![Diagram of Core Level Structures](../assets/Structures-levels.png)
 
 The following diagrams illustrate the way that levels can be combined to form a tensor tree.
 
-![Diagram of Core Level Structures](../assets/structures-structures.png)
+![Diagram of Core Level Structures](../assets/Structures-structures.png)
 
 # Examples of Popular Formats in Finch
 

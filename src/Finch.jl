@@ -24,6 +24,7 @@ using UnsafeAtomics
 export @finch, @finch_program, @finch_code, @finch_kernel, value
 
 export Tensor
+export DenseFormat, CSFFormat, CSCFormat, DCSFFormat, DCSCFormat, HashFormat, ByteMapFormat, COOFormat
 export SparseRunList, SparseRunListLevel
 export RunList, RunListLevel
 export SparseInterval, SparseIntervalLevel
@@ -52,7 +53,7 @@ export lazy, compute, tensordot, @einsum
 
 export choose, minby, maxby, overwrite, initwrite, filterop, d
 
-export fill_value, AsArray, expanddims
+export fill_value, AsArray, expanddims, tensor_tree
 
 export parallelAnalysis, ParallelAnalysisResults
 export parallel, realextent, extent, dimless
@@ -154,6 +155,98 @@ include("tensors/combinators/product.jl")
 
 const Sparse = SparseDictLevel
 const SparseLevel = SparseDictLevel
+
+"""
+    DenseFormat(N, z = 0.0, T = typeof(z))
+
+A dense format with a fill value of `z`.
+"""
+function DenseFormat(N, z = 0.0, T = typeof(z))
+    fmt = ElementLevel{z, T}()
+    for i in 1:N
+        fmt = DenseLevel(fmt)
+    end
+    fmt
+end
+
+"""
+    CSFFormat(N, z = 0.0, T = typeof(z))
+
+An `N`-dimensional CSC format with a fill value of `z`.
+CSF supports random access in the rightmost index, and uses
+a tree structure to store the rest of the data.
+"""
+function CSFFormat(N, z = 0.0, T = Float64)
+    fmt = ElementLevel{z, T}()
+    for i in 1:N-1
+        fmt = SparseListLevel(fmt)
+    end
+    DenseLevel(fmt)
+end
+
+"""
+    CSCFormat(z = 0.0, T = typeof(z))
+
+A CSC format with a fill value of `z`. CSC stores a sparse matrix as a
+dense array of lists.
+"""
+CSCFormat(z = 0.0, T = typeof(z)) = CSFFormat(2, z, T)
+
+"""
+    DCSFFormat(z = 0.0, T = typeof(z))
+
+A DCSF format with a fill value of `z`. DCSF stores a sparse tensor as a
+list of lists of lists.
+"""
+function DCSFFormat(N, z = 0.0, T = typeof(z))
+    fmt = ElementLevel{z, T}()
+    for i in 1:N
+        fmt = SparseListLevel(fmt)
+    end
+    fmt
+end
+
+"""
+    DCSCFormat(z = 0.0, T = typeof(z))
+
+A DCSC format with a fill value of `z`. DCSC stores a sparse matrix as a
+list of lists.
+"""
+DCSCFormat(z = 0.0, T = typeof(z)) = DCSFFormat(2, z, T)
+
+"""
+    HashFormat(N, z = 0.0, T = typeof(z))
+
+A hash-table based format with a fill value of `z`.
+"""
+function HashFormat(N, z = 0.0, T = typeof(z))
+    fmt = ElementLevel{z, T}()
+    for i in 1:N-1
+        fmt = SparseDictLevel(fmt)
+    end
+    DenseLevel(fmt)
+end
+
+"""
+    ByteMapFormat(N, z = 0.0, T = typeof(z))
+
+A byte-map based format with a fill value of `z`.
+"""
+function ByteMapFormat(N, z = 0.0, T = typeof(z))
+    fmt = ElementLevel{z, T}()
+    for i in 1:N
+        fmt = SparseByteMapLevel(fmt)
+    end
+    fmt
+end
+
+"""
+    COOFormat(N, z = 0.0, T = typeof(z))
+
+An `N`-dimensional COO format with a fill value of `z`. COO stores a
+sparse tensor as a list of coordinates.
+"""
+COOFormat(N, z = 0.0, T = typeof(z)) = SparseCOOLevel{N}(ElementLevel{z, T}())
 
 include("postprocess.jl")
 

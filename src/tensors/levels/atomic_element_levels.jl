@@ -4,7 +4,7 @@
 Like an [`ElementLevel`](@ref), but updates to the level are performed atomically.
 
 ```jldoctest
-julia> Tensor(Dense(AtomicElement(0.0)), [1, 2, 3])
+julia> tensor_tree(Tensor(Dense(AtomicElement(0.0)), [1, 2, 3]))
 3-Tensor
 └─ Dense [1:3]
    ├─ [1]: 1.0

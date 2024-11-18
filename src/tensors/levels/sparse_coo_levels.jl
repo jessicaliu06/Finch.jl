@@ -17,7 +17,7 @@ The type `Tbl` is an NTuple type where each entry k is a subtype `AbstractVector
 The type `Ptr` is the type for the pointer array.
 
 ```jldoctest
-julia> Tensor(Dense(SparseCOO{1}(Element(0.0))), [10 0 20; 30 0 0; 0 0 40])
+julia> tensor_tree(Tensor(Dense(SparseCOO{1}(Element(0.0))), [10 0 20; 30 0 0; 0 0 40]))
 3×3-Tensor
 └─ Dense [:,1:3]
    ├─ [:, 1]: SparseCOO{1} (0.0) [1:3]
@@ -28,7 +28,7 @@ julia> Tensor(Dense(SparseCOO{1}(Element(0.0))), [10 0 20; 30 0 0; 0 0 40])
       ├─ [1]: 20.0
       └─ [3]: 40.0
 
-julia> Tensor(SparseCOO{2}(Element(0.0)), [10 0 20; 30 0 0; 0 0 40])
+julia> tensor_tree(Tensor(SparseCOO{2}(Element(0.0)), [10 0 20; 30 0 0; 0 0 40]))
 3×3-Tensor
 └─ SparseCOO{2} (0.0) [:,1:3]
    ├─ [1, 1]: 10.0

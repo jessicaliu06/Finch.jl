@@ -11,7 +11,7 @@ positions in the level. The types `Ptr` and `Idx` are the types of the
 arrays used to store positions and indicies.
 
 ```jldoctest
-julia> Tensor(Dense(SparseList(Element(0.0))), [10 0 20; 30 0 0; 0 0 40])
+julia> tensor_tree(Tensor(Dense(SparseList(Element(0.0))), [10 0 20; 30 0 0; 0 0 40]))
 3×3-Tensor
 └─ Dense [:,1:3]
    ├─ [:, 1]: SparseList (0.0) [1:3]
@@ -22,7 +22,7 @@ julia> Tensor(Dense(SparseList(Element(0.0))), [10 0 20; 30 0 0; 0 0 40])
       ├─ [1]: 20.0
       └─ [3]: 40.0
 
-julia> Tensor(SparseList(SparseList(Element(0.0))), [10 0 20; 30 0 0; 0 0 40])
+julia> tensor_tree(Tensor(SparseList(SparseList(Element(0.0))), [10 0 20; 30 0 0; 0 0 40]))
 3×3-Tensor
 └─ SparseList (0.0) [:,1:3]
    ├─ [:, 1]: SparseList (0.0) [1:3]

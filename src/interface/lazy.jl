@@ -11,6 +11,11 @@ mutable struct LazyTensor{T, N}
 end
 LazyTensor{T}(data, extrude::NTuple{N, Bool}, fill_value) where {T, N} = LazyTensor{T, N}(data, extrude, fill_value)
 
+function Base.show(io::IO, tns::LazyTensor)
+    join(io, [x ? "1" : "?" for x in tns.extrude], "×")
+    print(io, "-LazyTensor{", eltype(tns), "}")
+end
+
 Base.ndims(::Type{LazyTensor{T, N}}) where {T, N} = N
 Base.ndims(tns::LazyTensor) = ndims(typeof(tns))
 Base.eltype(::Type{<:LazyTensor{T}}) where {T} = T
@@ -113,6 +118,9 @@ function initial_value(op, T)
     end
     throw(ArgumentError("Please supply initial value for reduction of $T with $op."))
 end
+
+initial_value(::typeof(max), T) = typemin(T)
+initial_value(::typeof(min), T) = typemax(T)
 
 function fixpoint_type(op, z, T)
     S = Union{}

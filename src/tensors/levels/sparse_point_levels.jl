@@ -11,7 +11,7 @@ an error if the program tries to write multiple (>=2) coordinates into SparsePoi
 types of the arrays used to store positions and indicies.
 
 ```jldoctest
-julia> Tensor(Dense(SparsePoint(Element(0.0))), [10 0 0; 0 20 0; 0 0 30])
+julia> tensor_tree(Tensor(Dense(SparsePoint(Element(0.0))), [10 0 0; 0 20 0; 0 0 30]))
 3×3-Tensor
 └─ Dense [:,1:3]
    ├─ [:, 1]: SparsePoint (0.0) [1:3]
@@ -21,7 +21,7 @@ julia> Tensor(Dense(SparsePoint(Element(0.0))), [10 0 0; 0 20 0; 0 0 30])
    └─ [:, 3]: SparsePoint (0.0) [1:3]
       └─ 30.0
 
-julia> Tensor(SparsePoint(Dense(Element(0.0))), [0 0 0; 0 0 30; 0 0 30])
+julia> tensor_tree(Tensor(SparsePoint(Dense(Element(0.0))), [0 0 0; 0 0 30; 0 0 30]))
 3×3-Tensor
 └─ SparsePoint (0.0) [:,1:3]
    └─ Dense [1:3]

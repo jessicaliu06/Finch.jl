@@ -6,7 +6,7 @@ false. PatternLevels are used to create tensors that represent which values
 are stored by other fibers. See [`pattern!`](@ref) for usage examples.
 
 ```jldoctest
-julia> Tensor(Dense(Pattern()), 3)
+julia> tensor_tree(Tensor(Dense(Pattern()), 3))
 3-Tensor
 └─ Dense [1:3]
    ├─ [1]: true
@@ -59,22 +59,30 @@ original tensor unusable when modified.
 
 ```jldoctest
 julia> A = Tensor(SparseList(Element(0.0), 10), [2.0, 0.0, 3.0, 0.0, 4.0, 0.0, 5.0, 0.0, 6.0, 0.0])
-10-Tensor
-└─ SparseList (0.0) [1:10]
-   ├─ [1]: 2.0
-   ├─ [3]: 3.0
-   ├─ ⋮
-   ├─ [7]: 5.0
-   └─ [9]: 6.0
+10 Tensor{SparseListLevel{Int64, Vector{Int64}, Vector{Int64}, ElementLevel{0.0, Float64, Int64, Vector{Float64}}}}:
+ 2.0
+ 0.0
+ 3.0
+ 0.0
+ 4.0
+ 0.0
+ 5.0
+ 0.0
+ 6.0
+ 0.0
 
 julia> pattern!(A)
-10-Tensor
-└─ SparseList (false) [1:10]
-   ├─ [1]: true
-   ├─ [3]: true
-   ├─ ⋮
-   ├─ [7]: true
-   └─ [9]: true
+10 Tensor{SparseListLevel{Int64, Vector{Int64}, Vector{Int64}, PatternLevel{Int64}}}:
+ 1
+ 0
+ 1
+ 0
+ 1
+ 0
+ 1
+ 0
+ 1
+ 0
 ```
 """
 pattern!(fbr::Tensor) = Tensor(pattern!(fbr.lvl))

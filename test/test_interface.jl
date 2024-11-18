@@ -1,8 +1,19 @@
-using Finch: AsArray
+using Finch: AsArray, JuliaContext
+using Finch.FinchNotation: finch_unparse_program, @finch_program_instance
 
 @testset "interface" begin
 
     @info "Testing Finch Interface"
+
+    @testset "finch_unparse" begin
+        prgm = @finch_program quote 
+            A .= 0
+            for i = _
+                A[i] += 1
+            end
+        end
+        @test prgm.val == @finch_program $(finch_unparse_program(JuliaContext(), prgm))
+    end
 
     #https://github.com/finch-tensor/Finch.jl/issues/383
     let
@@ -814,4 +825,6 @@ using Finch: AsArray
         B = dropfills!(swizzle(A, 2, 1), [0.0 0.0 4.4; 1.1 0.0 0.0; 2.2 0.0 5.5; 3.3 0.0 0.0])
         @test B == swizzle(Tensor(Dense{Int64}(SparseList{Int64}(Element{0.0, Float64, Int64}([4.4, 1.1, 2.2, 5.5, 3.3]), 3, [1, 2, 3, 5, 6], [3, 1, 1, 3, 1]), 4)), 2, 1)
     end
+
+
 end

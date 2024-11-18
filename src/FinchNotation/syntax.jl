@@ -440,3 +440,76 @@ function display_statement(io, mime, node::Union{FinchNode, FinchNodeInstance}, 
         error("unimplemented")
     end
 end
+
+finch_unparse_program(ctx, node) = finch_unparse_program(ctx, finch_leaf(node))
+function finch_unparse_program(ctx, node::Union{FinchNode, FinchNodeInstance})
+    if operation(node) === value
+        node.val
+    elseif operation(node) === literal
+        node.val
+    elseif operation(node) === index
+        node.name
+    elseif operation(node) === variable
+        node.name
+    elseif operation(node) === cached
+        finch_unparse_program(ctx, node.arg)
+    elseif operation(node) === tag
+        @assert operation(node.var) === variable
+        node.var.name
+    elseif operation(node) === virtual
+        if node.val == dimless
+            :_
+        else
+            ctx(node)
+        end
+    elseif operation(node) === access
+        tns = finch_unparse_program(ctx, node.tns)
+        idxs = map(x -> finch_unparse_program(ctx, x), node.idxs)
+        :($tns[$(idxs...)])
+    elseif operation(node) === call
+        op = finch_unparse_program(ctx, node.op)
+        args = map(x -> finch_unparse_program(ctx, x), node.args)
+        :($op($(args...)))
+    elseif operation(node) === loop
+        idx = finch_unparse_program(ctx, node.idx)
+        ext = finch_unparse_program(ctx, node.ext)
+        body = finch_unparse_program(ctx, node.body)
+        :(for $idx = $ext; $body end)
+    elseif operation(node) === define
+        lhs = finch_unparse_program(ctx, node.lhs)
+        rhs = finch_unparse_program(ctx, node.rhs)
+        body = finch_unparse_program(ctx, node.body)
+        :(let $lhs = $rhs; $body end)
+    elseif operation(node) === sieve
+        cond = finch_unparse_program(ctx, node.cond)
+        body = finch_unparse_program(ctx, node.body)
+        :(if $cond; $body end)
+    elseif operation(node) === assign
+        lhs = finch_unparse_program(ctx, node.lhs)
+        op = finch_unparse_program(ctx, node.op)
+        rhs = finch_unparse_program(ctx, node.rhs)
+        if haskey(incs, op)
+            Expr(incs[op], lhs, rhs)
+        else
+            :($lhs <<$op>>= $rhs)
+        end
+    elseif operation(node) === declare
+        tns = finch_unparse_program(ctx, node.tns)
+        init = finch_unparse_program(ctx, node.init)
+        :($tns .= $init)
+    elseif operation(node) === freeze
+        tns = finch_unparse_program(ctx, node.tns)
+        :(@freeze($tns))
+    elseif operation(node) === thaw
+        tns = finch_unparse_program(ctx, node.tns)
+        :(@thaw($tns))
+    elseif operation(node) === yieldbind
+        args = map(x -> finch_unparse_program(ctx, x), node.args)
+        :(return($(args...)))
+    elseif operation(node) === block
+        bodies = map(x -> finch_unparse_program(ctx, x), node.bodies)
+        Expr(:block, bodies...)
+    else
+        error("unimplemented")
+    end
+end

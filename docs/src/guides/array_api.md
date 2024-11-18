@@ -124,6 +124,63 @@ lazy
 compute
 ```
 
+## The Galley Optimizer
+
+Galley is a cost-based optimizer for Finch's lazy evaluation interface based on techniques from database 
+query optimization. To use Galley, you just add the parameter `ctx=galley_optimizer()` to the `compute` 
+function. While the default optimizer (`ctx=default_scheduler()`) makes decisions entirely based on
+the types of the inputs, Galley gathers statistics on their sparsity to make cost-based based optimization
+decisions.
+
+Consider the following set of small examples:
+
+```
+   N = 300
+   A = lazy(Tensor(Dense(SparseList(Element(0.0))), fsprand(N, N, .5)))
+   B = lazy(Tensor(Dense(SparseList(Element(0.0))), fsprand(N, N, .5)))
+   C = lazy(Tensor(Dense(SparseList(Element(0.0))), fsprand(N, N, .01)))
+
+   println("Galley: A * B * C")
+   empty!(Finch.codes)
+   @btime begin 
+      compute($A * $B * $C, ctx=galley_scheduler())
+   end
+
+   println("Galley: C * B * A")
+   empty!(Finch.codes)
+   @btime begin 
+      compute($C * $B * $A, ctx=galley_scheduler())
+   end
+
+   println("Galley: sum(C * B * A)")
+   empty!(Finch.codes)
+   @btime begin 
+      compute(sum($C * $B * $A), ctx=galley_scheduler())
+   end
+
+   println("Finch: A * B * C")
+   empty!(Finch.codes)
+   @btime begin 
+      compute($A * $B * $C, ctx=Finch.default_scheduler())
+   end
+
+   println("Finch: C * B * A")
+   empty!(Finch.codes)
+   @btime begin 
+      compute($C * $B * $A, ctx=Finch.default_scheduler())
+   end
+
+   println("Finch: sum(C * B * A)")
+   empty!(Finch.codes)
+   @btime begin 
+      compute(sum($C * $B * $A), ctx=Finch.default_scheduler())
+   end
+```
+
+By taking advantage of the fact that C is highly sparse, Galley can better structure the computation. In the matrix chain multiplication,
+it always starts with the C,B matmul before multiplying with A. In the summation, it takes advantage of distributivity to pushing the reduction
+down to the inputs. It first sums over A and C, then multiplies those vectors with B.
+
 # Einsum
 
 Finch also supports a highly general `@einsum` macro which supports any reduction over any simple pointwise array expression.

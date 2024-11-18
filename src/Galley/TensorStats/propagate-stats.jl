@@ -213,7 +213,7 @@ function merge_tensor_stats_union(op, new_def::TensorDef, all_stats::Vararg{DCSt
     new_dcs = Dict{DCKey, UInt128}()
     for (key, count) in dc_keys
         if count == length(all_stats)
-            new_dcs[key] = min(typemax(UInt64), sum([get(dcs, key, UInt128(0)) for dcs in stats_dcs]))
+            new_dcs[key] = min(typemax(UInt), sum([get(dcs, key, UInt128(0)) for dcs in stats_dcs]))
             if  key.Y ⊆ idxs_to_bitset(final_idx_2_int, get_index_set(new_def))
                 new_dcs[key] = min(new_dcs[key], get_dim_space_size(new_def, bitset_to_idxs(final_int_2_idx, key.Y)))
             end
@@ -223,7 +223,7 @@ function merge_tensor_stats_union(op, new_def::TensorDef, all_stats::Vararg{DCSt
 #=
     for Y in subsets(collect(get_index_set(new_def)))
         proj_dc_key = (X=SmallBitSet(), Y=idxs_to_bitset(final_idx_2_int, Y))
-        new_dcs[proj_dc_key] = min(get(new_dcs, proj_dc_key, typemax(UInt64)/2), get_dim_space_size(new_def, Set(Y)))
+        new_dcs[proj_dc_key] = min(get(new_dcs, proj_dc_key, typemax(UInt)/2), get_dim_space_size(new_def, Set(Y)))
     end
  =#
     return DCStats(new_def, final_idx_2_int, final_int_2_idx, Set{DC}(DC(key.X, key.Y, d) for (key, d) in new_dcs))

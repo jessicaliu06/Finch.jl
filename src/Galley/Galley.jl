@@ -11,7 +11,7 @@ using SyntaxInterface
 using AbstractTrees
 using Statistics
 using Finch
-using Finch: Element, SparseListLevel, SparseDict, Dense, SparseCOO, fsparse_impl, compute_parse, 
+using Finch: Element, SparseListLevel, SparseDict, Dense, SparseCOO, fsparse_impl, compute_parse,
                         isimmediate, set_options, flatten_plans
 using Finch.FinchNotation: index_instance, variable_instance, tag_instance, literal_instance,
                         access_instance,  assign_instance, loop_instance, declare_instance,
@@ -38,7 +38,7 @@ TensorId = Symbol
 # The set of optimizers implemented by Galley
 @enum FAQ_OPTIMIZERS greedy naive pruned exact
 
-name_counter::UInt64 = 0
+name_counter::UInt = 0
 
 function galley_gensym(s::String)
     global name_counter += 1

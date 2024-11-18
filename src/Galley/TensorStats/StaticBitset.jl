@@ -132,6 +132,6 @@ function Base.hash(s::SmallBitSet, h::UInt128)
     return hash(s.bits, h)
 end
 
-function Base.hash(s::SmallBitSet, h::UInt64)
+function Base.hash(s::SmallBitSet, h::UInt)
     return hash(s.bits, h)
 end

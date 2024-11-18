@@ -1,4 +1,4 @@
-function branch_and_bound(input_aq::AnnotatedQuery, component, k, max_subquery_costs, alias_hash, cost_cache = Dict{UInt64, Float64}())
+function branch_and_bound(input_aq::AnnotatedQuery, component, k, max_subquery_costs, alias_hash, cost_cache = Dict{UInt, Float64}())
     input_aq = copy_aq(input_aq)
     PLAN_AND_COST = Tuple{Vector{IndexExpr}, Vector{PlanNode}, AnnotatedQuery, Float64}
     optimal_orders = Dict{Set{IndexExpr}, PLAN_AND_COST}(Set{IndexExpr}()=>(PlanNode[], PlanNode[], input_aq, 0))
@@ -67,7 +67,7 @@ function branch_and_bound(input_aq::AnnotatedQuery, component, k, max_subquery_c
     end
 end
 
-function pruned_query_to_plan(input_aq::AnnotatedQuery, cost_cache::Dict{UInt64, Float64}, alias_hash::Dict{IndexExpr, UInt64}; use_greedy=false)
+function pruned_query_to_plan(input_aq::AnnotatedQuery, cost_cache::Dict{UInt, Float64}, alias_hash::Dict{IndexExpr, UInt}; use_greedy=false)
     total_cost = 0
     elimination_order = IndexExpr[]
     queries = PlanNode[]
@@ -77,7 +77,7 @@ function pruned_query_to_plan(input_aq::AnnotatedQuery, cost_cache::Dict{UInt64,
         if isempty(component ∩ get_reducible_idxs(cur_aq))
             continue
         end
-        
+
         (greedy_order, greedy_queries, greedy_aq, greedy_cost), greedy_subquery_costs, cost_cache = branch_and_bound(cur_aq, component, 1, Dict(), alias_hash, cost_cache)
         if length(component) >=10 || use_greedy
             append!(elimination_order, greedy_order)

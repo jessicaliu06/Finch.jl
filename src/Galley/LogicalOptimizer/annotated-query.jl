@@ -369,7 +369,7 @@ function is_dense(mat_stats, mat_size)
 end
 
 # Returns the cost of reducing out an index
-function cost_of_reduce(reduce_idx, aq, cache::Dict{UInt64, Float64}=Dict{UInt64, Float64}(), alias_hash=Dict{IndexExpr, UInt64}())
+function cost_of_reduce(reduce_idx, aq, cache::Dict{UInt, Float64}=Dict{UInt, Float64}(), alias_hash=Dict{IndexExpr, UInt}())
     query, _, _,reduced_idxs = get_reduce_query(reduce_idx, aq)
     cache_key = cannonical_hash(query.expr, alias_hash)
     if !haskey(cache, cache_key)
@@ -452,7 +452,7 @@ function reduce_idx!(reduce_idx, aq; do_condense=false)
         new_parent_idxs[idx] = filter((x)->!(x in reduced_idxs), aq.parent_idxs[idx])
         new_connected_idxs[idx] = filter((x)->!(x in reduced_idxs), aq.connected_idxs[idx])
     end
-    
+
     for idx in keys(new_idx_lowest_root)
         for idx2 in keys(new_idx_lowest_root)
             if new_idx_lowest_root[idx] == new_idx_lowest_root[idx2]

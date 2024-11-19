@@ -10,7 +10,7 @@ using Finch.Galley
 using Finch.Galley: t_sparse_list, t_dense
 using Finch.Galley: canonicalize, insert_statistics!, get_reduce_query, AnnotatedQuery, reduce_idx!, cost_of_reduce, greedy_query_to_plan
 using Finch.Galley: estimate_nnz, reduce_tensor_stats, condense_stats!, merge_tensor_stats
-
+ 
 
 @testset verbose = true "Plan Equality" begin
     A = Tensor(Dense(Sparse(Element(0.0))), fsprand(5, 5, .2))

@@ -34,6 +34,18 @@ function PlanNode(kind::PlanNodeKind, children::Vector, val::Any, stats::Any)
     return PlanNode(kind, children, val, stats, -1)
 end
 
+function freshen_idxs!(p::PlanNode)
+    idx_dict = Dict()
+    for n in PostOrderDFS(p)
+        if n.kind == Index
+            if !haskey(idx_dict, n.val)
+                idx_dict[n.val] = galley_gensym(n.val)
+            end
+            n.val = idx_dict[n.val]
+        end
+    end
+end
+
 function PlanNode(kind::PlanNodeKind, args::Vector)
     if (kind === Value || kind === Index) && length(args) == 1
         return PlanNode(kind, PlanNode[], args[1], nothing)
@@ -62,12 +74,7 @@ function PlanNode(kind::PlanNodeKind, args::Vector)
                 old_idxs = [idx for idx in mat_expr.idx_order]
                 @assert length(new_idxs) == length(old_idxs)
                 internal_expr = plan_copy(mat_expr.expr)
-                # If the somewhere down the expression tree, there exists a reference to
-                # new_idxs[i], then we would like to rename it to avoid conflict.
-                prior_idx_translate = Dict(new_idxs[i].name => galley_gensym(new_idxs[i].name) for i in eachindex(old_idxs) if new_idxs[i] ∉ old_idxs)
-                for (i, j) in prior_idx_translate
-                    relabel_index(internal_expr, i, j)
-                end
+                freshen_idxs!(internal_expr)
                 new_idx_translate = Dict(old_idxs[i].name => new_idxs[i].name for i in eachindex(old_idxs))
                 for (i, j) in new_idx_translate
                     relabel_index(internal_expr, i, j)
@@ -278,7 +285,7 @@ function Base.hash(a::PlanNode, h::UInt)
     end
 end
 
-function planToString(n::PlanNode, depth::Int64)
+function planToString(n::PlanNode, depth::Int)
     output = ""
     if n.kind == Alias
         output *= "Alias($(n.name)"

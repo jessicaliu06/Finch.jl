@@ -98,6 +98,8 @@ let
         B = lazy(Tensor(Dense(SparseList(Element(0.0))), fsprand(10, 10, 100)))
         C = lazy(Tensor(Dense(SparseList(SparseList(Element(0.0)))), fsprand(10, 10, 10, 100)))
         compute(sum(A .* B .* C), ctx=galley_scheduler())
+        
+        compute(sum((A .* B) .+ C), ctx=galley_scheduler())
     end
 
     @info "Done!"

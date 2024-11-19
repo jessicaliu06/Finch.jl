@@ -46,7 +46,7 @@ function get_tensor_formats(tensor::Tensor)
     level_formats = reverse(level_formats)
 end
 
-function TensorDef(tensor::Tensor, indices::Vector{IndexExpr})
+function TensorDef(tensor::Tensor, indices)
     shape_tuple = size(tensor)
     level_formats = get_tensor_formats(tensor::Tensor)
     dim_size = Dict{IndexExpr, UInt128}(indices[i]=>shape_tuple[i] for i in 1:length(size(tensor)))
@@ -54,7 +54,7 @@ function TensorDef(tensor::Tensor, indices::Vector{IndexExpr})
     return TensorDef(Set{IndexExpr}(indices), dim_size, default_value, level_formats, indices, nothing)
 end
 
-function reindex_def(indices::Vector{IndexExpr}, def::TensorDef)
+function reindex_def(indices, def::TensorDef)
     @assert length(indices) == length(def.index_order)
     rename_dict = Dict{IndexExpr, IndexExpr}()
     for i in eachindex(indices)
@@ -155,7 +155,7 @@ copy_stats(stat::NaiveStats) = NaiveStats(copy_def(stat.def), stat.cardinality)
 
 NaiveStats(index_set, dim_sizes, cardinality, default_value) = NaiveStats(TensorDef(index_set, dim_sizes, default_value, nothing), cardinality)
 
-function NaiveStats(tensor::Tensor, indices::Vector{IndexExpr})
+function NaiveStats(tensor::Tensor, indices)
     def = TensorDef(tensor, indices)
     cardinality = countstored(tensor)
     return NaiveStats(def, cardinality)
@@ -166,7 +166,7 @@ function NaiveStats(x)
     return NaiveStats(def, 1)
 end
 
-function reindex_stats(stat::NaiveStats, indices::Vector{IndexExpr})
+function reindex_stats(stat::NaiveStats, indices)
     return NaiveStats(reindex_def(indices, stat.def), stat.cardinality)
 end
 
@@ -669,7 +669,7 @@ function dense_dcs(def, int_2_idx, indices::Vector{Int})
     return dcs
 end
 
-function DCStats(tensor::Tensor, indices::Vector{IndexExpr})
+function DCStats(tensor::Tensor, indices)
     def = TensorDef(tensor, indices)
     idx_2_int = Dict{IndexExpr, Int}()
     int_2_idx = Dict{Int, IndexExpr}()
@@ -685,7 +685,7 @@ function DCStats(tensor::Tensor, indices::Vector{IndexExpr})
     return DCStats(def, idx_2_int, int_2_idx, dcs)
 end
 
-function reindex_stats(stats::DCStats, indices::Vector{IndexExpr})
+function reindex_stats(stats::DCStats, indices)
     new_def = reindex_def(indices, stats.def)
     rename_dict = Dict(get_index_order(stats)[i]=> indices[i] for i in eachindex(indices))
     new_idx_to_int = Dict{IndexExpr, Int}()

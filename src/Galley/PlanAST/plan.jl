@@ -71,10 +71,11 @@ function PlanNode(kind::PlanNodeKind, args::Vector)
             elseif args[1].kind === Materialize
                 mat_expr = args[1]
                 new_idxs = [Index(x) for x  in args[2:end]]
+                mat_expr = plan_copy(mat_expr)
+                freshen_idxs!(mat_expr)
+                internal_expr = mat_expr.expr
                 old_idxs = [idx for idx in mat_expr.idx_order]
                 @assert length(new_idxs) == length(old_idxs)
-                internal_expr = plan_copy(mat_expr.expr)
-                freshen_idxs!(internal_expr)
                 new_idx_translate = Dict(old_idxs[i].name => new_idxs[i].name for i in eachindex(old_idxs))
                 for (i, j) in new_idx_translate
                     relabel_index(internal_expr, i, j)

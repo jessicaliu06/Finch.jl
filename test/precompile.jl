@@ -91,5 +91,14 @@ let
             A .* B
         end
     end
+
+    @info "Precompiling Galley optimizer"
+    begin
+        A = lazy(Tensor(Dense(Element(0.0)), fsprand(10, 100)))
+        B = lazy(Tensor(Dense(SparseList(Element(0.0))), fsprand(10, 10, 100)))
+        C = lazy(Tensor(Dense(SparseList(SparseList(Element(0.0)))), fsprand(10, 10, 10, 100)))
+        compute(sum(A .* B .* C), ctx=galley_scheduler())
+    end
+
     @info "Done!"
 end

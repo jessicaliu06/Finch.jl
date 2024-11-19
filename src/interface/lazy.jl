@@ -327,6 +327,8 @@ end
 @inline Base.zero(::Type{Square{T, S}}) where {T, S} = Square{T, S}(zero(T), zero(S))
 @inline Base.zero(::Square{T, S}) where {T, S} = Square{T, S}(zero(T), zero(S))
 
+@inline Base.isinf(x::Finch.Square) = isinf(x.arg) || isinf(x.scale)
+
 function Base.promote_rule(::Type{Square{T1, S1}}, ::Type{Square{T2, S2}}) where {T1, S1, T2, S2}
     return Square{promote_type(T1, T2), promote_type(S1, S2)}
 end
@@ -378,6 +380,7 @@ end
 
 @inline Base.zero(::Type{Power{T, S, E}}) where {T, S, E} = Power{T, S, E}(zero(T), zero(S), one(E))
 @inline Base.zero(x::Power) = Power(zero(x.arg), zero(x.scale), x.exponent)
+@inline Base.isinf(x::Finch.Power) = isinf(x.arg) || isinf(x.scale) || isinf(x.exponent)
 
 function Base.promote_rule(::Type{Power{T1, S1, E1}}, ::Type{Power{T2, S2, E2}}) where {T1, S1, E1, T2, S2, E2}
     return Power{promote_type(T1, T2), promote_type(S1, S2), promote_type(E1, E2)}

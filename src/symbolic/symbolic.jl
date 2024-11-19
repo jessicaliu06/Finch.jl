@@ -90,6 +90,9 @@ isidentity(::AbstractAlgebra, ::typeof(|), x) = !ismissing(x) && iszero(x)
 isidentity(::AbstractAlgebra, ::typeof(&), x) = !ismissing(x) && x == ~(zero(x))
 isidentity(::AbstractAlgebra, ::typeof(min), x) = !ismissing(x) && isinf(x) && x > 0
 isidentity(::AbstractAlgebra, ::typeof(max), x) = !ismissing(x) && isinf(x) && x < 0
+isidentity(::Finch.AbstractAlgebra, ::InitMax{D}, x) where {D} = isequal(x, D)
+isidentity(::Finch.AbstractAlgebra, ::InitMin{D}, x) where {D} = isequal(x, D)
+
 function isidentity_by_fn(alg::AbstractAlgebra, ::typeof(minby), x::FinchNode)
     if @capture x call(tuple, ~a::isliteral, ~b)
         return isidentity(alg, min, a.val)

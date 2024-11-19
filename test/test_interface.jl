@@ -115,7 +115,7 @@ using Finch.FinchNotation: finch_unparse_program, @finch_program_instance
         @test eltype(Finch.tensordot(a, b, 0)) == UInt8
     end
 
-    for scheduler in [Finch.default_scheduler(), Finch.DefaultLogicOptimizer(Finch.LogicInterpreter())]
+    for scheduler in [Finch.default_scheduler(), Finch.DefaultLogicOptimizer(Finch.LogicInterpreter()), Finch.galley_scheduler()]
         Finch.with_scheduler(scheduler) do
             @info "Testing $scheduler"
 

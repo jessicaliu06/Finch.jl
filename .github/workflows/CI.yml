@@ -106,28 +106,3 @@ jobs:
         run: |
           cd finch-tensor-python
           FINCH_REPO_PATH="${GITHUB_WORKSPACE}" poetry run pytest tests/
-
-  galley-tests:
-      name: Galley Tests
-      runs-on: ubuntu-latest
-      steps:
-        - name: Checkout Finch.jl
-          uses: actions/checkout@v4
-        - name: Setup Julia
-          uses: julia-actions/setup-julia@v1
-          with:
-            version: '1'
-        - name: Build Finch.jl package
-          uses: julia-actions/julia-buildpkg@v1
-        - name: Checkout Galley
-          uses: actions/checkout@v4
-          with:
-            repository: kylebd99/Galley
-            ref: 'main'
-            path: 'Galley'
-        - name: Run Galley tests 
-          run: |
-            pwd
-            ls
-            cd Galley
-            julia --project=test/ -e 'import Pkg; Pkg.develop(path="..");  Pkg.develop(path="."); include("test/runtests.jl")'

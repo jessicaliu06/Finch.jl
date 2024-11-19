@@ -115,7 +115,7 @@ function get_dim_space_size(def::TensorDef, indices)
         dim_space_size *= def.dim_sizes[idx]
     end
     if dim_space_size == 0  || dim_space_size > typemax(Int)
-        return UInt128(2)^63
+        return UInt128(typemax(Int))^(sizeof(Int) * 8 - 1)
     end
     return dim_space_size
 end
@@ -397,9 +397,9 @@ function estimate_nnz(stat::DCStats; indices = get_index_set(stat), conditional_
             for dc in stat.dcs
                 if x ⊇ dc.X
                     y = ∪(x, dc.Y)
-                    if min(current_bound, get(current_weights, y, typemax(UInt128))) >  weight * dc.d && !(((weight > (2^62)) || (dc.d > (2^62))))
+                    if min(current_bound, get(current_weights, y, typemax(UInt128))) >  weight * dc.d && !(((weight > (2^(sizeof(UInt) * 8 - 2))) || (dc.d > (2^(sizeof(UInt) * 8 - 2)))))
                         # We need to be careful about overflow here. Turns out UInts overflow as 0 >:(
-                        current_weights[y] = ((weight > (2^62)) || (dc.d > (2^62))) ? UInt128(2)^64 : (weight * dc.d)
+                        current_weights[y] = ((weight > (2^(sizeof(UInt) * 8 - 2))) || (dc.d > (2^(sizeof(UInt) * 8 - 2)))) ? UInt128(2)^(sizeof(UInt) * 8) : (weight * dc.d)
                         finished = false
                         push!(new_frontier, y)
                     end

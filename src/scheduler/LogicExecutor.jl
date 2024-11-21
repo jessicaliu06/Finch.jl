@@ -68,9 +68,16 @@ end
 
 codes = Dict()
 function (ctx::LogicExecutor)(prgm)
-    (f, code) = get!(codes, get_structure(prgm)) do
+    (f, code) = if prgm.kind === plan
+        # If no tag is used, default to no caching
         thunk = logic_executor_code(ctx.ctx, prgm)
         (eval(thunk), thunk)
+    else
+        get!(codes, get_structure(prgm)) do
+            prgm = prgm.prgm
+            thunk = logic_executor_code(ctx.ctx, prgm)
+            (eval(thunk), thunk)
+        end
     end
     if ctx.verbose
         println("Executing:")

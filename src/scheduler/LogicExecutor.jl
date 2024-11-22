@@ -75,7 +75,6 @@ function (ctx::LogicExecutor)(prgm)
         (eval(thunk), thunk)
     else
         get!(codes, (tag, get_structure(prgm))) do
-            prgm = prgm.prgm
             thunk = logic_executor_code(ctx.ctx, prgm)
             (eval(thunk), thunk)
         end

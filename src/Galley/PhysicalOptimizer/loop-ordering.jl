@@ -232,6 +232,9 @@ end
 
 GREEDY_PLAN_K = 1
 function get_join_loop_order(disjunct_and_conjunct_stats, transposable_stats::Vector{TensorStats}, output_stats::TensorStats, output_order::Union{Nothing, Vector{IndexExpr}})
+    if length(disjunct_and_conjunct_stats.disjuncts) == 0 && length(disjunct_and_conjunct_stats.conjuncts) == 0
+        return IndexExpr[]
+    end
     num_vars = length(union([get_index_set(s) for s in disjunct_and_conjunct_stats.disjuncts]...,
                     [get_index_set(s) for s in disjunct_and_conjunct_stats.conjuncts]...))
     if num_vars == 0

@@ -97,7 +97,8 @@ julia> @einsum F[i] <<max>>= A[i, j] + B[i, j]
 
 ```
 
-Finch even allows users to fuse multiple operations into a single kernel with `lazy` and `compute`. Different optimizers can be used with `compute`, such as the state-of-the-art `Galley` optimizer, which can adapt to the
+Finch even allows users to fuse multiple operations into a single kernel with `lazy` and `compute`.  The `lazy` function creates a lazy tensor, which is a symbolic representation of the computation. The `compute` function evaluates the computation.
+Different optimizers can be used with `compute`, such as the state-of-the-art `Galley` optimizer, which can adapt to the
 sparsity patterns of the inputs.
 
 ```julia
@@ -106,6 +107,8 @@ julia> using Finch, BenchmarkTools
 julia> A = fsprand(1000, 1000, 0.1); B = fsprand(1000, 1000, 0.1); C = fsprand(1000, 1000, 0.0001);
 
 julia> A = lazy(A); B = lazy(B); C = lazy(C);
+
+julia> sum(A * B * C)
 
 julia> @btime compute(sum(A * B * C));
   263.612 ms (1012 allocations: 185.08 MiB)

@@ -43,12 +43,3 @@ The first set of inputs given to galley is used to optimize, and the `estimator`
 estimate the sparsity of intermediate computations during optimization.
 """
 galley_scheduler(; verbose = false, estimator=DCStats) = Finch.LogicExecutor(GalleyOptimizer(verbose=verbose, estimator=estimator); verbose=verbose)
-
-# Roadmap:
-#   - Register Galley as a julia package (juliaregistrator, tagbot) @Kyle
-#   - Add Documentation in Finch (need simple shortcuts Compute(...,ctx=Galley())) @Willow
-#   - Add PythonPR to add compute() param for optimizers @Kyle
-#       - Discussion of adding Galley to python deps
-#       - Minimal param interface to enable Galley 
-#       - Get perftest file 
-#   - Add precompilation for Galley @Kyle

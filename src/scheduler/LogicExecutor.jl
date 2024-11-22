@@ -58,22 +58,23 @@ structure.
 """
 struct LogicExecutor
     ctx
+    tag
     verbose
 end
 
-LogicExecutor(ctx; verbose = false) = LogicExecutor(ctx, verbose)
-function set_options(ctx::LogicExecutor; verbose = ctx.verbose, kwargs...)
-    LogicExecutor(set_options(ctx.ctx; kwargs...), verbose)
+LogicExecutor(ctx; tag = -1, verbose = false) = LogicExecutor(ctx, tag, verbose)
+function set_options(ctx::LogicExecutor; tag = ctx.tag, verbose = ctx.verbose, kwargs...)
+    LogicExecutor(set_options(ctx.ctx; kwargs...), tag, verbose)
 end
 
 codes = Dict()
-function (ctx::LogicExecutor)(prgm, instance_id=-1)
-    (f, code) = if instance_id == -1
+function (ctx::LogicExecutor)(prgm)
+    (f, code) = if tag == -1
         # If no tag is used, default to no caching
         thunk = logic_executor_code(ctx.ctx, prgm)
         (eval(thunk), thunk)
     else
-        get!(codes, (instance_id, get_structure(prgm))) do
+        get!(codes, (tag, get_structure(prgm))) do
             prgm = prgm.prgm
             thunk = logic_executor_code(ctx.ctx, prgm)
             (eval(thunk), thunk)

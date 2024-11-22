@@ -17,7 +17,6 @@ const ID = 4
     query     = 11ID | IS_TREE | IS_STATEFUL
     produces  = 12ID | IS_TREE | IS_STATEFUL
     plan      = 13ID | IS_TREE | IS_STATEFUL
-    instance  = 14ID | IS_TREE | IS_STATEFUL
 end
 
 """
@@ -123,15 +122,6 @@ Logical AST statement that executes a sequence of statements `bodies...`.
 """
 plan
 
-
-"""
-    instance(prgm, tag)
-
-Logical AST statement that executes `prgm` and caches the compilation for this tag.
-Allows the user to keep different compiled programs for different classes of inputs.
-"""
-instance
-
 """
     LogicNode
 
@@ -228,8 +218,7 @@ function LogicNode(kind::LogicNodeKind, args::Vector)
             (kind === subquery && length(args) == 2) ||
             (kind === query && length(args) == 2) ||
             (kind === produces) ||
-            (kind === plan) ||
-            (kind === instance && length(args) == 2)
+            (kind === plan) 
             return LogicNode(kind, nothing, Any, args)
         else
             error("wrong number of arguments to $kind(...)")
@@ -268,8 +257,6 @@ function Base.getproperty(node::LogicNode, sym::Symbol)
     elseif node.kind === query && sym === :rhs node.children[2]
     elseif node.kind === produces && sym === :args node.children
     elseif node.kind === plan && sym === :bodies node.children
-    elseif node.kind === instance && sym === :prgm node.prgm
-    elseif node.kind === instance && sym === :tag node.tag
     else
         error("type LogicNode($(node.kind), ...) has no property $sym")
     end
@@ -322,11 +309,6 @@ function display_statement(io, mime, node, indent)
             display_expression(io, mime, node.args[end])
         end
         print(io, ")")
-    elseif operation(node) == instance
-        println(io, "instance ($node.tag)")
-        print(io, " " ^ (indent + 2))
-        display_statement(io, mime, node.prgm, indent + 2)
-        println(io)
     else
         throw(ArgumentError("Expected statement but got $(operation(node))"))
     end

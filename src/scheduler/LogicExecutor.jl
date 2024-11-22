@@ -67,13 +67,13 @@ function set_options(ctx::LogicExecutor; verbose = ctx.verbose, kwargs...)
 end
 
 codes = Dict()
-function (ctx::LogicExecutor)(prgm)
-    (f, code) = if prgm.kind === plan
+function (ctx::LogicExecutor)(prgm, instance_id=-1)
+    (f, code) = if instance_id == -1
         # If no tag is used, default to no caching
         thunk = logic_executor_code(ctx.ctx, prgm)
         (eval(thunk), thunk)
     else
-        get!(codes, get_structure(prgm)) do
+        get!(codes, (instance_id, get_structure(prgm))) do
             prgm = prgm.prgm
             thunk = logic_executor_code(ctx.ctx, prgm)
             (eval(thunk), thunk)

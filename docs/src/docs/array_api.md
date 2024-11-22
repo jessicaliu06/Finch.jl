@@ -86,6 +86,7 @@ together and divides each result by 2, without materializing an intermediate.
 ```@docs
 lazy
 compute
+fused
 ```
 
 The `lazy` and `compute` functions allow the compiler to fuse operations together, resulting in asymptotically more efficient code.
@@ -111,7 +112,7 @@ optimizer can be set as an argument `ctx` to the `compute` function, or using
 `set_scheduler` or `with_scheduler`.
 
 ```@docs
-set_scheduler
+set_scheduler!
 with_scheduler
 default_scheduler
 ```

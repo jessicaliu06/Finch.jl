@@ -85,7 +85,7 @@ The `@einsum` macro is a powerful tool for expressing complex array operations c
 ## Array Fusion
 
 To get the full benefits of a sparse compiler, it is critical to fuse certain operations together. For this, Finch exposes two functions, [`lazy`](@ref) and [`compute`](@ref).
-The `lazy` function creates a lazy tensor, which is a symbolic representation of the computation. The `compute` function evaluates the computation.
+The `lazy` function creates a lazy tensor, which is a symbolic representation of the computation. The `compute` function evaluates the computation. For convenience, you may wish to use the [`fused`](@ref) function, which automatically fuses the computations it contains.
 
 ```jldoctest fusion; setup = :(using Finch)
 julia> A = fsparse([1, 1, 2, 3], [2, 4, 5, 6], [1.0, 2.0, 3.0])

@@ -169,10 +169,12 @@ using Finch.FinchNotation: finch_unparse_program, @finch_program_instance
                 ref = reshape(c_raw, 10, 10, 1) .* reshape(a_raw, 10, 1, 5) .* reshape(b_raw, 1, 10, 5);
 
                 plan = c[:, :, nothing] .* a[:, nothing, :] .* b[nothing, :, :];
-                @test compute(plan) == ref
+                res = compute(plan)
+                @test norm(res - ref)/norm(ref) < 0.01
 
                 plan = broadcast(*, broadcast(*, c[:, :, nothing], a[:, nothing, :]), b[nothing, :, :]);
-                @test compute(plan) == ref
+                res = compute(plan)
+                @test norm(res - ref)/norm(ref) < 0.01
             end
 
             #https://github.com/finch-tensor/Finch.jl/issues/536

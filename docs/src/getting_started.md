@@ -37,16 +37,58 @@ Many functions in the Julia standard array library are supported.
 
 ```jldoctest arrayapi; setup = :(using Finch)
 julia> A = Tensor(CSCFormat(), [0 1; 2 3]);
+
 julia> B = A .+ 1
+2×2 Tensor{DenseLevel{Int64, DenseLevel{Int64, ElementLevel{1.0, Float64, Int64, Vector{Float64}}}}}:
+ 1.0  2.0
+ 3.0  4.0
+
 julia> C = max.(A, B)
+2×2 Tensor{DenseLevel{Int64, DenseLevel{Int64, ElementLevel{1.0, Float64, Int64, Vector{Float64}}}}}:
+ 1.0  2.0
+ 3.0  4.0
+
 julia> D = sum(C, dims=2)
+2 Tensor{DenseLevel{Int64, ElementLevel{0.0, Float64, Int64, Vector{Float64}}}}:
+ 3.0
+ 7.0
+
 julia> E = B[1, :]
+2 Tensor{DenseLevel{Int64, ElementLevel{1.0, Float64, Int64, Vector{Float64}}}}:
+ 1.0
+ 2.0
 ```
 
 For situations which are difficult to express in the julia standard library, Finch also supports an `@einsum` syntax:
 ```jldoctest arrayapi; setup = :(using Finch)
 julia> @einsum F[i, j, k] *= A[i, j] * B[j, k]
+2×2×2 Tensor{DenseLevel{Int64, DenseLevel{Int64, SparseDictLevel{Int64, Vector{Int64}, Vector{Int64}, Vector{Int64}, Dict{Tuple{Int64, Int64}, Int64}, Vector{Int64}, ElementLevel{0.0, Float64, Int64, Vector{Float64}}}}}}:
+[:, :, 1] =
+ 0.0  3.0
+ 2.0  9.0
+
+[:, :, 2] =
+ 0.0   4.0
+ 4.0  12.0
+
 julia> @einsum G[j, k] <<max>>= A[i, j] + B[j, i]
+ERROR: KeyError: key :k not found
+Stacktrace:
+ [1] getindex(h::Dict{Symbol, Bool}, key::Symbol)
+   @ Base ./dict.jl:477
+ [2] #1983
+   @ ~/Projects/Finch.jl/src/interface/einsum.jl:54 [inlined]
+ [3] ntuple
+   @ ./ntuple.jl:19 [inlined]
+ [4] einsum(::Function, ::Finch.EinsumArgument{Float64, Finch.EinsumEagerStyle}, ::Symbol, ::Vararg{Symbol}; init::Float64)
+   @ Finch ~/Projects/Finch.jl/src/interface/einsum.jl:54
+ [5] einsum(::Function, ::Finch.EinsumArgument{Float64, Finch.EinsumEagerStyle}, ::Symbol, ::Vararg{Symbol})
+   @ Finch ~/Projects/Finch.jl/src/interface/einsum.jl:53
+ [6] macro expansion
+   @ ~/Projects/Finch.jl/src/interface/einsum.jl:125 [inlined]
+ [7] top-level scope
+   @ none:1
+
 ```
 
 The `@einsum` macro is a powerful tool for expressing complex array operations concisely.
@@ -242,23 +284,24 @@ By default, tensors in Finch are column-major. However, you can use the
 use the `dropfills!` function.
 
 ```jldoctest tensorformats; setup = :(using Finch)
-julia> A = Tensor(CSCFormat(), fsprand(3, 3, 2))
-3×3 Tensor{DenseLevel{Int64, SparseListLevel{Int64, Vector{Int64}, Vector{Int64}, ElementLevel{0.0, Float64, Int64, Vector{Float64}}}}}:
- 0.0  0.0  0.0
- 0.0  0.0  0.799269
- 0.0  0.0  0.924114
+julia> A = Tensor(CSCFormat(), [0 0 2 1; 0 0 1 0; 1 0 0 0])
+3×4 Tensor{DenseLevel{Int64, SparseListLevel{Int64, Vector{Int64}, Vector{Int64}, ElementLevel{0.0, Float64, Int64, Vector{Float64}}}}}:
+ 0.0  0.0  2.0  1.0
+ 0.0  0.0  1.0  0.0
+ 1.0  0.0  0.0  0.0
 
 julia> swizzle(A, 2, 1)
-3×3 Finch.SwizzleArray{(2, 1), Tensor{DenseLevel{Int64, SparseListLevel{Int64, Vector{Int64}, Vector{Int64}, ElementLevel{0.0, Float64, Int64, Vector{Float64}}}}}}:
- 0.0  0.0       0.0
- 0.0  0.0       0.0
- 0.0  0.799269  0.924114
+4×3 Finch.SwizzleArray{(2, 1), Tensor{DenseLevel{Int64, SparseListLevel{Int64, Vector{Int64}, Vector{Int64}, ElementLevel{0.0, Float64, Int64, Vector{Float64}}}}}}:
+ 0.0  0.0  1.0
+ 0.0  0.0  0.0
+ 2.0  1.0  0.0
+ 1.0  0.0  0.0
 
 julia> dropfills!(swizzle(Tensor(CSCFormat()), 2, 1), A)
-3×3 Finch.SwizzleArray{(2, 1), Tensor{DenseLevel{Int64, SparseListLevel{Int64, Vector{Int64}, Vector{Int64}, ElementLevel{0.0, Float64, Int64, Vector{Float64}}}}}}:
- 0.0  0.0  0.0
- 0.0  0.0  0.799269
- 0.0  0.0  0.924114
+3×4 Finch.SwizzleArray{(2, 1), Tensor{DenseLevel{Int64, SparseListLevel{Int64, Vector{Int64}, Vector{Int64}, ElementLevel{0.0, Float64, Int64, Vector{Float64}}}}}}:
+ 0.0  0.0  2.0  1.0
+ 0.0  0.0  1.0  0.0
+ 1.0  0.0  0.0  0.0
 
 ```
 

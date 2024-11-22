@@ -106,17 +106,17 @@ You can convert between tensor formats with the `Tensor` constructor. Simply con
 
 ```jldoctest tensorformats; setup = :(using Finch)
 # Create an empty 4x3 sparse matrix in CSC format
-julia> A = fsprand(3, 3, 2)
-3×3 Tensor{SparseCOOLevel{2, Tuple{Int64, Int64}, Vector{Int64}, Tuple{Vector{Int64}, Vector{Int64}}, ElementLevel{0.0, Float64, Int64, Vector{Float64}}}}:
- 0.0  0.0  0.0
- 0.0  0.0  0.616369
- 0.0  0.0  0.475751
+julia> A = Tensor(CSCFormat(), [0 0 2 1; 0 0 1 0; 1 0 0 0])
+3×4 Tensor{DenseLevel{Int64, SparseListLevel{Int64, Vector{Int64}, Vector{Int64}, ElementLevel{0.0, Float64, Int64, Vector{Float64}}}}}:
+ 0.0  0.0  2.0  1.0
+ 0.0  0.0  1.0  0.0
+ 1.0  0.0  0.0  0.0
 
 julia> B = Tensor(DCSCFormat(), A)
-3×3 Tensor{SparseListLevel{Int64, Vector{Int64}, Vector{Int64}, SparseListLevel{Int64, Vector{Int64}, Vector{Int64}, ElementLevel{0.0, Float64, Int64, Vector{Float64}}}}}:
- 0.0  0.0  0.0
- 0.0  0.0  0.616369
- 0.0  0.0  0.475751
+3×4 Tensor{SparseListLevel{Int64, Vector{Int64}, Vector{Int64}, SparseListLevel{Int64, Vector{Int64}, Vector{Int64}, ElementLevel{0.0, Float64, Int64, Vector{Float64}}}}}:
+ 0.0  0.0  2.0  1.0
+ 0.0  0.0  1.0  0.0
+ 1.0  0.0  0.0  0.0
 
 ```
 
@@ -131,34 +131,40 @@ swizzle
 ```
 
 ```jldoctest tensorformats; setup = :(using Finch)
-julia> A = Tensor(CSCFormat(), fsprand(3, 3, 2))
-3×3 Tensor{DenseLevel{Int64, SparseListLevel{Int64, Vector{Int64}, Vector{Int64}, ElementLevel{0.0, Float64, Int64, Vector{Float64}}}}}:
- 0.0  0.0  0.0
- 0.0  0.0  0.0459399
- 0.0  0.0  0.113917
+julia> A = Tensor(CSCFormat(), [0 0 2 1; 0 0 1 0; 1 0 0 0])
+3×4 Tensor{DenseLevel{Int64, SparseListLevel{Int64, Vector{Int64}, Vector{Int64}, ElementLevel{0.0, Float64, Int64, Vector{Float64}}}}}:
+ 0.0  0.0  2.0  1.0
+ 0.0  0.0  1.0  0.0
+ 1.0  0.0  0.0  0.0
 
 julia> tensor_tree(swizzle(A, 2, 1))
 SwizzleArray (2, 1)
-└─ 3×3-Tensor
-   └─ Dense [:,1:3]
+└─ 3×4-Tensor
+   └─ Dense [:,1:4]
       ├─ [:, 1]: SparseList (0.0) [1:3]
+      │  └─ [3]: 1.0
       ├─ [:, 2]: SparseList (0.0) [1:3]
-      └─ [:, 3]: SparseList (0.0) [1:3]
-         ├─ [2]: 0.0459399
-         └─ [3]: 0.113917
+      ├─ [:, 3]: SparseList (0.0) [1:3]
+      │  ├─ [1]: 2.0
+      │  └─ [2]: 1.0
+      └─ [:, 4]: SparseList (0.0) [1:3]
+         └─ [1]: 1.0
 
 julia> tensor_tree(permutedims(A, (2, 1)))
-3×3-Tensor
+4×3-Tensor
 └─ SparseDict (0.0) [:,1:3]
-   ├─ [:, 2]: SparseDict (0.0) [1:3]
-   │  └─ [3]: 0.0459399
-   └─ [:, 3]: SparseDict (0.0) [1:3]
-      └─ [3]: 0.113917
+   ├─ [:, 1]: SparseDict (0.0) [1:4]
+   │  ├─ [3]: 2.0
+   │  └─ [4]: 1.0
+   ├─ [:, 2]: SparseDict (0.0) [1:4]
+   │  └─ [3]: 1.0
+   └─ [:, 3]: SparseDict (0.0) [1:4]
+      └─ [1]: 1.0
 
 julia> dropfills!(swizzle(Tensor(CSCFormat()), 2, 1), A)
-3×3 Finch.SwizzleArray{(2, 1), Tensor{DenseLevel{Int64, SparseListLevel{Int64, Vector{Int64}, Vector{Int64}, ElementLevel{0.0, Float64, Int64, Vector{Float64}}}}}}:
- 0.0  0.0  0.0
- 0.0  0.0  0.0459399
- 0.0  0.0  0.113917
+3×4 Finch.SwizzleArray{(2, 1), Tensor{DenseLevel{Int64, SparseListLevel{Int64, Vector{Int64}, Vector{Int64}, ElementLevel{0.0, Float64, Int64, Vector{Float64}}}}}}:
+ 0.0  0.0  2.0  1.0
+ 0.0  0.0  1.0  0.0
+ 1.0  0.0  0.0  0.0
 
 ```

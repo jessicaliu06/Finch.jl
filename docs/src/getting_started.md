@@ -11,7 +11,9 @@ You can create Finch tensors using the [`Tensor`](@ref) constructor, which close
 ```jldoctest tensorformats; setup = :(using Finch)
 # Create an empty 4x3 sparse matrix in CSC format
 julia> A = Tensor(CSCFormat(), 4, 3);
-julia> B = Tensor(COOFormat(2), A)
+
+julia> B = Tensor(COOFormat(2), A);
+
 ```
 
 Some pre-defined formats include:
@@ -71,7 +73,7 @@ julia> @einsum F[i, j, k] *= A[i, j] * B[j, k]
  0.0   4.0
  4.0  12.0
 
-julia> @einsum G[j, k] <<max>>= A[i, j] + B[j, i]
+julia> @einsum G[j, k] <<max>>= A[i, j] + B[j, k]
 ERROR: KeyError: key :k not found
 Stacktrace:
  [1] getindex(h::Dict{Symbol, Bool}, key::Symbol)

@@ -1,6 +1,6 @@
 countstored tests
 julia> A = Tensor(Dense(SparseList(Element(0.0))), [0.0 0.0 4.4; 1.1 0.0 0.0; 2.2 0.0 5.5; 3.3 0.0 0.0])
-4×3 Tensor{DenseLevel{Int32, SparseListLevel{Int32, Vector{Int32}, Vector{Int32}, ElementLevel{0.0, Float64, Int32, Vector{Float64}}}}}:
+4×3 Tensor{DenseLevel{Int64, SparseListLevel{Int64, Vector{Int64}, Vector{Int64}, ElementLevel{0.0, Float64, Int64, Vector{Float64}}}}}:
  0.0  0.0  4.4
  1.1  0.0  0.0
  2.2  0.0  5.5
@@ -8,7 +8,7 @@ julia> A = Tensor(Dense(SparseList(Element(0.0))), [0.0 0.0 4.4; 1.1 0.0 0.0; 2.
 julia> countstored(A)
 5
 julia> A = Tensor(SparseCOO{2}(Element(0.0)), [0.0 0.0 4.4; 1.1 0.0 0.0; 2.2 0.0 5.5; 3.3 0.0 0.0])
-4×3 Tensor{SparseCOOLevel{2, Tuple{Int32, Int32}, Vector{Int32}, Tuple{Vector{Int32}, Vector{Int32}}, ElementLevel{0.0, Float64, Int32, Vector{Float64}}}}:
+4×3 Tensor{SparseCOOLevel{2, Tuple{Int64, Int64}, Vector{Int64}, Tuple{Vector{Int64}, Vector{Int64}}, ElementLevel{0.0, Float64, Int64, Vector{Float64}}}}:
  0.0  0.0  4.4
  1.1  0.0  0.0
  2.2  0.0  5.5
@@ -16,7 +16,7 @@ julia> A = Tensor(SparseCOO{2}(Element(0.0)), [0.0 0.0 4.4; 1.1 0.0 0.0; 2.2 0.0
 julia> countstored(A)
 5
 julia> A = Tensor(Dense(Dense(Element(0.0))), [0.0 0.0 4.4; 1.1 0.0 0.0; 2.2 0.0 5.5; 3.3 0.0 0.0])
-4×3 Tensor{DenseLevel{Int32, DenseLevel{Int32, ElementLevel{0.0, Float64, Int32, Vector{Float64}}}}}:
+4×3 Tensor{DenseLevel{Int64, DenseLevel{Int64, ElementLevel{0.0, Float64, Int64, Vector{Float64}}}}}:
  0.0  0.0  4.4
  1.1  0.0  0.0
  2.2  0.0  5.5
@@ -24,7 +24,7 @@ julia> A = Tensor(Dense(Dense(Element(0.0))), [0.0 0.0 4.4; 1.1 0.0 0.0; 2.2 0.0
 julia> countstored(A)
 12
 julia> A = Tensor(SparseList(Dense(Element(0.0))), [0.0 0.0 4.4; 1.1 0.0 0.0; 2.2 0.0 5.5; 3.3 0.0 0.0])
-4×3 Tensor{SparseListLevel{Int32, Vector{Int32}, Vector{Int32}, DenseLevel{Int32, ElementLevel{0.0, Float64, Int32, Vector{Float64}}}}}:
+4×3 Tensor{SparseListLevel{Int64, Vector{Int64}, Vector{Int64}, DenseLevel{Int64, ElementLevel{0.0, Float64, Int64, Vector{Float64}}}}}:
  0.0  0.0  4.4
  1.1  0.0  0.0
  2.2  0.0  5.5

@@ -437,7 +437,7 @@ using Finch.FinchNotation: finch_unparse_program, @finch_program_instance
                     println(io)
                 end
 
-                @test check_output("interface/getindex.txt", String(take!(io)))
+                @test check_output("interface/getindex_$scheduler.txt", String(take!(io)))
             end
 
             let
@@ -452,7 +452,7 @@ using Finch.FinchNotation: finch_unparse_program, @finch_program_instance
                 @repl io A[9, :] = 1:12
                 @repl io AsArray(A)
 
-                @test check_output("interface/setindex.txt", String(take!(io)))
+                @test check_output("interface/setindex_$scheduler.txt", String(take!(io)))
             end
 
             let
@@ -468,7 +468,7 @@ using Finch.FinchNotation: finch_unparse_program, @finch_program_instance
                 @repl io E = ifelse.(A .== 0, 1, 2)
                 @repl io AsArray(E)
 
-                @test check_output("interface/broadcast.txt", String(take!(io)))
+                @test check_output("interface/broadcast_$scheduler.txt", String(take!(io)))
             end
 
             let
@@ -483,7 +483,7 @@ using Finch.FinchNotation: finch_unparse_program, @finch_program_instance
                 @repl io reduce(+, A, dims=(1,2))
                 @repl io reduce(+, A, dims=:)
 
-                @test check_output("interface/reduce.txt", String(take!(io)))
+                @test check_output("interface/reduce_$scheduler.txt", String(take!(io)))
             end
 
             let
@@ -499,7 +499,7 @@ using Finch.FinchNotation: finch_unparse_program, @finch_program_instance
                 @repl io A = Tensor(SparseList(Dense(Element(0.0))), [0.0 0.0 4.4; 1.1 0.0 0.0; 2.2 0.0 5.5; 3.3 0.0 0.0])
                 @repl io countstored(A)
 
-                @test check_output("interface/countstored.txt", String(take!(io)))
+                @test check_output("interface/countstored_$scheduler.txt", String(take!(io)))
             end
 
             let
@@ -515,7 +515,7 @@ using Finch.FinchNotation: finch_unparse_program, @finch_program_instance
                 @repl io A / 3
                 @repl io 3 / A
 
-                @test check_output("interface/asmd.txt", String(take!(io)))
+                @test check_output("interface/asmd_$scheduler.txt", String(take!(io)))
             end
 
             let

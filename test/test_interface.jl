@@ -187,7 +187,7 @@ using Finch.FinchNotation: finch_unparse_program, @finch_program_instance
             let
                 A_tns = Tensor(Dense(Dense(Dense(Element(0.0)))), zeros(3, 3, 3))
                 A_sw = swizzle(A_tns, 2, 3, 1)
-                A_tns == A_sw #fails
+                A_tns == A_sw
             end
 
             #https://github.com/finch-tensor/Finch.jl/issues/524

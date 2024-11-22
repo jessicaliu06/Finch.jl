@@ -3,6 +3,9 @@ mutable struct GalleyOptimizer
     verbose
 end
 
+Base.:(==)(a::GalleyOptimizer, b::GalleyOptimizer) = a.verbose == b.verbose && a.estimator == b.estimator
+Base.hash(a::GalleyOptimizer, h::UInt) = hash(GalleyOptimizer, hash(a.verbose, hash(a.estimator, h)))
+
 GalleyOptimizer(; verbose = false, estimator=DCStats) = GalleyOptimizer(estimator, verbose)
 
 function (ctx::GalleyOptimizer)(prgm)

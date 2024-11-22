@@ -56,10 +56,13 @@ Executes a logic program by compiling it with the given compiler `ctx`. Compiled
 codes are cached, and are only compiled once for each program with the same
 structure.
 """
-struct LogicExecutor
+@kwdef struct LogicExecutor
     ctx
     verbose
 end
+
+Base.:(==)(a::LogicExecutor, b::LogicExecutor) = a.ctx == b.ctx && a.verbose == b.verbose
+Base.hash(a::LogicExecutor, h::UInt) = hash(LogicExecutor, hash(a.ctx, hash(a.verbose, h)))
 
 LogicExecutor(ctx; verbose = false) = LogicExecutor(ctx, verbose)
 function set_options(ctx::LogicExecutor; verbose = ctx.verbose, kwargs...)

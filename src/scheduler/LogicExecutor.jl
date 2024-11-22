@@ -71,7 +71,7 @@ end
 
 codes = Dict()
 function (ctx::LogicExecutor)(prgm)
-    (f, code) = get!(codes, get_structure(prgm)) do
+    (f, code) = get!(codes, (ctx.ctx, get_structure(prgm))) do
         thunk = logic_executor_code(ctx.ctx, prgm)
         (eval(thunk), thunk)
     end

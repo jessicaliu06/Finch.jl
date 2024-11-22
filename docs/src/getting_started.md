@@ -74,22 +74,9 @@ julia> @einsum F[i, j, k] *= A[i, j] * B[j, k]
  4.0  12.0
 
 julia> @einsum G[j, k] <<max>>= A[i, j] + B[j, k]
-ERROR: KeyError: key :k not found
-Stacktrace:
- [1] getindex(h::Dict{Symbol, Bool}, key::Symbol)
-   @ Base ./dict.jl:477
- [2] #1983
-   @ ~/Projects/Finch.jl/src/interface/einsum.jl:54 [inlined]
- [3] ntuple
-   @ ./ntuple.jl:19 [inlined]
- [4] einsum(::Function, ::Finch.EinsumArgument{Float64, Finch.EinsumEagerStyle}, ::Symbol, ::Vararg{Symbol}; init::Float64)
-   @ Finch ~/Projects/Finch.jl/src/interface/einsum.jl:54
- [5] einsum(::Function, ::Finch.EinsumArgument{Float64, Finch.EinsumEagerStyle}, ::Symbol, ::Vararg{Symbol})
-   @ Finch ~/Projects/Finch.jl/src/interface/einsum.jl:53
- [6] macro expansion
-   @ ~/Projects/Finch.jl/src/interface/einsum.jl:125 [inlined]
- [7] top-level scope
-   @ none:1
+2×2 Tensor{DenseLevel{Int64, DenseLevel{Int64, ElementLevel{-Inf, Float64, Int64, Vector{Float64}}}}}:
+ 3.0  4.0
+ 6.0  7.0
 
 ```
 

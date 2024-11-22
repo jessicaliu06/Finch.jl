@@ -45,6 +45,14 @@ julia> map(x -> x^2, B)
  0.0  0.0  0.0   0.0   0.0  0.0
 ```
 
+# Einsum
+
+Finch also supports a highly general `@einsum` macro which supports any reduction over any simple pointwise array expression.
+
+```@docs
+@einsum
+```
+
 # Array Fusion
 
 Finch supports array fusion, which allows you to compose multiple array operations
@@ -80,7 +88,35 @@ lazy
 compute
 ```
 
-## The Galley Optimizer
+The `lazy` and `compute` functions allow the compiler to fuse operations together, resulting in asymptotically more efficient code.
+
+```julia
+julia> using BenchmarkTools
+
+julia> A = fsprand(1000, 1000, 100); B = Tensor(rand(1000, 1000)); C = Tensor(rand(1000, 1000));
+
+julia> @btime A .* (B * C);
+  145.940 ms (859 allocations: 7.69 MiB)
+
+julia> @btime compute(lazy(A) .* (lazy(B) * lazy(C)));
+  694.666 μs (712 allocations: 60.86 KiB)
+
+```
+
+## Optimizers
+
+Different optimizers can be used with `compute`, such as the state-of-the-art
+Galley optimizer, which can adapt to the sparsity patterns of the inputs. The
+optimizer can be set as an argument `ctx` to the `compute` function, or using
+`set_scheduler` or `with_scheduler`.
+
+```@docs
+set_scheduler
+with_scheduler
+default_scheduler
+```
+
+### The Galley Optimizer
 
 Galley is a cost-based optimizer for Finch's lazy evaluation interface based on techniques from database 
 query optimization. To use Galley, you just add the parameter `ctx=galley_optimizer()` to the `compute` 
@@ -88,59 +124,23 @@ function. While the default optimizer (`ctx=default_scheduler()`) makes decision
 the types of the inputs, Galley gathers statistics on their sparsity to make cost-based based optimization
 decisions.
 
-Consider the following set of small examples:
-
+```@docs
+galley_scheduler
 ```
-   N = 300
-   A = lazy(Tensor(Dense(SparseList(Element(0.0))), fsprand(N, N, .5)))
-   B = lazy(Tensor(Dense(SparseList(Element(0.0))), fsprand(N, N, .5)))
-   C = lazy(Tensor(Dense(SparseList(Element(0.0))), fsprand(N, N, .01)))
 
-   println("Galley: A * B * C")
-   empty!(Finch.codes)
-   @btime begin 
-      compute($A * $B * $C, ctx=galley_scheduler())
-   end
+```julia
+julia> A = fsprand(1000, 1000, 0.1); B = fsprand(1000, 1000, 0.1); C = fsprand(1000, 1000, 0.0001);
 
-   println("Galley: C * B * A")
-   empty!(Finch.codes)
-   @btime begin 
-      compute($C * $B * $A, ctx=galley_scheduler())
-   end
+julia> A = lazy(A); B = lazy(B); C = lazy(C);
 
-   println("Galley: sum(C * B * A)")
-   empty!(Finch.codes)
-   @btime begin 
-      compute(sum($C * $B * $A), ctx=galley_scheduler())
-   end
+julia> @btime compute(sum(A * B * C));
+  282.503 ms (1018 allocations: 184.43 MiB)
 
-   println("Finch: A * B * C")
-   empty!(Finch.codes)
-   @btime begin 
-      compute($A * $B * $C, ctx=Finch.default_scheduler())
-   end
+julia> @btime compute(sum(A * B * C), ctx=galley_scheduler());
+  152.792 μs (672 allocations: 28.81 KiB)
 
-   println("Finch: C * B * A")
-   empty!(Finch.codes)
-   @btime begin 
-      compute($C * $B * $A, ctx=Finch.default_scheduler())
-   end
-
-   println("Finch: sum(C * B * A)")
-   empty!(Finch.codes)
-   @btime begin 
-      compute(sum($C * $B * $A), ctx=Finch.default_scheduler())
-   end
 ```
 
 By taking advantage of the fact that C is highly sparse, Galley can better structure the computation. In the matrix chain multiplication,
 it always starts with the C,B matmul before multiplying with A. In the summation, it takes advantage of distributivity to pushing the reduction
 down to the inputs. It first sums over A and C, then multiplies those vectors with B.
-
-# Einsum
-
-Finch also supports a highly general `@einsum` macro which supports any reduction over any simple pointwise array expression.
-
-```@docs
-@einsum
-```

@@ -181,6 +181,9 @@ COMPUTE_QUERY := query(ALIAS, reformat(IMMEDIATE, arg::(REORDER | MAPREDUCE)))
     mode = :fast
 end
 
+Base.:(==)(a::LogicCompiler, b::LogicCompiler) = a.mode == b.mode
+Base.hash(a::LogicCompiler, h::UInt) = hash(LogicCompiler, hash(a.mode, h))
+
 function set_options(ctx::LogicCompiler; mode = ctx.mode, kwargs...)
     LogicCompiler(mode = mode)
 end

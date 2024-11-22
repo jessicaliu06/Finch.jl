@@ -128,6 +128,9 @@ COMPUTE_QUERY := query(ALIAS, reformat(IMMEDIATE, arg::(REORDER | MAPREDUCE)))
     mode = :fast
 end
 
+Base.:(==)(a::LogicInterpreter, b::LogicInterpreter) = a.verbose == b.verbose && a.mode == b.mode
+Base.hash(a::LogicInterpreter, h::UInt) = hash(LogicInterpreter, hash(a.verbose, hash(a.mode, h)))
+
 function set_options(ctx::LogicInterpreter; verbose = ctx.verbose, mode = ctx.mode, kwargs...)
     LogicInterpreter(verbose=verbose, mode=mode)
 end

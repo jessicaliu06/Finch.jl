@@ -639,6 +639,9 @@ struct DefaultLogicOptimizer
     ctx
 end
 
+Base.:(==)(a::DefaultLogicOptimizer, b::DefaultLogicOptimizer) = a.ctx == b.ctx
+Base.hash(a::DefaultLogicOptimizer, h::UInt) = hash(DefaultLogicOptimizer, hash(a.ctx, h))
+
 function (ctx::DefaultLogicOptimizer)(prgm)
     prgm = optimize(prgm)
     ctx.ctx(prgm)

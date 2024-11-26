@@ -50,31 +50,30 @@ function logic_executor_code(ctx, prgm)
 end
 
 """
-    LogicExecutor(ctx, verbose=false)
+    LogicExecutor(ctx, tag=:global, verbose=false)
 
 Executes a logic program by compiling it with the given compiler `ctx`. Compiled
 codes are cached, and are only compiled once for each program with the same
-structure.
+structure. The `tag` argument is used to distinguish between different
+use cases for the same program structure.
 """
-struct LogicExecutor
+@kwdef struct LogicExecutor
     ctx
     tag
     verbose
 end
 
-LogicExecutor(ctx; tag = -1, verbose = false) = LogicExecutor(ctx, tag, verbose)
-function set_options(ctx::LogicExecutor; tag = ctx.tag, verbose = ctx.verbose, kwargs...)
-    LogicExecutor(set_options(ctx.ctx; kwargs...), tag, verbose)
+Base.:(==)(a::LogicExecutor, b::LogicExecutor) = a.ctx == b.ctx && a.verbose == b.verbose
+Base.hash(a::LogicExecutor, h::UInt) = hash(LogicExecutor, hash(a.ctx, hash(a.verbose, h)))
+
+LogicExecutor(ctx; tag = :global, verbose = false) = LogicExecutor(ctx, tag, verbose)
+function set_options(ctx::LogicExecutor; verbose = ctx.verbose, kwargs...)
+    LogicExecutor(set_options(ctx.ctx; kwargs...), verbose)
 end
 
 codes = Dict()
 function (ctx::LogicExecutor)(prgm)
-    (f, code) = if tag == -1
-        # If no tag is used, default to no caching
-        thunk = logic_executor_code(ctx.ctx, prgm)
-        (eval(thunk), thunk)
-    else
-        get!(codes, (tag, get_structure(prgm))) do
+    (f, code) = get!(codes, (ctx.ctx, ctx.tag, get_structure(prgm))) do
             thunk = logic_executor_code(ctx.ctx, prgm)
             (eval(thunk), thunk)
         end

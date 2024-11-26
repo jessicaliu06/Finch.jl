@@ -3,6 +3,9 @@ mutable struct GalleyOptimizer
     verbose
 end
 
+Base.:(==)(a::GalleyOptimizer, b::GalleyOptimizer) = a.verbose == b.verbose && a.estimator == b.estimator
+Base.hash(a::GalleyOptimizer, h::UInt) = hash(GalleyOptimizer, hash(a.verbose, hash(a.estimator, h)))
+
 GalleyOptimizer(; verbose = false, estimator=DCStats) = GalleyOptimizer(estimator, verbose)
 
 function (ctx::GalleyOptimizer)(prgm)
@@ -32,13 +35,11 @@ function Finch.set_options(ctx::GalleyOptimizer; estimator=DCStats)
     return ctx
 end
 
-galley_scheduler(; verbose = false, estimator=DCStats) = Finch.LogicExecutor(GalleyOptimizer(verbose=verbose, estimator=estimator); verbose=verbose)
+"""
+    galley_scheduler(verbose = false, estimator=DCStats)
 
-# Roadmap:
-#   - Register Galley as a julia package (juliaregistrator, tagbot) @Kyle
-#   - Add Documentation in Finch (need simple shortcuts Compute(...,ctx=Galley())) @Willow
-#   - Add PythonPR to add compute() param for optimizers @Kyle
-#       - Discussion of adding Galley to python deps
-#       - Minimal param interface to enable Galley 
-#       - Get perftest file 
-#   - Add precompilation for Galley @Kyle
+The galley scheduler uses the sparsity patterns of the inputs to optimize the computation.
+The first set of inputs given to galley is used to optimize, and the `estimator` is used to
+estimate the sparsity of intermediate computations during optimization.
+"""
+galley_scheduler(; verbose = false, estimator=DCStats) = Finch.LogicExecutor(GalleyOptimizer(verbose=verbose, estimator=estimator); verbose=verbose)

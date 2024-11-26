@@ -467,6 +467,13 @@ is fused with the execution of `z + 1`.
 """
 lazy(arg) = LazyTensor(arg)
 
+"""
+    default_scheduler(;verbose=false)
+
+The default scheduler used by `compute` to execute lazy tensor programs.
+Fuses all pointwise expresions into reductions. Only fuses reductions
+into pointwise expressions when they are the only usage of the reduction.
+"""
 default_scheduler(;verbose=false) = LogicExecutor(DefaultLogicOptimizer(LogicCompiler()), verbose=verbose)
 
 """

@@ -45,6 +45,10 @@ function modify_protocols!(expr)
     conjuncts = [input.stats for input in inputs.conjuncts]
     disjuncts = [input.stats for input in inputs.disjuncts]
 
+    if length(conjuncts) == 0 && length(disjuncts) == 0
+        return
+    end
+
     # Start by initializing the protocol lists for each input
     for input in conjuncts
         get_def(input).index_protocols = [t_default for _ in get_index_order(input)]

@@ -487,7 +487,7 @@ program:
     - `tag=:global`: A tag to distinguish between different classes of inputs for the same program.
 """
 function fused(f, args...; kwargs...)
-    compute(f(map(LazyTensor, args...)), kwargs...)
+    compute(f(map(LazyTensor, args)...); kwargs...)
 end
 
 current_scheduler = Ref{Any}(default_scheduler())

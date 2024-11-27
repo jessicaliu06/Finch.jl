@@ -151,14 +151,14 @@ be useful to distinguish between different uses of the same function using the
 `tag` keyword argument to `compute` or `fuse`.  For example, we may wish to
 distinguish one spmv from another, as follows:
 
-```jldoctest example2
+```jldoctest example2; setup=:(using Finch)
 julia> A = rand(1000, 1000); B = rand(1000, 1000); C = fsprand(1000, 1000, 0.0001);
 
-julia> fused((A, B, C) -> C .* (A * B), tag=:very_sparse_sddmm);
+julia> fused((A, B, C) -> C .* (A * B), A, B, C, tag=:very_sparse_sddmm);
 
 julia> C = fsprand(1000, 1000, 0.9);
 
-julia> fused((A, B, C) -> C .* (A * B), tag=:very_dense_sddmm);
+julia> fused((A, B, C) -> C .* (A * B), A, B, C, tag=:very_dense_sddmm);
 
 ```
 

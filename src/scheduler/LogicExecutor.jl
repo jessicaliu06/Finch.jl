@@ -67,8 +67,8 @@ Base.:(==)(a::LogicExecutor, b::LogicExecutor) = a.ctx == b.ctx && a.verbose == 
 Base.hash(a::LogicExecutor, h::UInt) = hash(LogicExecutor, hash(a.ctx, hash(a.verbose, h)))
 
 LogicExecutor(ctx; tag = :global, verbose = false) = LogicExecutor(ctx, tag, verbose)
-function set_options(ctx::LogicExecutor; verbose = ctx.verbose, kwargs...)
-    LogicExecutor(set_options(ctx.ctx; kwargs...), verbose)
+function set_options(ctx::LogicExecutor; tag = ctx.tag, verbose = ctx.verbose, kwargs...)
+    LogicExecutor(set_options(ctx.ctx; kwargs...), tag, verbose)
 end
 
 codes = Dict()

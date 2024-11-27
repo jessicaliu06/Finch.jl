@@ -74,9 +74,8 @@ end
 codes = Dict()
 function (ctx::LogicExecutor)(prgm)
     (f, code) = get!(codes, (ctx.ctx, ctx.tag, get_structure(prgm))) do
-            thunk = logic_executor_code(ctx.ctx, prgm)
-            (eval(thunk), thunk)
-        end
+        thunk = logic_executor_code(ctx.ctx, prgm)
+        (eval(thunk), thunk)
     end
     if ctx.verbose
         println("Executing:")

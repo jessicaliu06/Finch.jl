@@ -2,7 +2,7 @@
 
 You can use Finch in other languages through interfaces like
 [julia.h](https://docs.julialang.org/en/v1/manual/embedding/) or
-[PyJulia](https://github.com/JuliaPy/pyjulia), but sparse arrays require special
+[juliacall](https://github.com/JuliaPy/PythonCall.jl), but sparse arrays require special
 considerations for converting between 0-indexed and 1-indexed arrays.
 
 ## 0-Index Compatibility

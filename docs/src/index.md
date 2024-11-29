@@ -121,7 +121,7 @@ Radha Patel, Willow Ahrens, Saman Amarasinghe.
 [The Continuous Tensor Abstraction: Where Indices are Real](https://arxiv.org/abs/2407.01742).
 Jaeyeon Won, Willow Ahrens, Joel S. Emer, Saman Amarasinghe.
 
-[Galley: Modern Query Optimization for Sparse Tensor Programs](https://arxiv.org/abs/2408.14706). [Galley.jl](https://github.com/kylebd99/Galley.jl).
+[Galley: Modern Query Optimization for Sparse Tensor Programs](https://arxiv.org/abs/2408.14706).
 Kyle Deeds, Willow Ahrens, Magda Balazinska, Dan Suciu.
 
 ## Contributing

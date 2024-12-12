@@ -35,7 +35,7 @@ end
 
 # The prefix cost is equal to the number of valid iterations times the number of tensors
 # which we need to access to handle that final iteration.
-function get_prefix_cost(new_prefix::Vector{IndexExpr},  conjunct_stats, disjunct_stats)
+function get_prefix_cost(new_prefix::Vector{IndexExpr},  output_vars, conjunct_stats, disjunct_stats)
     new_var = new_prefix[end]
     prefix_set = Set(new_prefix)
     rel_conjuncts = [stat for stat in conjunct_stats if !isempty(get_index_set(stat) ∩ prefix_set)]
@@ -64,5 +64,20 @@ function get_prefix_cost(new_prefix::Vector{IndexExpr},  conjunct_stats, disjunc
             lookup_factor += SeqReadCost
         end
     end
+
+
+    if output_vars isa Vector && new_var ∈ output_vars
+        new_var_idx = only(indexin([new_var], output_vars))
+        min_var_idx = minimum([x for x in indexin(vars, output_vars) if !isnothing(x)])
+        is_rand_write = new_var_idx != min_var_idx
+        if is_rand_write
+            lookup_factor += RandomWriteCost
+        else
+            lookup_factor += SeqWriteCost
+        end
+    else
+        lookup_factor += SeqWriteCost
+    end
+
     return lookups * lookup_factor
 end

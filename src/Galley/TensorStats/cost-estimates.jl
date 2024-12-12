@@ -64,10 +64,9 @@ function get_prefix_cost(new_prefix::Vector{IndexExpr},  output_vars, conjunct_s
         end
     end
 
-
     if output_vars isa Vector && new_var ∈ output_vars
         new_var_idx = only(indexin([new_var], output_vars))
-        min_var_idx = minimum([x for x in indexin(vars, output_vars) if !isnothing(x)])
+        min_var_idx = minimum([x for x in indexin(new_prefix, output_vars) if !isnothing(x)])
         is_rand_write = new_var_idx != min_var_idx
         if is_rand_write
             lookup_factor += RandomWriteCost

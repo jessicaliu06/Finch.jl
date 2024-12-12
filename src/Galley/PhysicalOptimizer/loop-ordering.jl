@@ -21,24 +21,28 @@ function cost_of_reformat(stat::TensorStats)
     end
 end
 
+function needs_reformat(stat::TensorStats, prefix::Vector{IndexExpr})
+    index_order = get_index_order(stat)
+    # Tensors are stored in column major, so we reverse the index order here
+    current_loop = 0
+    reformat = false
+    for idx in reverse(index_order)
+        idx_loop = Inf
+        if idx ∈ prefix
+            idx_loop = only(indexin([idx], prefix))
+        end
+        if idx_loop < current_loop
+            reformat = true
+        end
+        current_loop = idx_loop
+    end
+    return reformat
+end
+
 function get_reformat_set(input_stats::Vector{TensorStats}, prefix::Vector{IndexExpr})
     ref_set = Set()
     for i in eachindex(input_stats)
-        index_order = get_index_order(input_stats[i])
-        # Tensors are stored in column major, so we reverse the index order here
-        current_loop = 0
-        needs_reformat = false
-        for idx in reverse(index_order)
-            idx_loop = Inf
-            if idx ∈ prefix
-                idx_loop = only(indexin([idx], prefix))
-            end
-            if idx_loop < current_loop
-                needs_reformat = true
-            end
-            current_loop = idx_loop
-        end
-        needs_reformat && push!(ref_set, i)
+        needs_reformat(input_stats[i], prefix) && push!(ref_set, i)
     end
     return ref_set
 end
@@ -128,11 +132,10 @@ function get_join_loop_order_bounded(disjunct_and_conjunct_stats,
     optimal_plans = Dict{PLAN_CLASS, PLAN}()
     for var in all_vars
         prefix = [var]
-        v_set = Set(prefix)
         rf_set = get_reformat_set(transposable_stats, prefix)
         output_compat = get_output_compat(output_vars, prefix)
-        class = (v_set, output_compat, rf_set)
-        cost = get_prefix_cost(var, v_set, conjunct_stats, disjunct_stats)
+        class = (Set(prefix), output_compat, rf_set)
+        cost = get_prefix_cost(prefix, conjunct_stats, disjunct_stats)
         optimal_plans[class] = (prefix, cost)
     end
 
@@ -163,7 +166,7 @@ function get_join_loop_order_bounded(disjunct_and_conjunct_stats,
                 rf_set = get_reformat_set(transposable_stats, new_prefix)
                 output_compat = get_output_compat(output_vars, new_prefix)
                 new_plan_class = (new_prefix_set, output_compat, rf_set)
-                new_cost = get_prefix_cost(new_var, new_prefix_set, conjunct_stats, disjunct_stats) + cost
+                new_cost = get_prefix_cost(new_prefix, conjunct_stats, disjunct_stats) + cost
                 new_plan = (new_prefix, new_cost)
 
                 alt_cost = Inf

@@ -651,14 +651,14 @@
 
         @finch begin
             y .= 0
-            for j = parallel(_)
-                for i = _
-                    y[i] += A[i, j] * x[j]
+            for i = parallel(_)
+                for j = _
+                    y[i] += A[j, i] * x[j]
                 end
             end
         end
 
-        @test norm(y - A * x) / norm(A * x) < 1e-10
+        @test norm(y - permutedims(A) * x) / norm(permutedims(A) * x) < 1e-10
 
     end
 end

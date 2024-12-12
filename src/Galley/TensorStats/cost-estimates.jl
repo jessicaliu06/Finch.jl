@@ -46,7 +46,6 @@ function get_prefix_cost(new_prefix::Vector{IndexExpr},  output_vars, conjunct_s
         if new_var ∉ get_index_set(stat)
             continue
         end
-        prev_lookup_factor = lookup_factor
         if isnothing(get_index_order(stat)) || needs_reformat(stat, new_prefix)
             rel_vars = get_index_set(stat) ∩ prefix_set
             approx_sparsity = estimate_nnz(stat; indices=rel_vars, conditional_indices=setdiff(rel_vars, [new_var])) / get_dim_size(stat, new_var)

@@ -48,22 +48,29 @@ function Finch.set_options(ctx::GalleyOptimizer; estimator=DCStats, verbose=fals
 end
 
 """
-    galley_scheduler(verbose = false, estimator=DCStats)
+    get_stats_dict(ctx::GalleyOptimizer, prgm)
 
-The galley scheduler uses the sparsity patterns of the inputs to optimize the computation.
-The first set of inputs given to galley is used to optimize, and the `estimator` is used to
-estimate the sparsity of intermediate computations during optimization.
+Returns a dictionary mapping the location of input tensors in the program to their statistics objects.
 """
-galley_scheduler(; verbose = false, estimator=DCStats) = GalleyExecutor(GalleyOptimizer(verbose=verbose, estimator=estimator); verbose=verbose)
-
+function get_stats_dict(ctx::GalleyOptimizer, prgm)
+    deferred_prgm = Finch.defer_tables(:prgm, prgm)
+    expr_stats_dict = Dict()
+    for node in PostOrderDFS(deferred_prgm)
+        if node.kind == table
+            expr_stats_dict[node.tns.ex] = ctx.estimator(node.tns.imm, [i.name for i in node.idxs])
+        end
+    end
+    return expr_stats_dict
+end
 
 """
     GalleyExecutor(ctx::GalleyOptimizer, tag=:global, verbose=false)
 
 Executes a logic program by compiling it with the given compiler `ctx`. Compiled
-codes are cached, and are only compiled once for each program with the same
-structure. The `tag` argument is used to distinguish between different
-use cases for the same program structure.
+codes are cached for each program structure. If the 'tag' argument is ':global', it maintains a set of plans 
+for inputs with different sparsity structures. In this case, it first checks the cache for a plan that
+was compiled for similar inputs and only compiles if it doesn't find one. If the `tag` argument is anything else,
+it will only compile once for that tag and will skip this search process.
 """
 @kwdef struct GalleyExecutor
     ctx::GalleyOptimizer
@@ -77,18 +84,6 @@ Base.hash(a::GalleyExecutor, h::UInt) = hash(GalleyExecutor, hash(a.ctx, hash(a.
 GalleyExecutor(ctx::GalleyOptimizer; tag = :global, verbose = false) = GalleyExecutor(ctx, tag, verbose)
 function Finch.set_options(ctx::GalleyExecutor; tag = ctx.tag, verbose = ctx.verbose, kwargs...)
     GalleyExecutor(Finch.set_options(ctx.ctx; kwargs...), tag, verbose)
-end
-
-# To make sure that "similar" tensors get "similar"
-function get_stats_dict(ctx::GalleyOptimizer, prgm)
-    deferred_prgm = Finch.defer_tables(:prgm, prgm)
-    expr_stats_dict = Dict()
-    for node in PostOrderDFS(deferred_prgm)
-        if node.kind == table
-            expr_stats_dict[node.tns.ex] = ctx.estimator(node.tns.imm, [i.name for i in node.idxs])
-        end
-    end
-    return expr_stats_dict
 end
 
 galley_codes = Dict()
@@ -133,3 +128,13 @@ end
 function (ctx::GalleyExecutorCode)(prgm)
     return Finch.logic_executor_code(ctx.ctx, prgm)
 end
+
+"""
+    galley_scheduler(verbose = false, estimator=DCStats)
+
+The galley scheduler uses the sparsity patterns of the inputs to optimize the computation.
+The first set of inputs given to galley is used to optimize, and the `estimator` is used to
+estimate the sparsity of intermediate computations during optimization.
+"""
+galley_scheduler(; verbose = false, estimator=DCStats) = GalleyExecutor(GalleyOptimizer(verbose=verbose, estimator=estimator); verbose=verbose)
+

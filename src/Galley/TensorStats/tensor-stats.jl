@@ -141,6 +141,12 @@ copy_stats(stat::Nothing) = nothing
 end
 
 get_def(stat::NaiveStats) = stat.def
+get_cannonical_stats(stat::NaiveStats, rel_granularity=4) = NaiveStats(copy_def(stat.def), geometric_round(rel_granularity, stat.cardinality))
+
+# This function assumes that stat1 and stat2 have ONLY differ in the value of their DCs.
+function issimilar(stat1::NaiveStats, stat2::NaiveStats, rel_granularity)
+    return abs(log(rel_granularity, stat1.cardinality) - log(rel_granularity, stat2.cardinality)) <= 1
+end
 
 function estimate_nnz(stat::NaiveStats; indices = get_index_set(stat), conditional_indices=Set{IndexExpr}())
     return stat.cardinality / get_dim_space_size(stat, conditional_indices)
@@ -244,6 +250,41 @@ end
 
 copy_stats(stat::DCStats) = DCStats(copy_def(stat.def), copy(stat.idx_2_int), copy(stat.int_2_idx),  Set{DC}(dc for dc in stat.dcs))
 DCStats(x) = DCStats(TensorDef(x), Dict{IndexExpr, Int}(), Dict{Int, IndexExpr}(), Set{DC}())
+
+# Return a stats object where values have been geometrically rounded.
+function get_cannonical_stats(stat::DCStats, rel_granularity=4)
+    new_dcs = Set{DC}()
+    for dc in stat.dcs
+        push!(new_dcs, DC(dc.X, dc.Y, geometric_round(rel_granularity, dc.d)))
+    end
+    return DCStats(copy_def(stat.def), copy(stat.idx_2_int), copy(stat.int_2_idx), new_dcs)
+end 
+
+# Check whether two tensors have similar sparsity distributions.
+# This function assumes that stat1 and stat2 have ONLY differ in the value of their DCs.
+function issimilar(stat1::DCStats, stat2::DCStats, rel_granularity)
+    if length(stat1.dcs) < 50
+        for dc1 in stat1.dcs
+            for dc2 in stat2.dcs
+                if dc1.X == dc2.X && dc1.Y == dc2.Y && abs(log(rel_granularity, dc1.d) - log(rel_granularity, dc2.d)) > 1
+                    return false
+                end
+            end
+        end
+    else
+        dc_dict = Dict{DCKey}()
+        for dc1 in stat1.dcs
+            dc_dict[get_dc_key(dc1)] = dc1.d
+        end
+        for dc2 in stat2.dcs 
+            if abs(log(rel_granularity, dc_dict[get_dc_key(dc2)]) - log(rel_granularity, dc2.d)) > 1
+                return false
+            end
+        end
+    end
+    return true
+end
+
 get_def(stat::DCStats) = stat.def
 get_index_bitset(stat::DCStats) = SmallBitSet(Int[stat.idx_2_int[x] for x in get_index_set(stat)])
 
@@ -454,13 +495,23 @@ function _vector_structure_to_dcs(indices::Vector{Int}, s::Tensor)
 end
 
 function _matrix_structure_to_dcs(indices::Vector{Int}, s::Tensor)
-    X = Tensor(Dense(Element(0)))
-    Y = Tensor(Dense(Element(0)))
+    n_j, n_i = size(s)
+    d_ij = Scalar(0)
+    @finch begin
+        d_ij .= 0
+        for i =_
+            for j =_
+                d_ij[] += s[j, i]
+            end
+        end
+    end
+
+    X = d_ij[]/n_i < .1 ? Tensor(SparseList(Element(0))) : Tensor(Dense(Element(0)))
+    Y = d_ij[]/n_j < .1 ? Tensor(Sparse(Element(0))) : Tensor(Dense(Element(0)))
     d_i = Scalar(0)
     d_j = Scalar(0)
     d_i_j = Scalar(0)
     d_j_i = Scalar(0)
-    d_ij = Scalar(0)
     @finch begin
         X .= 0
         Y .= 0
@@ -472,11 +523,9 @@ function _matrix_structure_to_dcs(indices::Vector{Int}, s::Tensor)
         end
         d_i .= 0
         d_i_j .= 0
-        d_ij .= 0
         for i=_
             d_i[] += X[i] > 0
             d_i_j[] <<max>>= X[i]
-            d_ij[] += X[i]
         end
         d_j .= 0
         d_j_i .= 0
@@ -496,9 +545,22 @@ function _matrix_structure_to_dcs(indices::Vector{Int}, s::Tensor)
 end
 
 function _3d_structure_to_dcs(indices::Vector{Int}, s::Tensor)
-    X = Tensor(Dense(Element(0)))
-    Y = Tensor(Dense(Element(0)))
-    Z = Tensor(Dense(Element(0)))
+    n_k, n_j, n_i = size(s)
+    d_ijk = Scalar(0)
+    @finch begin
+        d_ijk .= 0
+        for i =_
+            for j =_
+                for k =_
+                    d_ijk[] += s[k, j, i]
+                end
+            end
+        end
+    end
+    X = d_ijk[]/n_i < .1 ? Tensor(SparseList(Element(0))) : Tensor(Dense(Element(0)))
+    Y = d_ijk[]/n_j < .1 ? Tensor(Sparse(Element(0))) : Tensor(Dense(Element(0)))
+    X = d_ijk[]/n_k < .1 ? Tensor(Sparse(Element(0))) : Tensor(Dense(Element(0)))
+
     d_i = Scalar(0)
     d_j = Scalar(0)
     d_k = Scalar(0)
@@ -557,10 +619,25 @@ end
 
 
 function _4d_structure_to_dcs(indices::Vector{Int}, s::Tensor)
-    X = Tensor(Dense(Element(0)))
-    Y = Tensor(Dense(Element(0)))
-    Z = Tensor(Dense(Element(0)))
-    U = Tensor(Dense(Element(0)))
+    n_l, n_k, n_j, n_i = size(s)
+    d_ijkl = Scalar(0)
+    @finch begin
+        d_ijk .= 0
+        for i =_
+            for j =_
+                for k =_
+                    for l =_
+                        d_ijkl[] += s[l, k, j, i]
+                    end
+                end
+            end
+        end
+    end
+    X = d_ijkl[]/n_i < .1 ? Tensor(SparseList(Element(0))) : Tensor(Dense(Element(0)))
+    Y = d_ijkl[]/n_j < .1 ? Tensor(Sparse(Element(0))) : Tensor(Dense(Element(0)))
+    X = d_ijkl[]/n_k < .1 ? Tensor(Sparse(Element(0))) : Tensor(Dense(Element(0)))
+    U = d_ijkl[]/n_l < .1 ? Tensor(Sparse(Element(0))) : Tensor(Dense(Element(0)))
+
     d_i = Scalar(0)
     d_j = Scalar(0)
     d_k = Scalar(0)

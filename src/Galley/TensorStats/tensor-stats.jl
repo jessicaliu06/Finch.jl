@@ -161,7 +161,10 @@ copy_stats(stat::NaiveStats) = NaiveStats(copy_def(stat.def), stat.cardinality)
 
 NaiveStats(index_set, dim_sizes, cardinality, default_value) = NaiveStats(TensorDef(index_set, dim_sizes, default_value, nothing), cardinality)
 
-function NaiveStats(tensor::Tensor, indices)
+function NaiveStats(tensor, indices)
+    if !(tensor isa Tensor)
+        tensor = Tensor(tensor)
+    end
     def = TensorDef(tensor, indices)
     cardinality = countstored(tensor)
     return NaiveStats(def, cardinality)
@@ -746,7 +749,10 @@ function dense_dcs(def, int_2_idx, indices::Vector{Int})
     return dcs
 end
 
-function DCStats(tensor::Tensor, indices)
+function DCStats(tensor, indices)
+    if !(tensor isa Tensor)
+        tensor = Tensor(tensor)
+    end
     def = TensorDef(tensor, indices)
     idx_2_int = Dict{IndexExpr, Int}()
     int_2_idx = Dict{Int, IndexExpr}()

@@ -138,6 +138,15 @@ copy_stats(stat::Nothing) = nothing
 @auto_hash_equals mutable struct NaiveStats <: TensorStats
     def::TensorDef
     cardinality::Float64
+
+    function NaiveStats(tensor, indices)
+        if !(tensor isa Tensor)
+            tensor = Tensor(tensor)
+        end
+        def = TensorDef(tensor, indices)
+        cardinality = countstored(tensor)
+        return new(def, cardinality)
+    end
 end
 
 get_def(stat::NaiveStats) = stat.def
@@ -161,14 +170,6 @@ copy_stats(stat::NaiveStats) = NaiveStats(copy_def(stat.def), stat.cardinality)
 
 NaiveStats(index_set, dim_sizes, cardinality, default_value) = NaiveStats(TensorDef(index_set, dim_sizes, default_value, nothing), cardinality)
 
-function NaiveStats(tensor, indices)
-    if !(tensor isa Tensor)
-        tensor = Tensor(tensor)
-    end
-    def = TensorDef(tensor, indices)
-    cardinality = countstored(tensor)
-    return NaiveStats(def, cardinality)
-end
 
 function NaiveStats(x)
     def = TensorDef(Set{IndexExpr}(), Dict{IndexExpr, Int}(), x, nothing, nothing, nothing)
@@ -185,49 +186,6 @@ end
 
 function add_dummy_idx!(stats::NaiveStats, i::IndexExpr; idx_pos = -1)
     add_dummy_idx!(stats.def, i, idx_pos=idx_pos)
-end
-
-#################  DSStats Definition ######################################################
-
-struct DegreeSequenceConstraint
-    X::Set{IndexExpr}
-    Y::Set{IndexExpr}
-    f::Vector{UInt128}
-    F::Vector{UInt128}
-    r::Vector{UInt128}
-end
-DS = DegreeSequenceConstraint
-
-function get_ds_key(ds::DegreeSequenceConstraint)
-    return (X=ds.X, Y=ds.Y)
-end
-
-@auto_hash_equals mutable struct DSStats <: TensorStats
-    def::TensorDef
-    dss::Set{DS}
-end
-
-copy_stats(stat::DSStats) = DSStats(copy_def(stat.def),  Set{DS}(dc for dc in stat.dcs))
-DSStats(x::Number) = DSStats(TensorDef(x::Number), Set{DS}())
-get_def(stat::DSStats) = stat.def
-
-function fix_cardinality!(stat::DSStats, card)
-    return stat # TODO
-end
-
-function infer_ds(l_AB::DS, l_BA::DS, r_BC::DS, all_dss, new_dss)
-    if l_BA.X ⊇ r_BC.X && l_AB.X == l_BA.Y && l_AB.X == l_BA.Y
-        new_key = (X = l.X, Y = setdiff(∪(l.Y, r.Y), l.X))
-        new_degree = ld*rd
-        if get(all_dcs, new_key, Inf) > new_degree &&
-                get(new_dcs, new_key, Inf) > new_degree
-            new_dcs[new_key] = new_degree
-        end
-    end
-end
-
-function estimate_nnz(stat::DSStats; indices = get_index_set(stat), conditional_indices=Set{IndexExpr}())
-
 end
 
 #################  DCStats Definition ######################################################
@@ -248,6 +206,27 @@ end
     idx_2_int::Dict{IndexExpr, Int}
     int_2_idx::Dict{Int, IndexExpr}
     dcs::Set{DC}
+
+    DCStats(def, idx_2_int, int_2_idx, dcs) = new(def, idx_2_int, int_2_idx, dcs)
+
+    function DCStats(tensor, indices)
+        if !(tensor isa Tensor)
+            tensor = Tensor(tensor)
+        end
+        def = TensorDef(tensor, indices)
+        idx_2_int = Dict{IndexExpr, Int}()
+        int_2_idx = Dict{Int, IndexExpr}()
+        for (i, idx) in enumerate(Set(indices))
+            idx_2_int[idx] = i
+            int_2_idx[i] = idx
+        end
+        if all([f==t_dense for f in get_index_formats(def)])
+            return new(def, idx_2_int, int_2_idx, dense_dcs(def, int_2_idx, [idx_2_int[i] for i in indices]))
+        end
+        sparsity_structure = pattern!(tensor)
+        dcs = _structure_to_dcs(int_2_idx, [idx_2_int[i] for i in indices], sparsity_structure)
+        return new(def, idx_2_int, int_2_idx, dcs)
+    end
 end
 
 
@@ -747,25 +726,6 @@ function dense_dcs(def, int_2_idx, indices::Vector{Int})
         end
     end
     return dcs
-end
-
-function DCStats(tensor, indices)
-    if !(tensor isa Tensor)
-        tensor = Tensor(tensor)
-    end
-    def = TensorDef(tensor, indices)
-    idx_2_int = Dict{IndexExpr, Int}()
-    int_2_idx = Dict{Int, IndexExpr}()
-    for (i, idx) in enumerate(Set(indices))
-        idx_2_int[idx] = i
-        int_2_idx[i] = idx
-    end
-    if all([f==t_dense for f in get_index_formats(def)])
-        return DCStats(def, idx_2_int, int_2_idx, dense_dcs(def, int_2_idx, [idx_2_int[i] for i in indices]))
-    end
-    sparsity_structure = pattern!(tensor)
-    dcs = _structure_to_dcs(int_2_idx, [idx_2_int[i] for i in indices], sparsity_structure)
-    return DCStats(def, idx_2_int, int_2_idx, dcs)
 end
 
 function reindex_stats(stats::DCStats, indices)

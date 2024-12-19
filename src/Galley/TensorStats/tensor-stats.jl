@@ -50,7 +50,7 @@ function TensorDef(tensor::Tensor, indices)
     shape_tuple = size(tensor)
     level_formats = get_tensor_formats(tensor::Tensor)
     dim_size = Dict{IndexExpr, UInt128}(indices[i]=>shape_tuple[i] for i in 1:length(size(tensor)))
-    default_value = Finch.default(tensor)
+    default_value = Finch.fill_value(tensor)
     return TensorDef(Set{IndexExpr}(indices), dim_size, default_value, level_formats, indices, nothing)
 end
 
@@ -559,7 +559,7 @@ function _3d_structure_to_dcs(indices::Vector{Int}, s::Tensor)
     end
     X = d_ijk[]/n_i < .1 ? Tensor(SparseList(Element(0))) : Tensor(Dense(Element(0)))
     Y = d_ijk[]/n_j < .1 ? Tensor(Sparse(Element(0))) : Tensor(Dense(Element(0)))
-    X = d_ijk[]/n_k < .1 ? Tensor(Sparse(Element(0))) : Tensor(Dense(Element(0)))
+    Z = d_ijk[]/n_k < .1 ? Tensor(Sparse(Element(0))) : Tensor(Dense(Element(0)))
 
     d_i = Scalar(0)
     d_j = Scalar(0)
@@ -635,7 +635,7 @@ function _4d_structure_to_dcs(indices::Vector{Int}, s::Tensor)
     end
     X = d_ijkl[]/n_i < .1 ? Tensor(SparseList(Element(0))) : Tensor(Dense(Element(0)))
     Y = d_ijkl[]/n_j < .1 ? Tensor(Sparse(Element(0))) : Tensor(Dense(Element(0)))
-    X = d_ijkl[]/n_k < .1 ? Tensor(Sparse(Element(0))) : Tensor(Dense(Element(0)))
+    Z = d_ijkl[]/n_k < .1 ? Tensor(Sparse(Element(0))) : Tensor(Dense(Element(0)))
     U = d_ijkl[]/n_l < .1 ? Tensor(Sparse(Element(0))) : Tensor(Dense(Element(0)))
 
     d_i = Scalar(0)

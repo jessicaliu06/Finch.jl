@@ -139,6 +139,10 @@ copy_stats(stat::Nothing) = nothing
     def::TensorDef
     cardinality::Float64
 
+    function NaiveStats(def::TensorDef, cardinality)
+        return new(def, cardinality)
+    end
+
     function NaiveStats(tensor, indices)
         if !(tensor isa Tensor)
             tensor = Tensor(tensor)

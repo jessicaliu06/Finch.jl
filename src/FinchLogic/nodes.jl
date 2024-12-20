@@ -352,7 +352,7 @@ function Base.:(==)(a::LogicNode, b::LogicNode)
     elseif a.kind === immediate
         return b.kind === immediate && a.val === b.val
     elseif a.kind === deferred
-        return b.kind === deferred && a.val === b.val && a.type === b.type
+        return b.kind === deferred && a.ex === b.ex && a.type === b.type
     elseif a.kind === field
         return b.kind === field && a.name == b.name
     elseif a.kind === alias

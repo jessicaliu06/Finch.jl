@@ -370,7 +370,7 @@ function Base.hash(a::LogicNode, h::UInt)
     elseif istree(a)
         return hash(a.kind, hash(a.children, h))
     elseif a.kind === deferred
-        return hash(a.kind, hash(a.val, hash(a.type, h)))
+        return hash(a.kind, hash(a.ex, hash(a.type, h)))
     else
         error("unimplemented")
     end

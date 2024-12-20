@@ -83,7 +83,7 @@ Base.hash(a::GalleyExecutor, h::UInt) = hash(GalleyExecutor, hash(a.ctx, hash(a.
 
 GalleyExecutor(ctx::GalleyOptimizer; tag = :global, verbose = false) = GalleyExecutor(ctx, tag, verbose)
 function Finch.set_options(ctx::GalleyExecutor; tag = ctx.tag, verbose = ctx.verbose, kwargs...)
-    GalleyExecutor(Finch.set_options(ctx.ctx; kwargs...), tag, verbose)
+    GalleyExecutor(Finch.set_options(ctx.ctx; verbose=verbose, kwargs...), tag, verbose)
 end
 
 galley_codes = Dict()
@@ -136,5 +136,5 @@ The galley scheduler uses the sparsity patterns of the inputs to optimize the co
 The first set of inputs given to galley is used to optimize, and the `estimator` is used to
 estimate the sparsity of intermediate computations during optimization.
 """
-galley_scheduler(; verbose = false, estimator=DCStats) = GalleyExecutor(GalleyOptimizer(verbose=verbose, estimator=estimator); verbose=verbose)
+galley_scheduler(;verbose=false) = GalleyExecutor(GalleyOptimizer(;verbose=false); verbose=false)
 

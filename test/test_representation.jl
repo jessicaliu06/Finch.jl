@@ -113,8 +113,8 @@
                         show(io, @finch_code (res .= 0; for i=_; res[i] = tmp[i] end))
                         io
                     end
-                    key = typeof((res, tmp, ref))
-                    if !(key in compiled)
+                    roundtrip_key = typeof((res, tmp, ref))
+                    if !(roundtrip_key in compiled)
                         eval(@finch_kernel function roundtrip(res, tmp, ref)
                             tmp .= 0
                             for i = _
@@ -126,7 +126,7 @@
                             end
                             return res
                         end)
-                        push!(compiled, key)
+                        push!(compiled, roundtrip_key)
                     end
                     res = roundtrip(res, tmp, ref).res
                     @test size(res) == size(ref)
@@ -200,8 +200,8 @@
                 ref = dropfills!(ref, arr)
                 tmp = Tensor(lvl.Lvl(leaf()))
                 @testset "convert $(key) $(lvl.key)(Element())" begin
-                    key = typeof((res, tmp, ref))
-                    if !(key in compiled)
+                    roundtrip_key = typeof((res, tmp, ref))
+                    if !(roundtrip_key in compiled)
                         eval(@finch_kernel function roundtrip(res, tmp, ref)
                             tmp .= 0
                             for j=_, i=_
@@ -213,7 +213,7 @@
                             end
                             return res
                         end)
-                        push!(compiled, key)
+                        push!(compiled, roundtrip_key)
                     end
                     res = roundtrip(res, tmp, ref).res
                     @test size(res) == size(ref)

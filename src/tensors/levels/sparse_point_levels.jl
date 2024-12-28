@@ -1,5 +1,5 @@
 """
-    SparsePointLevel{[Ti=Int], [Ptr, Idx]}(lvl, [dim])
+    SparsePointLevel{[Ti=Int], [Idx]}(lvl, [dim])
 
 A subfiber of a SparsePoint level does not need to represent slices `A[:, ..., :, i]`
 which are entirely [`fill_value`](@ref). Instead, only potentially non-fill
@@ -15,16 +15,16 @@ julia> tensor_tree(Tensor(Dense(SparsePoint(Element(0.0))), [10 0 0; 0 20 0; 0 0
 3×3-Tensor
 └─ Dense [:,1:3]
    ├─ [:, 1]: SparsePoint (0.0) [1:3]
-   │  └─ 10.0
+   │  └─ [1]: 10.0
    ├─ [:, 2]: SparsePoint (0.0) [1:3]
-   │  └─ 20.0
+   │  └─ [2]: 20.0
    └─ [:, 3]: SparsePoint (0.0) [1:3]
-      └─ 30.0
+      └─ [3]: 30.0
 
 julia> tensor_tree(Tensor(SparsePoint(Dense(Element(0.0))), [0 0 0; 0 0 30; 0 0 30]))
 3×3-Tensor
 └─ SparsePoint (0.0) [:,1:3]
-   └─ Dense [1:3]
+   └─ [:, 3]: Dense [1:3]
       ├─ [1]: 0.0
       ├─ [2]: 30.0
       └─ [3]: 30.0
@@ -188,8 +188,8 @@ function assemble_level!(ctx, lvl::VirtualSparsePointLevel, pos_start, pos_stop)
     pos_stop = cache!(ctx, :p_start, pos_stop)
     Ti = lvl.Ti
     return quote
-        Finch.resize_if_smaller!($(lvl.idx), $(ctx(pos_stop)) + 1)
-        Finch.fill_range!($(lvl.idx), $(Ti(0)), $(ctx(pos_start)) + 1, $(ctx(pos_stop)) + 1)
+        Finch.resize_if_smaller!($(lvl.idx), $(ctx(pos_stop)))
+        Finch.fill_range!($(lvl.idx), $(Ti(0)), $(ctx(pos_start)), $(ctx(pos_stop)))
         $(assemble_level!(ctx, lvl.lvl, pos_start, pos_stop))
     end
 end

@@ -26,18 +26,12 @@ for (scheduler_name, scheduler) in [
 ]
     Finch.with_scheduler(scheduler) do
         let
-            k = Ref(0.0)
             A = Tensor(Dense(Sparse(Element(0.0))), fsprand(10000, 10000, 0.01))
-            x = rand(1)
-            y = rand(1)
             SUITE["high-level"]["permutedims(Dense(Sparse()))"][scheduler_name] = @benchmarkable(permutedims($A, (2, 1)))
         end
 
         let
-            k = Ref(0.0)
             A = Tensor(Dense(Dense(Element(0.0))), rand(10000, 10000))
-            x = rand(1)
-            y = rand(1)
             SUITE["high-level"]["permutedims(Dense(Dense()))"][scheduler_name] = @benchmarkable(permutedims($A, (2, 1)))
         end
 
@@ -55,6 +49,28 @@ for (scheduler_name, scheduler) in [
         end
 
         let
+            N = 10
+            P = 0.0001
+            C = 16.0
+            SUITE["high-level"]["einsum_matmul_adaptive_overhead"][scheduler_name] = @benchmarkable(
+                begin
+                    @einsum C[i, j] += A[i, k] * B[k, j]
+                end,
+                setup = begin
+                    (N, P, C) = ($N, $P, $C)
+                    n = floor(Int, N * C^(rand()))
+                    m = floor(Int, N * C^(rand()))
+                    l = floor(Int, N * C^(rand()))
+                    p = floor(Int, P * C^(rand()))
+                    q = floor(Int, P * C^(rand()))
+                    A = fsprand(n, l, p)
+                    B = fsprand(l, m, q)
+                end,
+                evals = 1
+            )
+        end
+
+        let
             A = Tensor(Dense(SparseList(Element(0.0))), fsprand(1, 1, 1))
             x = rand(1)
             SUITE["high-level"]["einsum_spmv_call_overhead"][scheduler_name] = @benchmarkable(
@@ -64,35 +80,36 @@ for (scheduler_name, scheduler) in [
                 end,
             )
         end
+
+        let
+            N = 1_000
+            K = 1_000
+            p = 0.001
+            A = Tensor(Dense(Dense(Element(0.0))), rand(N, K))
+            B = Tensor(Dense(Dense(Element(0.0))), rand(K, N))
+            M = Tensor(Dense(SparseList(Element(0.0))), fsprand(N, N, p))
+
+            SUITE["high-level"]["sddmm_fused"][scheduler_name] = @benchmarkable(
+                begin
+                    M = lazy($M)
+                    A = lazy($A)
+                    B = lazy($B)
+                    compute(M .* (A * B))
+                end,
+            )
+
+            SUITE["high-level"]["sddmm_unfused"][scheduler_name] = @benchmarkable(
+                begin
+                    M = $M
+                    A = $A
+                    B = $B
+                    M .* (A * B)
+                end,
+            )
+        end
     end
 end
 
-let
-    N = 1_000
-    K = 1_000
-    p = 0.001
-    A = Tensor(Dense(Dense(Element(0.0))), rand(N, K))
-    B = Tensor(Dense(Dense(Element(0.0))), rand(K, N))
-    M = Tensor(Dense(SparseList(Element(0.0))), fsprand(N, N, p))
-
-    SUITE["high-level"]["sddmm_fused"] = @benchmarkable(
-        begin
-            M = lazy($M)
-            A = lazy($A)
-            B = lazy($B)
-            compute(M .* (A * B))
-        end,
-    )
-
-    SUITE["high-level"]["sddmm_unfused"] = @benchmarkable(
-        begin
-            M = $M
-            A = $A
-            B = $B
-            M .* (A * B)
-        end,
-    )
-end
 
 eval(let
     A = Tensor(Dense(SparseList(Element(0.0))), fsprand(1, 1, 1))

@@ -19,16 +19,20 @@ If the environment variable FINCH_TEST_ARGS is set, it will override the given a
     help = "overwrite reference output for $(Sys.WORD_SIZE)-bit systems"
     "--include", "-i"
     nargs = '*'
-    default = nothing
+    default = []
     help = "list of test suites to include, e.g., --include constructors merges"
 
     "--exclude", "-e"
     nargs = '*'
-    default = nothing
+    default = []
     help = "list of test suites to exclude, e.g., --exclude parallel algebra"
 end
 
-parsed_args = parse_args(get(ENV, "FINCH_TEST_ARGS", ARGS), s)
+if "FINCH_TEST_ARGS" in keys(ENV)
+    ARGS = split(ENV["FINCH_TEST_ARGS"], " ")
+end
+
+parsed_args = parse_args(ARGS, s)
 
 """
     check_output(fname, arg)
@@ -66,8 +70,8 @@ end
 function should_run(name)
     global parsed_args
     inc = parsed_args["include"]
-    exc = something(parsed_args["exclude"], [])
-    return (isnothing(inc) || !isempty(intersect(test_names, inc))) && isempty(intersect(test_names, exc))
+    exc = parsed_args["exclude"]
+    return (isempty(inc) || name in inc) && !(name in exc)
 end
 
 macro repl(io, ex, quiet = false)

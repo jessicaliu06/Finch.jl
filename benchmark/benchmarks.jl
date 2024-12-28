@@ -10,6 +10,29 @@ using BenchmarkTools
 using MatrixDepot
 using SparseArrays
 using Random
+using ArgParse
+
+s = ArgParseSettings("Run Finch.jl benchmarks. By default, all tests are run unless --include or --exclude options are provided. 
+If the environment variable FINCH_BENCHMARK_ARGS is set, it will override the given arguments.")
+
+@add_arg_table! s begin
+    "--include", "-i"
+    nargs = '*'
+    default = []
+    help = "list of benchmark suites to include, e.g., --include high-level structures"
+
+    "--exclude", "-e"
+    nargs = '*'
+    default = []
+    help = "list of benchmark suites to exclude, e.g., --exclude compile graphs"
+end
+
+if "FINCH_BENCHMARK_ARGS" in keys(ENV)
+    ARGS = split(ENV["FINCH_BENCHMARK_ARGS"], " ")
+end
+
+parsed_args = parse_args(ARGS, s)
+
 include(joinpath(@__DIR__, "../docs/examples/bfs.jl"))
 include(joinpath(@__DIR__, "../docs/examples/pagerank.jl"))
 include(joinpath(@__DIR__, "../docs/examples/shortest_paths.jl"))
@@ -374,6 +397,13 @@ SUITE["structure"]["banded"]["SparseList"] = @benchmarkable spmv_serial($A_ref, 
 SUITE["structure"]["banded"]["SparseBand"] = @benchmarkable spmv_serial($A, $x)
 SUITE["structure"]["banded"]["SparseInterval"] = @benchmarkable spmv_serial($A2, $x)
 
-if !isnothing(ENV["BENCHMARK_FILTER"])
-    SUITE = eval(:(SUITE[@tagged $(Meta.parse(ENV["BENCHMARK_FILTER"]))]))
+if !isempty(parsed_args["include"])
+    inc = reduce((a, b) -> :($a || $b), parsed_args["include"])
+    println(:(SUITE[@tagged $inc]))
+    SUITE = eval(:(SUITE[@tagged $inc]))
+end
+if !isempty(parsed_args["exclude"])
+    exc = reduce((a, b) -> :($a || $b), parsed_args["exclude"])
+    println(:(SUITE[@tagged !$exc]))
+    SUITE = eval(:(SUITE[@tagged !$exc]))
 end

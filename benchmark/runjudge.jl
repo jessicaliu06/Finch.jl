@@ -11,7 +11,7 @@ end
 using PkgBenchmark
 
 function mkconfig(; kwargs...)
-    return BenchmarkConfig(env = Dict("JULIA_NUM_THREADS" => "1"); kwargs...)
+    return BenchmarkConfig(env = Dict("JULIA_NUM_THREADS" => "1", "FINCH_BENCHMARK_ARGS" => get(ENV, "FINCH_BENCHMARK_ARGS", join(ARGS, " "))); kwargs...)
 end
 
 script = tempname(joinpath(@__DIR__))

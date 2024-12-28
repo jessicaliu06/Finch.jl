@@ -14,16 +14,22 @@ function mkconfig(; kwargs...)
     return BenchmarkConfig(env = Dict("JULIA_NUM_THREADS" => "1"); kwargs...)
 end
 
+script = tempname(joinpath(@__DIR__))
+
+cp(joinpath(@__DIR__, "benchmarks.jl"), script)
+
 group_target = benchmarkpkg(
     dirname(@__DIR__),
     mkconfig(),
     resultfile = joinpath(@__DIR__, "result-target.json"),
+    script = script,
 )
 
 group_baseline = benchmarkpkg(
     dirname(@__DIR__),
     mkconfig(id = "main"),
     resultfile = joinpath(@__DIR__, "result-baseline.json"),
+    script = script,
 )
 
 judgement = judge(group_target, group_baseline)

@@ -20,44 +20,51 @@ SUITE = BenchmarkGroup()
 
 SUITE["high-level"] = BenchmarkGroup()
 
-let
-    k = Ref(0.0)
-    A = Tensor(Dense(Sparse(Element(0.0))), fsprand(10000, 10000, 0.01))
-    x = rand(1)
-    y = rand(1)
-    SUITE["high-level"]["permutedims(Dense(Sparse()))"] = @benchmarkable(permutedims($A, (2, 1)))
-end
+for (scheduler_name, scheduler) in [
+    "default_scheduler" => Finch.default_scheduler(),
+    "galley_scheduler" => Finch.galley_scheduler(),
+]
+    Finch.with_scheduler(scheduler) do
+        let
+            k = Ref(0.0)
+            A = Tensor(Dense(Sparse(Element(0.0))), fsprand(10000, 10000, 0.01))
+            x = rand(1)
+            y = rand(1)
+            SUITE["high-level"]["permutedims(Dense(Sparse()))"][scheduler_name] = @benchmarkable(permutedims($A, (2, 1)))
+        end
 
-let
-    k = Ref(0.0)
-    A = Tensor(Dense(Dense(Element(0.0))), rand(10000, 10000))
-    x = rand(1)
-    y = rand(1)
-    SUITE["high-level"]["permutedims(Dense(Dense()))"] = @benchmarkable(permutedims($A, (2, 1)))
-end
+        let
+            k = Ref(0.0)
+            A = Tensor(Dense(Dense(Element(0.0))), rand(10000, 10000))
+            x = rand(1)
+            y = rand(1)
+            SUITE["high-level"]["permutedims(Dense(Dense()))"][scheduler_name] = @benchmarkable(permutedims($A, (2, 1)))
+        end
 
-let
-    k = Ref(0.0)
-    x = rand(1)
-    y = rand(1)
-    SUITE["high-level"]["einsum_spmv_compile_overhead"] = @benchmarkable(
-        begin
-            A, x, y = (A, $x, $y)
-            @einsum y[i] += A[i, j] * x[j]
-        end,
-        setup = (A = Tensor(Dense(SparseList(Element($k[] += 1))), fsprand(1, 1, 1)))
-    )
-end
+        let
+            k = Ref(0.0)
+            x = rand(1)
+            y = rand(1)
+            SUITE["high-level"]["einsum_spmv_compile_overhead"][scheduler_name] = @benchmarkable(
+                begin
+                    A, x, y = (A, $x, $y)
+                    @einsum y[i] += A[i, j] * x[j]
+                end,
+                setup = (A = Tensor(Dense(SparseList(Element($k[] += 1))), fsprand(1, 1, 1)))
+            )
+        end
 
-let
-    A = Tensor(Dense(SparseList(Element(0.0))), fsprand(1, 1, 1))
-    x = rand(1)
-    SUITE["high-level"]["einsum_spmv_call_overhead"] = @benchmarkable(
-        begin
-            A, x = ($A, $x)
-            @einsum y[i] += A[i, j] * x[j]
-        end,
-    )
+        let
+            A = Tensor(Dense(SparseList(Element(0.0))), fsprand(1, 1, 1))
+            x = rand(1)
+            SUITE["high-level"]["einsum_spmv_call_overhead"][scheduler_name] = @benchmarkable(
+                begin
+                    A, x = ($A, $x)
+                    @einsum y[i] += A[i, j] * x[j]
+                end,
+            )
+        end
+    end
 end
 
 let

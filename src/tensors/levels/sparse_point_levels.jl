@@ -110,7 +110,7 @@ data_rep_level(::Type{<:SparsePointLevel{Ti, Idx, Lvl}}) where {Ti, Idx, Lvl} = 
 function (fbr::SubFiber{<:SparsePointLevel{Ti}})(idxs...) where {Ti}
     isempty(idxs) && return fbr
     lvl = fbr.lvl
-    if idxs[end] == lvl.idxs[fbr.pos]
+    if idxs[end] == lvl.idx[fbr.pos]
         return SubFiber(lvl.lvl, fbr.pos)(idxs[1:end-1]...)
     else
         fill_value(fbr)

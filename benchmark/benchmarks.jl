@@ -349,3 +349,5 @@ x = rand(N)
 SUITE["structure"]["banded"]["SparseList"] = @benchmarkable spmv_serial($A_ref, $x)
 SUITE["structure"]["banded"]["SparseBand"] = @benchmarkable spmv_serial($A, $x)
 SUITE["structure"]["banded"]["SparseInterval"] = @benchmarkable spmv_serial($A2, $x)
+
+SUITE = SUITE["structure"]

@@ -94,13 +94,11 @@ for (scheduler_name, scheduler) in [
         end
 
         let
-            A = Tensor(Dense(SparseList(Element(0.0))), fsprand(1, 1, 1))
-            x = rand(1)
             SUITE["high-level"]["einsum_spmv_call_overhead"][scheduler_name] = @benchmarkable(
                 begin
-                    A, x = ($A, $x)
                     @einsum y[i] += A[i, j] * x[j]
                 end,
+                setup = (A = Tensor(Dense(SparseList(Element(0.0))), fsprand(1, 1, 1)); x = rand(1))
             )
         end
 

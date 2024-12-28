@@ -399,11 +399,9 @@ SUITE["structure"]["banded"]["SparseInterval"] = @benchmarkable spmv_serial($A2,
 
 if !isempty(parsed_args["include"])
     inc = reduce((a, b) -> :($a || $b), parsed_args["include"])
-    println(:(SUITE[@tagged $inc]))
     SUITE = eval(:(SUITE[@tagged $inc]))
 end
 if !isempty(parsed_args["exclude"])
     exc = reduce((a, b) -> :($a || $b), parsed_args["exclude"])
-    println(:(SUITE[@tagged !$exc]))
     SUITE = eval(:(SUITE[@tagged !$exc]))
 end

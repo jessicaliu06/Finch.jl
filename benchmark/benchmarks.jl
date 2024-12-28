@@ -304,7 +304,7 @@ for (key, mtx) in [
     "SNAP/soc-Epinions1" => SparseMatrixCSC(matrixdepot("SNAP/soc-Epinions1")),
     "fsprand(10_000, 10_000, 0.01)" => fsprand(10_000, 10_000, 0.01)]
     A = Tensor(Dense{Int64}(SparseList{Int64}(Element{0.0,Float64,Int64}())), mtx)
-    A_T = permutedims(A)
+    A_T = Tensor(Dense{Int64}(SparseList{Int64}(Element{0.0,Float64,Int64}())), permutedims(A))
     x = Tensor(Dense{Int64}(Element{0.0,Float64,Int64}()), rand(size(A)[2]))
     SUITE["parallel"]["SpMV_serial"][key] = @benchmarkable spmv_serial($A_T, $x)
     SUITE["parallel"]["SpMV_threaded"][key] = @benchmarkable spmv_threaded($A_T, $x)

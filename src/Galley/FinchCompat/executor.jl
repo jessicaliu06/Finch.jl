@@ -80,8 +80,11 @@ end
 Base.:(==)(a::AdaptiveExecutor, b::AdaptiveExecutor) = a.ctx == b.ctx && a.threshold == b.threshold && a.verbose == b.verbose
 Base.hash(a::AdaptiveExecutor, h::UInt) = hash(AdaptiveExecutor, hash(a.ctx, hash(a.threshold, hash(a.verbose, h))))
 
-AdaptiveExecutor(ctx::GalleyOptimizer; threshold = 4, verbose = false) = AdaptiveExecutor(ctx, threshold, verbose)
-function Finch.set_options(ctx::AdaptiveExecutor; threshold = 4, verbose = ctx.verbose, kwargs...)
+AdaptiveExecutor(ctx::GalleyOptimizer; threshold = 2, verbose = false) = AdaptiveExecutor(ctx, threshold, verbose)
+function Finch.set_options(ctx::AdaptiveExecutor; threshold = 2, verbose = ctx.verbose, tag=:global, kwargs...)
+    if tag != :global
+        @warn("The tag argument is a no-op for the AdaptiveExecutor.")
+    end
     AdaptiveExecutor(Finch.set_options(ctx.ctx; verbose=verbose, kwargs...), threshold, verbose)
 end
 
@@ -91,8 +94,9 @@ function (ctx::AdaptiveExecutor)(prgm)
     stats_list = get!(galley_codes, (ctx.ctx, ctx.threshold, Finch.get_structure(prgm)), [])
     valid_match = nothing
     for (stats_dict, f_code) in stats_list
-        if all(issimilar(cur_stats, stats_dict[cur_expr], 4) for (cur_expr, cur_stats) in cur_stats_dict)
+        if all(issimilar(cur_stats, stats_dict[cur_expr], ctx.threshold) for (cur_expr, cur_stats) in cur_stats_dict)
             valid_match = f_code
+            break
         end
     end
     if isnothing(valid_match)
@@ -128,5 +132,5 @@ The galley scheduler uses the sparsity patterns of the inputs to optimize the co
 The first set of inputs given to galley is used to optimize, and the `estimator` is used to
 estimate the sparsity of intermediate computations during optimization.
 """
-galley_scheduler(;verbose=false) = AdaptiveExecutor(GalleyOptimizer(;verbose=false); verbose=false)
+galley_scheduler(;threshold=2, verbose=false) = AdaptiveExecutor(GalleyOptimizer(;verbose=verbose); threshold=threshold, verbose=verbose)
 

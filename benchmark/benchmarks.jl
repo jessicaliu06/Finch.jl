@@ -30,7 +30,6 @@ end
 if "FINCH_BENCHMARK_ARGS" in keys(ENV)
     ARGS = split(ENV["FINCH_BENCHMARK_ARGS"], " ")
 end
-
 parsed_args = parse_args(ARGS, s)
 
 include(joinpath(@__DIR__, "../docs/examples/bfs.jl"))
@@ -47,88 +46,94 @@ for (scheduler_name, scheduler) in [
     "default_scheduler" => Finch.default_scheduler(),
     "galley_scheduler" => Finch.galley_scheduler(),
 ]
-    Finch.with_scheduler(scheduler) do
-        let
-            A = Tensor(Dense(Sparse(Element(0.0))), fsprand(10000, 10000, 0.01))
-            SUITE["high-level"]["permutedims(Dense(Sparse()))"][scheduler_name] = @benchmarkable(permutedims($A, (2, 1)))
+    let
+        A = Tensor(Dense(Sparse(Element(0.0))), fsprand(10000, 10000, 0.01))
+        SUITE["high-level"]["permutedims(Dense(Sparse()))"][scheduler_name] = @benchmarkable(permutedims($A, (2, 1)), setup = (Finch.set_scheduler($scheduler)))
+    end
+
+    let
+        A = Tensor(Dense(Dense(Element(0.0))), rand(10000, 10000))
+        SUITE["high-level"]["permutedims(Dense(Dense()))"][scheduler_name] = @benchmarkable(permutedims($A, (2, 1)), setup = (Finch.set_scheduler($scheduler)))
+    end
+
+    let
+        k = Ref(0.0)
+        x = rand(1)
+        y = rand(1)
+        SUITE["high-level"]["einsum_spmv_compile_overhead"][scheduler_name] = @benchmarkable(
+            begin
+                A, x, y = (A, $x, $y)
+                @einsum y[i] += A[i, j] * x[j]
+            end,
+            setup = (Finch.set_scheduler($scheduler); A = Tensor(Dense(SparseList(Element($k[] += 1))), fsprand(1, 1, 1)))
+        )
+    end
+
+    let
+        N = 10000
+        function generate_kernel_defs()
+            for nnz1 in [4, 4^2, 4^3, 4^4, 4^5, 4^6, 4^7, 4^8]
+                for nnz2 in [4, 4^2, 4^3, 4^4, 4^5, 4^6, 4^7, 4^8]
+                    D = fsprand(N, N, nnz1)
+                    E = fsprand(N, N, nnz2)
+                    F = fsprand(N, N, 4)
+                    @einsum F[i, j] += D[i, k] * E[k, j]
+                end
+            end
         end
+        SUITE["high-level"]["einsum_matmul_adaptive_overhead"][scheduler_name] = @benchmarkable(
+            begin
+                @einsum C[i, j] += A[i, k] * B[k, j]
+            end,
+            setup = begin
+                Finch.set_scheduler($scheduler)
+                N = $N
+                $generate_kernel_defs()
+                A = fsprand(N, N, 4)
+                B = fsprand(N, N, 4)
+                C = fsprand(N, N, 4)
+            end,
+            evals = 1
+        )
+    end
 
-        let
-            A = Tensor(Dense(Dense(Element(0.0))), rand(10000, 10000))
-            SUITE["high-level"]["permutedims(Dense(Dense()))"][scheduler_name] = @benchmarkable(permutedims($A, (2, 1)))
-        end
+    let
+        SUITE["high-level"]["einsum_spmv_call_overhead"][scheduler_name] = @benchmarkable(
+            begin
+                @einsum y[i] += A[i, j] * x[j]
+            end,
+            setup = (Finch.set_scheduler($scheduler); A = Tensor(Dense(SparseList(Element(0.0))), fsprand(1, 1, 1)); x = rand(1)),
+            evals = 1
+        )
+    end
 
-        let
-            k = Ref(0.0)
-            x = rand(1)
-            y = rand(1)
-            SUITE["high-level"]["einsum_spmv_compile_overhead"][scheduler_name] = @benchmarkable(
-                begin
-                    A, x, y = (A, $x, $y)
-                    @einsum y[i] += A[i, j] * x[j]
-                end,
-                setup = (A = Tensor(Dense(SparseList(Element($k[] += 1))), fsprand(1, 1, 1)))
-            )
-        end
+    let
+        N = 1_000
+        K = 1_000
+        p = 0.001
+        A = Tensor(Dense(Dense(Element(0.0))), rand(N, K))
+        B = Tensor(Dense(Dense(Element(0.0))), rand(K, N))
+        M = Tensor(Dense(SparseList(Element(0.0))), fsprand(N, N, p))
 
-        let
-            N = 10
-            P = 0.0001
-            C = 16.0
-            SUITE["high-level"]["einsum_matmul_adaptive_overhead"][scheduler_name] = @benchmarkable(
-                begin
-                    @einsum C[i, j] += A[i, k] * B[k, j]
-                end,
-                setup = begin
-                    (N, P, C) = ($N, $P, $C)
-                    n = floor(Int, N * C^(rand()))
-                    m = floor(Int, N * C^(rand()))
-                    l = floor(Int, N * C^(rand()))
-                    p = floor(Int, P * C^(rand()))
-                    q = floor(Int, P * C^(rand()))
-                    A = fsprand(n, l, p)
-                    B = fsprand(l, m, q)
-                end,
-                evals = 1
-            )
-        end
+        SUITE["high-level"]["sddmm_fused"][scheduler_name] = @benchmarkable(
+            begin
+                M = lazy($M)
+                A = lazy($A)
+                B = lazy($B)
+                compute(M .* (A * B))
+            end,
+            setup = (Finch.set_scheduler($scheduler)),
+        )
 
-        let
-            SUITE["high-level"]["einsum_spmv_call_overhead"][scheduler_name] = @benchmarkable(
-                begin
-                    @einsum y[i] += A[i, j] * x[j]
-                end,
-                setup = (A = Tensor(Dense(SparseList(Element(0.0))), fsprand(1, 1, 1)); x = rand(1)),
-                evals = 1
-            )
-        end
-
-        let
-            N = 1_000
-            K = 1_000
-            p = 0.001
-            A = Tensor(Dense(Dense(Element(0.0))), rand(N, K))
-            B = Tensor(Dense(Dense(Element(0.0))), rand(K, N))
-            M = Tensor(Dense(SparseList(Element(0.0))), fsprand(N, N, p))
-
-            SUITE["high-level"]["sddmm_fused"][scheduler_name] = @benchmarkable(
-                begin
-                    M = lazy($M)
-                    A = lazy($A)
-                    B = lazy($B)
-                    compute(M .* (A * B))
-                end,
-            )
-
-            SUITE["high-level"]["sddmm_unfused"][scheduler_name] = @benchmarkable(
-                begin
-                    M = $M
-                    A = $A
-                    B = $B
-                    M .* (A * B)
-                end,
-            )
-        end
+        SUITE["high-level"]["sddmm_unfused"][scheduler_name] = @benchmarkable(
+            begin
+                M = $M
+                A = $A
+                B = $B
+                M .* (A * B)
+            end,
+            setup = (Finch.set_scheduler($scheduler)),
+        )
     end
 end
 

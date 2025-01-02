@@ -64,51 +64,43 @@ function get_stats_dict(ctx::GalleyOptimizer, prgm)
 end
 
 """
-    GalleyExecutor(ctx::GalleyOptimizer, tag=:global, verbose=false)
+    AdaptiveExecutor(ctx::GalleyOptimizer, verbose=false)
 
 Executes a logic program by compiling it with the given compiler `ctx`. Compiled
-codes are cached for each program structure. If the 'tag' argument is ':global', it maintains a set of plans 
-for inputs with different sparsity structures. In this case, it first checks the cache for a plan that
-was compiled for similar inputs and only compiles if it doesn't find one. If the `tag` argument is anything else,
-it will only compile once for that tag and will skip this search process.
+codes are cached for each program structure. It first checks the cache for a plan that
+was compiled for similar inputs and only compiles if it doesn't find one.
 """
-@kwdef struct GalleyExecutor
+
+@kwdef struct AdaptiveExecutor
     ctx::GalleyOptimizer
-    tag
+    threshold
     verbose
 end
 
-Base.:(==)(a::GalleyExecutor, b::GalleyExecutor) = a.ctx == b.ctx && a.verbose == b.verbose
-Base.hash(a::GalleyExecutor, h::UInt) = hash(GalleyExecutor, hash(a.ctx, hash(a.verbose, h)))
+Base.:(==)(a::AdaptiveExecutor, b::AdaptiveExecutor) = a.ctx == b.ctx && a.threshold == b.threshold && a.verbose == b.verbose
+Base.hash(a::AdaptiveExecutor, h::UInt) = hash(AdaptiveExecutor, hash(a.ctx, hash(a.threshold, hash(a.verbose, h))))
 
-GalleyExecutor(ctx::GalleyOptimizer; tag = :global, verbose = false) = GalleyExecutor(ctx, tag, verbose)
-function Finch.set_options(ctx::GalleyExecutor; tag = ctx.tag, verbose = ctx.verbose, kwargs...)
-    GalleyExecutor(Finch.set_options(ctx.ctx; verbose=verbose, kwargs...), tag, verbose)
+AdaptiveExecutor(ctx::GalleyOptimizer; threshold = 4, verbose = false) = AdaptiveExecutor(ctx, threshold, verbose)
+function Finch.set_options(ctx::AdaptiveExecutor; threshold = 4, verbose = ctx.verbose, kwargs...)
+    AdaptiveExecutor(Finch.set_options(ctx.ctx; verbose=verbose, kwargs...), threshold, verbose)
 end
 
 galley_codes = Dict()
-function (ctx::GalleyExecutor)(prgm)
-    (f, code) = if ctx.tag == :global
-        cur_stats_dict = get_stats_dict(ctx.ctx, prgm)
-        stats_list = get!(galley_codes, (ctx.ctx, ctx.tag, Finch.get_structure(prgm)), [])
-        valid_match = nothing
-        for (stats_dict, f_code) in stats_list
-            if all(issimilar(cur_stats, stats_dict[cur_expr], 4) for (cur_expr, cur_stats) in cur_stats_dict)
-                valid_match = f_code
-            end
-        end
-        if isnothing(valid_match)
-            thunk = Finch.logic_executor_code(ctx.ctx, prgm)
-            valid_match = (eval(thunk), thunk)
-            push!(stats_list, (cur_stats_dict, valid_match))
-        end
-        valid_match
-    else
-        get!(galley_codes, (ctx.ctx, ctx.tag, Finch.get_structure(prgm))) do
-            thunk = Finch.logic_executor_code(ctx.ctx, prgm)
-            (eval(thunk), thunk)
+function (ctx::AdaptiveExecutor)(prgm)
+    cur_stats_dict = get_stats_dict(ctx.ctx, prgm)
+    stats_list = get!(galley_codes, (ctx.ctx, ctx.threshold, Finch.get_structure(prgm)), [])
+    valid_match = nothing
+    for (stats_dict, f_code) in stats_list
+        if all(issimilar(cur_stats, stats_dict[cur_expr], 4) for (cur_expr, cur_stats) in cur_stats_dict)
+            valid_match = f_code
         end
     end
+    if isnothing(valid_match)
+        thunk = Finch.logic_executor_code(ctx.ctx, prgm)
+        valid_match = (eval(thunk), thunk)
+        push!(stats_list, (cur_stats_dict, valid_match))
+    end
+    (f, code) = valid_match
     if ctx.verbose
         println("Executing:")
         display(code)
@@ -117,15 +109,15 @@ function (ctx::GalleyExecutor)(prgm)
 end
 
 """
-    GalleyExecutorCode(ctx)
+    AdaptiveExecutorCode(ctx)
 
-Return the code that would normally be used by the GalleyExecutor to run a program.
+Return the code that would normally be used by the AdaptiveExecutor to run a program.
 """
-struct GalleyExecutorCode
+struct AdaptiveExecutorCode
     ctx
 end
 
-function (ctx::GalleyExecutorCode)(prgm)
+function (ctx::AdaptiveExecutorCode)(prgm)
     return Finch.logic_executor_code(ctx.ctx, prgm)
 end
 
@@ -136,5 +128,5 @@ The galley scheduler uses the sparsity patterns of the inputs to optimize the co
 The first set of inputs given to galley is used to optimize, and the `estimator` is used to
 estimate the sparsity of intermediate computations during optimization.
 """
-galley_scheduler(;verbose=false) = GalleyExecutor(GalleyOptimizer(;verbose=false); verbose=false)
+galley_scheduler(;verbose=false) = AdaptiveExecutor(GalleyOptimizer(;verbose=false); verbose=false)
 

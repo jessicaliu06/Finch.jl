@@ -44,7 +44,7 @@ SUITE["high-level"] = BenchmarkGroup()
 
 for (scheduler_name, scheduler) in [
     "default_scheduler" => Finch.default_scheduler(),
-    "galley_scheduler" => Finch.galley_scheduler(),
+#    "galley_scheduler" => Finch.galley_scheduler(),
 ]
     let
         A = Tensor(Dense(Sparse(Element(0.0))), fsprand(10000, 10000, 0.01))

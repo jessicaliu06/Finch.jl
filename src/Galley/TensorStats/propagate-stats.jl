@@ -85,7 +85,7 @@ function merge_tensor_stats(op, all_stats::Vararg{ST}) where ST <: TensorStats
         return merge_tensor_stats_join(op, new_def, join_like_args...)
     elseif length(join_like_args) == 0
         return merge_tensor_stats_union(op, new_def, union_like_args...)
-    elseif union([get_index_set(stats) for stats in join_like_args]) == get_index_set(new_def)
+    elseif union([get_index_set(stats) for stats in join_like_args]...) == get_index_set(new_def)
         # Currently we glean no information from non-join-like args
         return merge_tensor_stats_join(op, new_def, join_like_args...)
     else

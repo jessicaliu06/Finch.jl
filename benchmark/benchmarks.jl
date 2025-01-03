@@ -70,29 +70,31 @@ for (scheduler_name, scheduler) in [
     end
 
     let
-        N = 10000
+        N = 100000
         function generate_kernel_defs()
-            for nnz1 in [4, 4^2, 4^3, 4^4, 4^5, 4^6, 4^7, 4^8]
-                for nnz2 in [4, 4^2, 4^3, 4^4, 4^5, 4^6, 4^7, 4^8]
-                    D = fsprand(N, N, nnz1)
-                    E = fsprand(N, N, nnz2)
-                    F = fsprand(N, N, 4)
-                    @einsum F[i, j] += D[i, k] * E[k, j]
+            for nnz1 in reverse([4, 4^2, 4^3, 4^4])
+                for nnz2 in reverse([4, 4^2, 4^3, 4^4])
+                    for nnz3 in reverse([4, 4^2, 4^3, 4^4])
+                        A = lazy(fsprand(N, N, nnz1))
+                        B = lazy(fsprand(N, N, nnz2))
+                        C = lazy(fsprand(N, N, nnz3))
+                        compute(A * B * C)
+                    end
                 end
             end
         end
-        
-        SUITE["high-level"]["einsum_matmul_adaptive_overhead"][scheduler_name] = @benchmarkable(
+
+        SUITE["high-level"]["matchain_adaptive_overhead"][scheduler_name] = @benchmarkable(
             begin
-                @einsum C[i, j] += A[i, k] * B[k, j]
+                compute(A * B * C)
             end,
             setup = begin
                 Finch.set_scheduler!($scheduler)
                 N = $N
                 $generate_kernel_defs()
-                A = fsprand(N, N, 4)
-                B = fsprand(N, N, 4)
-                C = fsprand(N, N, 4)
+                A = lazy(fsprand(N, N, 4))
+                B = lazy(fsprand(N, N, 4))
+                C = lazy(fsprand(N, N, 4))
             end,
             evals = 1
         )
@@ -106,6 +108,19 @@ for (scheduler_name, scheduler) in [
             begin
                 A, x, y = ($A, $x, $y)
                 @einsum y[i] += A[i, j] * x[j]
+            end,
+            setup = (Finch.set_scheduler!($scheduler);),
+            evals = 1
+        )
+    end
+
+    let
+        A = Tensor(Dense(SparseList(Element(0.0))), fsprand(1, 1, 1))
+        x = rand(1)
+        SUITE["high-level"]["compute_spmv_call_overhead"][scheduler_name] = @benchmarkable(
+            begin
+                A, x = (lazy($A), lazy($x))
+                compute(A * x)
             end,
             setup = (Finch.set_scheduler!($scheduler);),
             evals = 1

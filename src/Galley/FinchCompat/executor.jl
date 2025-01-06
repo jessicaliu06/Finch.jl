@@ -82,9 +82,6 @@ Base.hash(a::AdaptiveExecutor, h::UInt) = hash(AdaptiveExecutor, hash(a.ctx, has
 
 AdaptiveExecutor(ctx::GalleyOptimizer; threshold = 2, verbose = false) = AdaptiveExecutor(ctx, threshold, verbose)
 function Finch.set_options(ctx::AdaptiveExecutor; threshold = 2, verbose = ctx.verbose, tag=:global, kwargs...)
-    if tag != :global
-        @warn("The tag argument is a no-op for the AdaptiveExecutor.")
-    end
     AdaptiveExecutor(Finch.set_options(ctx.ctx; verbose=verbose, kwargs...), threshold, verbose)
 end
 

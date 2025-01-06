@@ -119,6 +119,7 @@ include("utils.jl")
         end
     end
     if should_run("parallel") include("test_parallel.jl") end
+    if should_run("scheduler") include("test_scheduler.jl") end
     #algebra goes at the end since it calls refresh()
     if should_run("algebra") include("test_algebra.jl") end
 end

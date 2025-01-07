@@ -70,7 +70,12 @@ end
 
 function compile_logic_constant(node)
     if node.kind === immediate
-        node.val
+        val = node.val
+        if Base.isoperator(Symbol(val))
+            Symbol(val)
+        else
+            val
+        end
     elseif node.kind === deferred
         :($(node.ex)::$(node.type))
     else

@@ -50,7 +50,7 @@ alias
 """
     table(tns, idxs...)
 
-Logical AST expression for a tensor object `val`, indexed by fields `idxs...`.
+Logical AST expression for a tensor object `tns`, indexed by fields `idxs...`.
 """
 table
 

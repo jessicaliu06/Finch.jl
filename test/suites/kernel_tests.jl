@@ -1,11 +1,14 @@
-@testset "kernels" begin
-    @info "Testing Standard Kernels"
+@testitem "kernels" setup=[CheckOutput] begin
+        @info "Testing Standard Kernels"
 
     using SparseArrays
+    using MatrixMarket
+    using LinearAlgebra
+    matrices = ["LPnetlib/lpi_itest6", "HB/west0132", "LPnetlib/lp_blend"]
 
     seen = false
-    for (mtx, A_ref) in matrices
-        A_ref = SparseMatrixCSC(A_ref)
+    for mtx in matrices
+        A_ref = SparseMatrixCSC(mmread(joinpath(@__DIR__, "../data", "$mtx.mtx")))
         m, n = size(A_ref)
         B_ref = transpose(A_ref) * A_ref
         A = Tensor(A_ref)
@@ -20,8 +23,8 @@
     end
 
     seen = false
-    for (mtx, A_ref) in matrices
-        A_ref = SparseMatrixCSC(A_ref)
+    for mtx in matrices
+        A_ref = SparseMatrixCSC(mmread(joinpath(@__DIR__, "../data", "$mtx.mtx")))
         m, n = size(A_ref)
         if m == n
             A = Tensor(A_ref)
@@ -66,8 +69,8 @@
     end
 
     seen = false
-    for (mtx, A_ref) in matrices
-        A_ref = SparseMatrixCSC(A_ref)
+    for mtx in matrices
+        A_ref = SparseMatrixCSC(mmread(joinpath(@__DIR__, "../data", "$mtx.mtx")))
         m, n = size(A_ref)
         if m == n
             A = Tensor(A_ref)

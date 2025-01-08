@@ -1,6 +1,6 @@
-using SparseArrays
-
-@testset "issues" begin
+@testitem "issues" setup=[CheckOutput] begin
+        using SparseArrays
+    using Finch: Structure
     @info "Testing Github Issues"
 
     #https://github.com/finch-tensor/Finch.jl/issues/603
@@ -229,7 +229,7 @@ using SparseArrays
         B = Tensor(Dense(Element(0)), [2, 4, 5])
         A = Tensor(Dense(Element(0)), 6)
         @finch (A .= 0; for i=_; A[B[i]] = i end)
-        @test reference_isequal(A, [0, 1, 0, 2, 3, 0])
+        @test A == [0, 1, 0, 2, 3, 0]
     end
     #https://github.com/finch-tensor/Finch.jl/issues/61
     I = copyto!(Tensor(RunList(Element(0))), [1, 1, 9, 3, 3])

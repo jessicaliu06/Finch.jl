@@ -3,8 +3,22 @@
 # from their string representation, validation against reference getindex, and
 # validation against reference conversion code
 
-@testset "representation" begin
-    @info "Testing Tensor Representation"
+@testitem "representation" setup=[CheckOutput] begin
+        @info "Testing Tensor Representation"
+
+    using Finch: Structure
+
+    reference_getindex(arr, inds...) = getindex(arr, inds...)
+    reference_getindex(arr::Tensor, inds...) = arr(inds...)
+    
+    function reference_isequal(a,b)
+        size(a) == size(b) || return false
+        axes(a) == axes(b) || return false
+        for i in CartesianIndices(axes(a))
+            reference_getindex(a, Tuple(i)...) == reference_getindex(b, Tuple(i)...) || return false
+        end
+        return true
+    end
 
     modifier_levels = [
         (key = "Separate", Lvl = Separate),

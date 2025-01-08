@@ -43,6 +43,8 @@ end
 (fbr::AbstractFiber{<:PatternLevel})() = true
 data_rep_level(::Type{<:PatternLevel}) = ElementData(false, Bool)
 
+isstructequal(a::T, b::T)  where {T <: Pattern} = true
+
 postype(::Type{<:PatternLevel{Tp}}) where {Tp} = Tp
 
 function moveto(lvl::PatternLevel{Tp}, device) where {Tp}

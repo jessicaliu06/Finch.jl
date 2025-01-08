@@ -128,6 +128,12 @@ end
 @inline level_fill_value(::Type{<:SparseCOOLevel{N, TI, Ptr, Tbl, Lvl}}) where {N, TI, Ptr, Tbl, Lvl} = level_fill_value(Lvl)
 data_rep_level(::Type{<:SparseCOOLevel{N, TI, Ptr, Tbl, Lvl}}) where {N, TI, Ptr, Tbl, Lvl} = (SparseData^N)(data_rep_level(Lvl))
 
+isstructequal(a::T, b::T) where {T <: SparseCOO} =
+    a.shape == b.shape &&
+    a.ptr == b.ptr &&
+    a.tbl == b.tbl &&
+    isstructequal(a.lvl, b.lvl)
+
 (fbr::AbstractFiber{<:SparseCOOLevel})() = fbr
 (fbr::SubFiber{<:SparseCOOLevel})() = fbr
 function (fbr::SubFiber{<:SparseCOOLevel{N, TI}})(idxs...) where {N, TI}

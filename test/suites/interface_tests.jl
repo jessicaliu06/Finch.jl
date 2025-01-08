@@ -1,8 +1,10 @@
-using Finch: AsArray, JuliaContext
-using Finch.FinchNotation: finch_unparse_program, @finch_program_instance
+@testitem "interface" setup=[CheckOutput] begin
+    using Finch: AsArray, JuliaContext
+    using Finch.FinchNotation: finch_unparse_program, @finch_program_instance
+    using SparseArrays
+    using LinearAlgebra
 
-@testset "interface" begin
-
+    
     @info "Testing Finch Interface"
 
     @testset "finch_unparse" begin

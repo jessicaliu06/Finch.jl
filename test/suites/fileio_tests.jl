@@ -1,7 +1,8 @@
-using MatrixMarket
-using Pkg
-@testset "fileio" begin
+@testitem "fileio" setup=[CheckOutput] begin
+        using MatrixMarket
+    using Pkg
     using HDF5
+    using Finch: Structure
     @info "Testing HDF5 fileio"
     @testset "h5 binsparse" begin
         let f = mktempdir()
@@ -156,8 +157,8 @@ using Pkg
             @test A_COO_test == A_COO
 
             #A test to ensure some level of canonical interpretation.
-            A = mmread(joinpath(@__DIR__, "Trec4.mtx"))
-            fwrite(joinpath(f, "test.ttx"), Tensor(A))
+            A_ref = mmread(joinpath(@__DIR__, "../data/JGD_Kocay/Trec4.mtx"))
+            fwrite(joinpath(f, "test.ttx"), Tensor(A_ref))
             str = String(read(joinpath(f, "test.ttx")))
             @test check_output("fileio/Trec4.ttx", str)
         end

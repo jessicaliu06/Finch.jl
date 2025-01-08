@@ -1,4 +1,5 @@
-@testset "continuous" begin
+@testitem "continuous" setup=[CheckOutput] skip=true begin
+        include("../data/continuous_data.jl")
     @info "Testing Continuous Insertion"
     let
         s1 = Scalar(0)

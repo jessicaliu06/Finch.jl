@@ -98,6 +98,12 @@ end
 @inline level_fill_value(::Type{<:SparseBandLevel{Ti, Idx, Ofs, Lvl}}) where {Ti, Idx, Ofs, Lvl} = level_fill_value(Lvl)
 data_rep_level(::Type{<:SparseBandLevel{Ti, Idx, Ofs, Lvl}}) where {Ti, Idx, Ofs, Lvl} = SparseData(data_rep_level(Lvl))
 
+isstructequal(a::T, b::T) where {T <: SparseBand} =
+    a.shape == b.shape &&
+    a.idx == b.idx &&
+    a.ofs == b.ofs &&
+    isstructequal(a.lvl, b.lvl)
+
 (fbr::AbstractFiber{<:SparseBandLevel})() = fbr
 function (fbr::SubFiber{<:SparseBandLevel})(idxs...)
     isempty(idxs) && return fbr

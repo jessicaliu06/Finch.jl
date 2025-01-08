@@ -1,4 +1,4 @@
-@testset "scheduler" begin
+@testitem "scheduler" begin
     @info "Testing Default Scheduler's Internals"
 
     # test `propagate_map_queries`

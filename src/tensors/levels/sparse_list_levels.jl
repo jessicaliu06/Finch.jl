@@ -116,6 +116,12 @@ end
 @inline level_fill_value(::Type{<:SparseListLevel{Ti, Ptr, Idx, Lvl}}) where {Ti, Ptr, Idx, Lvl} = level_fill_value(Lvl)
 data_rep_level(::Type{<:SparseListLevel{Ti, Ptr, Idx, Lvl}}) where {Ti, Ptr, Idx, Lvl} = SparseData(data_rep_level(Lvl))
 
+isstructequal(a::T, b::T) where {T <: SparseList} =
+    a.shape == b.shape &&
+    a.ptr == b.ptr &&
+    a.idx == b.idx &&
+    isstructequal(a.lvl, b.lvl)
+
 (fbr::AbstractFiber{<:SparseListLevel})() = fbr
 function (fbr::SubFiber{<:SparseListLevel{Ti}})(idxs...) where {Ti}
     isempty(idxs) && return fbr

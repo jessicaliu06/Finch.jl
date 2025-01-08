@@ -1,5 +1,6 @@
 # FIXME: Add a test for failures of concurrent.
-@testset "parallel" begin
+@testitem "parallel" setup=[CheckOutput] begin
+        using LinearAlgebra
     @info "Testing Julia Threads Parallelism and Analysis"
     @assert Threads.nthreads() > 1
     let

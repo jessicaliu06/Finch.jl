@@ -1,7 +1,8 @@
-@testset "constructors" begin
+@testitem "constructors" setup=[CheckOutput] begin
     @info "Testing Tensor Constructors"
 
     using Base.Meta
+    using Finch: Structure
 
     basic_levels = [
         ("Dense", Dense, (;), [[0.0, 2.0, 2.0, 0.0, 3.0, 3.0],]),

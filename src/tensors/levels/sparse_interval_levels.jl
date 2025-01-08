@@ -112,6 +112,12 @@ end
 @inline level_fill_value(::Type{<:SparseIntervalLevel{Ti, Left, Right, Lvl}}) where {Ti, Left, Right, Lvl}= level_fill_value(Lvl)
 data_rep_level(::Type{<:SparseIntervalLevel{Ti, Left, Right, Lvl}}) where {Ti, Left, Right, Lvl} = SparseData(data_rep_level(Lvl))
 
+isstructequal(a::T, b::T) where {T <: SparseInterval} =
+    a.shape == b.shape &&
+    a.left == b.left &&
+    a.right == b.right &&
+    isstructequal(a.lvl, b.lvl)
+
 (fbr::AbstractFiber{<:SparseIntervalLevel})() = fbr
 function (fbr::SubFiber{<:SparseIntervalLevel})(idxs...)
     isempty(idxs) && return fbr

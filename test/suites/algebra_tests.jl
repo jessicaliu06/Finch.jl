@@ -1,7 +1,9 @@
-struct MyAlgebra <: Finch.AbstractAlgebra end
-struct MyAlgebra2 <: Finch.AbstractAlgebra end
 
-@testset "algebra" begin
+@testitem "algebra" begin
+    
+    struct MyAlgebra <: Finch.AbstractAlgebra end
+    struct MyAlgebra2 <: Finch.AbstractAlgebra end
+
     @info "Testing Custom Algebras"
     u = Tensor(SparseList(Element(1)), [3, 1, 6, 1, 9, 1, 4, 1, 8, 1])
     v = Tensor(SparseList(Element(1)), [1, 2, 3, 1, 1, 1, 1, 4, 1, 1])

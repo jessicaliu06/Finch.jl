@@ -163,4 +163,16 @@
             @test check_output("fileio/Trec4.ttx", str)
         end
     end
+
+    #https://github.com/finch-tensor/Finch.jl/issues/500
+    let
+        using NPZ
+        f = mktempdir(;prefix="finch-issue-500")
+        cd(f) do
+            A = Tensor(Dense(Element(0.0)), rand(4))
+            fwrite("test.bspnpy", A)
+            B = fread("test.bspnpy")
+            @test A == B
+        end
+    end
 end

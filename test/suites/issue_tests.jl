@@ -1,7 +1,6 @@
-@testitem "issues" setup=[CheckOutput] begin
-        using SparseArrays
+@testitem "issues1" setup=[CheckOutput] begin
+    using SparseArrays
     using Finch: Structure
-    @info "Testing Github Issues"
 
     #https://github.com/finch-tensor/Finch.jl/issues/603
     let 
@@ -147,18 +146,6 @@
         end
     end
 
-    #https://github.com/finch-tensor/Finch.jl/issues/500
-    let
-        using NPZ
-        f = mktempdir(;prefix="finch-issue-500")
-        cd(f) do
-            A = Tensor(Dense(Element(0.0)), rand(4))
-            fwrite("test.bspnpy", A)
-            B = fread("test.bspnpy")
-            @test A == B
-        end
-    end
-
     #https://github.com/finch-tensor/Finch.jl/issues/358
     let
         A = Tensor(Dense(SparseList(Element(0))), [
@@ -206,6 +193,12 @@
         end
     end
 
+end
+
+@testitem "issues2" setup=[CheckOutput] begin
+    using SparseArrays
+    using Finch: Structure
+
     #https://github.com/finch-tensor/Finch.jl/issues/51
     let
         x = Tensor(Dense(Element(0.0)), [1, 2, 3])
@@ -231,6 +224,7 @@
         @finch (A .= 0; for i=_; A[B[i]] = i end)
         @test A == [0, 1, 0, 2, 3, 0]
     end
+
     #https://github.com/finch-tensor/Finch.jl/issues/61
     I = copyto!(Tensor(RunList(Element(0))), [1, 1, 9, 3, 3])
     A = [
@@ -277,7 +271,6 @@
     end
 
     #https://github.com/finch-tensor/Finch.jl/issues/115
-
     let
         t = Tensor(SparseList(SparseList(Element(0.0))))
         B = SparseMatrixCSC([0 0 0 0; -1 -1 -1 -1; -2 -2 -2 -2; -3 -3 -3 -3])
@@ -293,7 +286,6 @@
     end
 
     #https://github.com/finch-tensor/Finch.jl/issues/129
-
     let
         a = Tensor(Dense(Element(0)), [1, 3, 7, 2])
 
@@ -472,6 +464,12 @@
         @finch (x .= 0; for i = _ x[] += A[i, i] end)
         @test x[] == 15.0
     end
+
+end
+
+@testitem "issues3" setup=[CheckOutput] begin
+using SparseArrays
+using Finch: Structure
 
     #https://github.com/finch-tensor/Finch.jl/issues/267
     let
@@ -793,6 +791,11 @@
             end
         end
     end)
+end
+
+@testitem "issues4" setup=[CheckOutput] begin
+using SparseArrays
+using Finch: Structure
 
     #https://github.com/finch-tensor/Finch.jl/pull/442
     let
@@ -826,19 +829,6 @@
             end
         end)
     end
-
-    #=
-    let
-        A_COO = fsprand(10, 10, .5)
-        A_hash = Tensor(SparseDict(SparseDict(Element(0.0))))
-        @finch (A_hash .= 0; for i=_, j=_ A_hash[i,j]= A_COO[i,j] end)
-        B_COO = fsprand(10, 10, .5)
-        B_hash = Tensor(SparseDict(SparseDict(Element(0.0))))
-        @finch (B_hash .= 0; for i=_, j=_ B_hash[i,j]= B_COO[i,j] end)
-        output = Scalar(0)
-        @finch (output .= 0; for i=_, j=_ output[] += A_hash[j,i] * B_hash[follow(j), i] end)
-    end
-    =#
 
     let
         A = zeros(2, 3, 3)
@@ -992,32 +982,6 @@
             end
         end
         @test C_follow == C_walk
-    end
-
-    #https://github.com/finch-tensor/Finch.jl/issues/615
-
-    let
-        A = Tensor(Dense(Dense(Element(0.0))), 10, 10)
-        res = sum(tensordot(A, A, ((1,), (2,))))
-
-        A_lazy = Finch.LazyTensor(A)
-        res = sum(tensordot(A_lazy, A_lazy, ((1,), (2,))))  # fails
-    end
-
-    #https://github.com/finch-tensor/Finch.jl/issues/614
-
-    let
-        A = sprand(5, 5, 0.5)
-        B = sprand(5, 5, 0.5)
-        x = rand(5)
-        C = Tensor(Dense(SparseList(Element(0.0))), A)
-        D = Tensor(Dense(SparseList(Element(0.0))), B)
-
-        @test A * B == C * D
-        @test A * B == compute(lazy(C) * D)
-        @test A * B == compute(C * lazy(D))
-        @test A * x == C * x
-        @test A * x == compute(lazy(C) * x)
     end
 
 

@@ -22,11 +22,16 @@ If the environment variable FINCH_TEST_ARGS is set, it will override the given a
     nargs = '*'
     default = []
     help = "list of test suites to include, e.g., --include constructors merges"
-
     "--exclude", "-e"
     nargs = '*'
     default = []
     help = "list of test suites to exclude, e.g., --exclude parallel algebra"
+    "--nprocs", "-p"
+    default = Sys.CPU_THREADS
+    help = "number of processors to use for parallelization (0 to disable)"
+    "--nthreads", "-t"
+    default = 2
+    help = "number of threads to use on each processor"
 end
 
 if "FINCH_TEST_ARGS" in keys(ENV)
@@ -57,7 +62,7 @@ end
 
 using Finch
 
-runtests(Finch, name=pattern, nworkers=8, worker_init_expr=quote
+runtests(Finch, name=pattern, nworkers=parsed_args["nprocs"], nworker_threads=parsed_args["nthreads"], worker_init_expr=quote
     using Finch
     using SparseArrays
     parsed_args=$parsed_args

@@ -158,7 +158,7 @@
     end
 end
 
-@testitem "interface_basics" setup=[CheckOutput] begin
+@testitem "interface_asmd" setup=[CheckOutput] begin
     using Finch: AsArray
     using SparseArrays
     using LinearAlgebra
@@ -399,7 +399,7 @@ end
     end
 end
 
-@testitem "interface_issues1" setup=[CheckOutput] begin
+@testitem "interface_issues" setup=[CheckOutput] begin
     using Finch: AsArray
     using SparseArrays
     using LinearAlgebra
@@ -596,22 +596,7 @@ end
                 @test Array(A_result) == A_t
                 @test permutedims(A_tns, perm) == A_t
             end
-        end
-    end
-end
 
-@testitem "interface_issues2" setup=[CheckOutput] begin
-using Finch: AsArray
-using SparseArrays
-using LinearAlgebra
-
-for (key, scheduler) in [
-        "default" => Finch.default_scheduler(),
-        "interp" => Finch.DefaultLogicOptimizer(Finch.LogicInterpreter()),
-        "galley" => Finch.galley_scheduler()
-    ]
-    Finch.with_scheduler(scheduler) do
-        @info "Testing $scheduler"
             #https://github.com/finch-tensor/Finch.jl/pull/477
             let
                 A = zeros(2, 3, 3)
@@ -676,5 +661,4 @@ for (key, scheduler) in [
             end
         end
     end
-
 end

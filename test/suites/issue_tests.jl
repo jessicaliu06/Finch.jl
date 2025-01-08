@@ -193,12 +193,6 @@
         end
     end
 
-end
-
-@testitem "issues2" setup=[CheckOutput] begin
-    using SparseArrays
-    using Finch: Structure
-
     #https://github.com/finch-tensor/Finch.jl/issues/51
     let
         x = Tensor(Dense(Element(0.0)), [1, 2, 3])
@@ -464,12 +458,6 @@ end
         @finch (x .= 0; for i = _ x[] += A[i, i] end)
         @test x[] == 15.0
     end
-
-end
-
-@testitem "issues3" setup=[CheckOutput] begin
-using SparseArrays
-using Finch: Structure
 
     #https://github.com/finch-tensor/Finch.jl/issues/267
     let
@@ -791,11 +779,6 @@ using Finch: Structure
             end
         end
     end)
-end
-
-@testitem "issues4" setup=[CheckOutput] begin
-using SparseArrays
-using Finch: Structure
 
     #https://github.com/finch-tensor/Finch.jl/pull/442
     let

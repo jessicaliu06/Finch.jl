@@ -27,10 +27,12 @@ If the environment variable FINCH_TEST_ARGS is set, it will override the given a
     default = []
     help = "list of test suites to exclude, e.g., --exclude parallel algebra"
     "--nprocs", "-p"
-    default = Sys.CPU_THREADS
+    default = 22
+    arg_type = Int
     help = "number of processors to use for parallelization (0 to disable)"
     "--nthreads", "-t"
     default = 2
+    arg_type = Int
     help = "number of threads to use on each processor"
 end
 
@@ -40,30 +42,15 @@ end
 
 parsed_args = parse_args(ARGS, s)
 
-if isempty(parsed_args["include"])
-    pattern = ".*"
-else
-    @assert all(x -> all(isascii, x), parsed_args["include"])
-    pattern = "(" * join(parsed_args["include"], "|") * ")"
-end
-if !isempty(parsed_args["exclude"])
-    @assert all(x -> all(isascii, x), parsed_args["exclude"])
-    pattern = "(?!" * join(parsed_args["exclude"], "|") * ")" * pattern 
-end
-
-pattern = Regex("^" * pattern * "\$")
-
-function should_run(name)
-    global parsed_args
-    inc = parsed_args["include"]
-    exc = parsed_args["exclude"]
-    return (isempty(inc) || name in inc) && !(name in exc)
-end
-
 using Finch
 
-runtests(Finch, name=pattern, nworkers=parsed_args["nprocs"], nworker_threads=parsed_args["nthreads"], worker_init_expr=quote
+runtests(Finch, nworkers=parsed_args["nprocs"], nworker_threads=parsed_args["nthreads"], worker_init_expr=quote
     using Finch
     using SparseArrays
     parsed_args=$parsed_args
-end)
+end) do ti
+    global parsed_args
+    inc = parsed_args["include"]
+    exc = parsed_args["exclude"]
+    return (isempty(inc) || ti.name in inc) && !(ti.name in exc)
+end

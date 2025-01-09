@@ -265,7 +265,7 @@ end
             println(io)
         end
 
-        @test check_output("interface/getindex_$key.txt", String(take!(io)))
+        @test check_output("interface/getindex_default.txt", String(take!(io)))
     end
 
     let
@@ -280,7 +280,7 @@ end
         @repl io A[9, :] = 1:12
         @repl io AsArray(A)
 
-        @test check_output("interface/setindex_$key.txt", String(take!(io)))
+        @test check_output("interface/setindex_default.txt", String(take!(io)))
     end
 
     for (key, scheduler) in [

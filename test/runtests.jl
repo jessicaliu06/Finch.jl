@@ -171,7 +171,7 @@ else
     using ReTestItems
 
     runtests(
-        (ti) -> !test_filter(ti.name),
+        (ti) -> test_filter(ti.name),
         Finch,
         nworkers=parsed_args["nprocs"],
         nworker_threads=parsed_args["nthreads"],

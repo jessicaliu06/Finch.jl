@@ -85,14 +85,10 @@ function refresh()
     end
 end
 
-ref = 0
 """
-    fgensym(sym)
+    fgensym([tag])
 
 Generate a new fgensym symbol with the given name, for use in Finch.
 """
-function fgensym(sym)
-    global ref += 1
-    return fgensym(Symbol(sym, ref))
-end
-fgensym() = fgensym(:_)
+fgensym(tag) = eval(Finch, :(gensym($(QuoteNode(tag)))))
+fgensym() = eval(Finch, :(gensym()))

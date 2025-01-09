@@ -1,5 +1,4 @@
 @testitem "typical" setup=[CheckOutput] begin
-        @info "Testing Typical Usage"
     using SparseArrays
 
     let

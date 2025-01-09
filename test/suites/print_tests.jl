@@ -1,6 +1,4 @@
 @testitem "print" setup=[CheckOutput] begin
-        @info "Testing Tensor Printing"
-
     A = Tensor([(i + j) % 3 for i = 1:5, j = 1:10])
 
     formats = [

@@ -1,6 +1,4 @@
 @testitem "kernels" setup=[CheckOutput] begin
-        @info "Testing Standard Kernels"
-
     using SparseArrays
     using MatrixMarket
     using LinearAlgebra

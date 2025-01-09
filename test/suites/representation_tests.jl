@@ -68,8 +68,6 @@
 end
 
 @testitem "representation1d" setup=[CheckOutput, RepresentationSetup] begin
-    @info "Testing Tensor Representation"
-
     using Finch: Structure
 
     ios = Dict()
@@ -189,8 +187,6 @@ end
 end
 
 @testitem "representation2d" setup=[CheckOutput, RepresentationSetup] begin
-    @info "Testing Tensor Representation"
-
     using Finch: Structure
 
     ios = Dict()

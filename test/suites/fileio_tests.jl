@@ -1,9 +1,8 @@
 @testitem "fileio" setup=[CheckOutput] begin
-        using MatrixMarket
+    using MatrixMarket
     using Pkg
     using HDF5
     using Finch: Structure
-    @info "Testing HDF5 fileio"
     @testset "h5 binsparse" begin
         let f = mktempdir()
             A = [0.0 1.0 2.0 2.0 ;
@@ -66,7 +65,6 @@
 
     if haskey(Pkg.project().dependencies, "NPZ")
         using NPZ
-        @info "Testing NPY fileio"
         @testset "npy binsparse" begin
             let f = mktempdir()
                 A = [0.0 1.0 2.0 2.0 ;
@@ -123,7 +121,6 @@
 
     if haskey(Pkg.project().dependencies, "TensorMarket")
         using TensorMarket
-        @info "Testing TensorMarket fileio"
         A = [0.0 1.0 2.0 2.0 ;
             0.0 0.0 0.0 0.0 ;
             1.0 1.0 2.0 0.0 ;

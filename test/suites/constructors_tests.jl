@@ -1,5 +1,4 @@
 @testitem "constructors" setup=[CheckOutput] begin
-    @info "Testing Tensor Constructors"
 
     using Base.Meta
     using Finch: Structure

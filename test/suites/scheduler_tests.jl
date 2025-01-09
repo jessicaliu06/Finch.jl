@@ -1,6 +1,4 @@
 @testitem "scheduler" begin
-    @info "Testing Default Scheduler's Internals"
-
     using Finch: JuliaContext
     using Finch.FinchNotation: finch_unparse_program, @finch_program_instance
 

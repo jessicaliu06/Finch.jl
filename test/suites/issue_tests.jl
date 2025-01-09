@@ -1,4 +1,4 @@
-@testitem "issues1" setup=[CheckOutput] begin
+@testitem "issues" setup=[CheckOutput] begin
     using SparseArrays
     using Finch: Structure
 

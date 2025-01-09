@@ -1,5 +1,4 @@
 @testitem "index" setup=[CheckOutput] begin
-    @info "Testing Index Expressions"
 
     A = Tensor(SparseList(Element(0.0)), [2.0, 0.0, 3.0, 0.0, 4.0, 0.0, 5.0, 0.0, 6.0, 0.0])
     B = Scalar{0.0}()

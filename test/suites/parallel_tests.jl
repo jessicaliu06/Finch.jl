@@ -1,8 +1,7 @@
 # FIXME: Add a test for failures of concurrent.
-@testitem "parallel" setup=[CheckOutput] begin
-        using LinearAlgebra
-    @info "Testing Julia Threads Parallelism and Analysis"
-    @assert Threads.nthreads() > 1
+@testitem "parallel" setup=[CheckOutput] skip=(Threads.nthreads() <= 1) begin
+    using LinearAlgebra
+
     let
         io = IOBuffer()
         A = Tensor(Dense(SparseList(Element(0.0))), [1 2; 3 4])

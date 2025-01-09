@@ -1,6 +1,5 @@
 @testitem "continuous examples" begin
-        include("../data/continuous_data.jl")
-    @info "Testing Continuous Finch Examples"
+    include("../data/continuous_data.jl")
     using Finch: Structure
 
     @testset "openclosed + openclosed" begin

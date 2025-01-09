@@ -1,5 +1,5 @@
 @testitem "examples" begin
-        using SparseArrays
+    using SparseArrays
     using LinearAlgebra
     using Graphs, SimpleWeightedGraphs
 
@@ -8,7 +8,6 @@
     include(joinpath(@__DIR__, "../../docs/examples/shortest_paths.jl"))
     include(joinpath(@__DIR__, "../../docs/examples/spgemm.jl"))
     include(joinpath(@__DIR__, "../../docs/examples/triangle_counting.jl"))
-    @info "Testing Finch Examples"
 
     @testset "pagerank" begin
         size, sparsity = 30, 0.5

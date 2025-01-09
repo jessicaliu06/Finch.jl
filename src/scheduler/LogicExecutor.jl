@@ -44,7 +44,7 @@ function logic_executor_code(ctx, prgm)
         ctx(prgm)
     end
     code = pretty(code)
-    fname = gensym(Symbol(:compute, hash(get_structure(prgm)))) #The fact that we need this hash is worrisome
+    fname = gensym(Symbol(:compute, hash(get_structure(prgm)))) #The fact that we need this hash is worrisome (it indicates that our gensyms are not always unique)
     return :(function $fname(prgm)
             $code
         end) |> striplines

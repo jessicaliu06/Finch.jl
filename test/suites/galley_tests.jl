@@ -1,4 +1,4 @@
-@testitem "Galley Tests" begin
+@testitem "galley" begin
     
     using Test
     using Finch

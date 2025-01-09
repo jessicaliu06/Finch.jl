@@ -106,6 +106,11 @@ end
 @inline level_fill_value(::Type{<:SparsePointLevel{Ti, Idx, Lvl}}) where {Ti, Idx, Lvl} = level_fill_value(Lvl)
 data_rep_level(::Type{<:SparsePointLevel{Ti, Idx, Lvl}}) where {Ti, Idx, Lvl} = SparseData(data_rep_level(Lvl))
 
+isstructequal(a::T, b::T) where {T <: SparsePoint} =
+    a.shape == b.shape &&
+    a.idx == b.idx &&
+    isstructequal(a.lvl, b.lvl)
+
 (fbr::AbstractFiber{<:SparsePointLevel})() = fbr
 function (fbr::SubFiber{<:SparsePointLevel{Ti}})(idxs...) where {Ti}
     isempty(idxs) && return fbr

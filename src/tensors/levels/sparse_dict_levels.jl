@@ -131,6 +131,11 @@ end
 @inline level_fill_value(::Type{<:SparseDictLevel{Ti, Ptr, Idx, Val, Tbl, Pool, Lvl}}) where {Ti, Ptr, Idx, Val, Tbl, Pool, Lvl} = level_fill_value(Lvl)
 data_rep_level(::Type{<:SparseDictLevel{Ti, Ptr, Idx, Val, Tbl, Pool, Lvl}}) where {Ti, Ptr, Idx, Val, Tbl, Pool, Lvl} = SparseData(data_rep_level(Lvl))
 
+isstructequal(a::T, b::T) where {T <: SparseDict} =
+    a.shape == b.shape &&
+    a.tbl == b.tbl &&
+    isstructequal(a.lvl, b.lvl)
+
 (fbr::AbstractFiber{<:SparseDictLevel})() = fbr
 function (fbr::SubFiber{<:SparseDictLevel{Ti}})(idxs...) where {Ti}
     isempty(idxs) && return fbr

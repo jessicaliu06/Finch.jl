@@ -1,8 +1,8 @@
-using MatrixMarket
-using Pkg
-@testset "fileio" begin
+@testitem "fileio" setup=[CheckOutput] begin
+    using MatrixMarket
+    using Pkg
     using HDF5
-    @info "Testing HDF5 fileio"
+    using Finch: Structure
     @testset "h5 binsparse" begin
         let f = mktempdir()
             A = [0.0 1.0 2.0 2.0 ;
@@ -65,7 +65,6 @@ using Pkg
 
     if haskey(Pkg.project().dependencies, "NPZ")
         using NPZ
-        @info "Testing NPY fileio"
         @testset "npy binsparse" begin
             let f = mktempdir()
                 A = [0.0 1.0 2.0 2.0 ;
@@ -122,7 +121,6 @@ using Pkg
 
     if haskey(Pkg.project().dependencies, "TensorMarket")
         using TensorMarket
-        @info "Testing TensorMarket fileio"
         A = [0.0 1.0 2.0 2.0 ;
             0.0 0.0 0.0 0.0 ;
             1.0 1.0 2.0 0.0 ;
@@ -156,10 +154,22 @@ using Pkg
             @test A_COO_test == A_COO
 
             #A test to ensure some level of canonical interpretation.
-            A = mmread(joinpath(@__DIR__, "Trec4.mtx"))
-            fwrite(joinpath(f, "test.ttx"), Tensor(A))
+            A_ref = mmread(joinpath(@__DIR__, "../data/JGD_Kocay/Trec4.mtx"))
+            fwrite(joinpath(f, "test.ttx"), Tensor(A_ref))
             str = String(read(joinpath(f, "test.ttx")))
             @test check_output("fileio/Trec4.ttx", str)
+        end
+    end
+
+    #https://github.com/finch-tensor/Finch.jl/issues/500
+    let
+        using NPZ
+        f = mktempdir(;prefix="finch-issue-500")
+        cd(f) do
+            A = Tensor(Dense(Element(0.0)), rand(4))
+            fwrite("test.bspnpy", A)
+            B = fread("test.bspnpy")
+            @test A == B
         end
     end
 end

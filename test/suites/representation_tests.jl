@@ -2,9 +2,22 @@
 # tensors between different representations, the conversion of tensors to and
 # from their string representation, validation against reference getindex, and
 # validation against reference conversion code
+@testsetup module RepresentationSetup
+    using Finch
 
-@testset "representation" begin
-    @info "Testing Tensor Representation"
+    export reference_getindex, reference_isequal, levels_1D, levels_2D
+
+    reference_getindex(arr, inds...) = getindex(arr, inds...)
+    reference_getindex(arr::Tensor, inds...) = arr(inds...)
+
+    function reference_isequal(a,b)
+        size(a) == size(b) || return false
+        axes(a) == axes(b) || return false
+        for i in CartesianIndices(axes(a))
+            reference_getindex(a, Tuple(i)...) == reference_getindex(b, Tuple(i)...) || return false
+        end
+        return true
+    end
 
     modifier_levels = [
         (key = "Separate", Lvl = Separate),
@@ -52,6 +65,10 @@
         lvl = merge((filter = (x) -> true, repr = true), lvl)
         push!(levels_1D, (key = "Dense{$(lvl.key)}", Lvl = (base) -> lvl.Lvl(Dense(base)), filter = (key) -> lvl.filter("$(key)_dense"), pattern=false, repr = lvl.repr))
     end
+end
+
+@testitem "representation1d" setup=[CheckOutput, RepresentationSetup] begin
+    using Finch: Structure
 
     ios = Dict()
     compiled = Set()
@@ -167,6 +184,13 @@
             end
         end
     end
+end
+
+@testitem "representation2d" setup=[CheckOutput, RepresentationSetup] begin
+    using Finch: Structure
+
+    ios = Dict()
+    compiled = Set()
 
     for (key, arr) in [
         ("5x5_falses", fill(false, 5, 5)),

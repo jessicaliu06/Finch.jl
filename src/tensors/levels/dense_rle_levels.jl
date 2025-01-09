@@ -119,6 +119,12 @@ end
 @inline level_fill_value(::Type{<:RunListLevel{Ti, Ptr, Right, merge, Lvl}}) where {Ti, Ptr, Right, merge, Lvl}= level_fill_value(Lvl)
 data_rep_level(::Type{<:RunListLevel{Ti, Ptr, Right, merge, Lvl}}) where {Ti, Ptr, Right, merge, Lvl} = DenseData(data_rep_level(Lvl))
 
+isstructequal(a::T, b::T) where {T <: RunList} =
+    a.shape == b.shape &&
+    a.ptr == b.ptr &&
+    a.right == b.right &&
+    isstructequal(a.lvl, b.lvl)
+
 (fbr::AbstractFiber{<:RunListLevel})() = fbr
 function (fbr::SubFiber{<:RunListLevel})(idxs...)
     isempty(idxs) && return fbr

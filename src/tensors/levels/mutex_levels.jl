@@ -74,6 +74,11 @@ end
 @inline level_fill_value(::Type{<:MutexLevel{AVal, Lvl}}) where {AVal, Lvl} = level_fill_value(Lvl)
 data_rep_level(::Type{<:MutexLevel{AVal,Lvl}}) where {AVal,Lvl} = data_rep_level(Lvl)
 
+isstructequal(a::T, b::T) where {T <: Mutex} =
+    typeof(a.locks) == typeof(b.locks) &&
+    isstructequal(a.lvl, b.lvl)
+# Temporary hack to deal with SpinLock allocate undefined references.
+
 # FIXME: These.
 (fbr::Tensor{<:MutexLevel})() = SubFiber(fbr.lvl, 1)()
 (fbr::SubFiber{<:MutexLevel})() = fbr #TODO this is not consistent somehow

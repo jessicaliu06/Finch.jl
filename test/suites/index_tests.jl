@@ -1,5 +1,4 @@
-@testset "index" begin
-    @info "Testing Index Expressions"
+@testitem "index" setup=[CheckOutput] begin
 
     A = Tensor(SparseList(Element(0.0)), [2.0, 0.0, 3.0, 0.0, 4.0, 0.0, 5.0, 0.0, 6.0, 0.0])
     B = Scalar{0.0}()
@@ -53,7 +52,7 @@
     A = Tensor(SparseVector{Float64, Int64}(A_ref)); B = Tensor(SparseVector{Float64, Int64}(B_ref)); C = Tensor(SparseList{Int64}(Element(0.0)), 20)
     @test check_output("index/concat_offset_permit.jl", @finch_code (C .= 0; for i=_; C[i] = coalesce(A[~i], B[~(i - 10)]) end))
     @finch (C .= 0; for i=_; C[i] = coalesce(A[~i], B[~(i - 10)]) end)
-    @test reference_isequal(C, C_ref)
+    @test C == C_ref
 
     F = Tensor(Int64[1,1,1,1,1])
 
@@ -70,15 +69,15 @@
             end
         end
     end
-    @test reference_isequal(C, C_ref)
+    @test C == C_ref
 
     @test check_output("index/sparse_window.jl", @finch_code (C .= 0; for i=_; C[i] = A[(2:4)(i)] end))
     @finch (C .= 0; for i=_; C[i] = A[(2:4)(i)] end)
-    @test reference_isequal(C, [A(2), A(3), A(4)])
+    @test C == [A(2), A(3), A(4)]
 
     I = 2:4
     @finch (C .= 0; for i=_; C[i] = I[i] end)
-    @test reference_isequal(C, [2, 3, 4])
+    @test C == [2, 3, 4]
 
     y = Array{Any}(undef, 4)
     x = Tensor(Dense(Element(0.0)), zeros(2))

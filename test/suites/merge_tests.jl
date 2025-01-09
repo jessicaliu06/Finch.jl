@@ -1,6 +1,6 @@
-@testset "merges" begin
-    @info "Testing Merge Kernels"
+@testitem "merges" begin
     using Base.Iterators
+    using Finch: Structure
     #TODO this is a hack to get around the fact that we don't call leaf_instance on interpolated values
     #and leaf_instance isn't super robust
     using Finch.FinchNotation: literal_instance

@@ -228,7 +228,7 @@ See also: [`@finch`](@ref)
 """
 function finch_kernel(fname, args, prgm; algebra = DefaultAlgebra(), mode = :safe, ctx = FinchCompiler(algebra=algebra, mode=mode))
     maybe_typeof(x) = x isa Type ? x : typeof(x)
-    unreachable = gensym(:unreachable)
+    unreachable = fgensym(:unreachable)
     code = contain(ctx) do ctx_2
         foreach(args) do (key, val)
             set_binding!(ctx_2, variable(key), finch_leaf(virtualize(ctx_2.code, key, maybe_typeof(val), key)))

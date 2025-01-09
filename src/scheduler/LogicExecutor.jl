@@ -44,7 +44,7 @@ function logic_executor_code(ctx, prgm)
         ctx(prgm)
     end
     code = pretty(code)
-    fname = gensym(:compute)
+    fname = fgensym(:compute)
     return :(function $fname(prgm)
             $code
         end) |> striplines

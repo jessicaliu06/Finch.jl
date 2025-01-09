@@ -1,4 +1,4 @@
-@testitem "continuous examples" begin
+@testitem "continuous_examples" begin
     include("../data/continuous_data.jl")
     using Finch: Structure
 

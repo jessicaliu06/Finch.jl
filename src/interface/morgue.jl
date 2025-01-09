@@ -27,13 +27,13 @@ end
 #=
     root = Rewrite(Fixpoint(Postwalk(Chain([
         (@rule plan(~a1..., query(~b, relabel(~c, ~i...)), ~a2...) => begin
-            d = alias(gensym(:A))
+            d = alias(fgensym(:A))
             bindings[d] = c
             rw = Rewrite(Postwalk(@rule b => relabel(d, i...)))
             plan(a1..., query(d, c), map(rw, a2)...)
         end),
         (@rule plan(~a1..., query(~b, reorder(~c, ~i...)), ~a2...) => begin
-            d = alias(gensym(:A))
+            d = alias(fgensym(:A))
             bindings[d] = c
             rw = Rewrite(Postwalk(@rule b => reorder(d, i...)))
             plan(a1..., query(d, c), map(rw, a2)...)
@@ -54,7 +54,7 @@ end
 function push_reorders(root, bindings)
     Rewrite(Fixpoint(Postwalk(Chain([
         (@rule plan(~a1..., query(~b, reorder(~c, ~i...)), ~a2...) => begin
-            d = alias(gensym(:A))
+            d = alias(fgensym(:A))
             bindings[d] = c
             rw = Rewrite(Postwalk(@rule b => reorder(d, i...)))
             plan(a1..., query(d, c), map(rw, a2)...)

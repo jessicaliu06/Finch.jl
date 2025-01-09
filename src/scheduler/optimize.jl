@@ -5,21 +5,21 @@ flatten_plans = Rewrite(Postwalk(Fixpoint(Chain([
 
 isolate_aggregates = Rewrite(Postwalk(
     @rule aggregate(~op, ~init, ~arg, ~idxs...) => begin
-        name = alias(gensym(:A))
+        name = alias(fgensym(:A))
         subquery(name, aggregate(~op, ~init, ~arg, ~idxs...))
     end
 ))
 
 isolate_reformats = Rewrite(Postwalk(
     @rule reformat(~tns, ~arg) => begin
-        name = alias(gensym(:A))
+        name = alias(fgensym(:A))
         subquery(name, reformat(tns, arg))
     end
 ))
 
 isolate_tables = Rewrite(Postwalk(
     @rule table(~tns, ~idxs...) => begin
-        name = alias(gensym(:A))
+        name = alias(fgensym(:A))
         subquery(name, table(tns, idxs...))
     end
 ))
@@ -193,7 +193,7 @@ function materialize_squeeze_expand_productions(root)
         preamble = []
         args_2 = map(args) do arg
             if (@capture arg reorder(relabel(~tns::isalias, ~idxs_1...), ~idxs_2...)) && Set(idxs_1) != Set(idxs_2)
-                tns_2 = alias(gensym(:A))
+                tns_2 = alias(fgensym(:A))
                 idxs_3 = withsubsequence(intersect(idxs_1, idxs_2), idxs_2)
                 push!(preamble, query(tns_2, reorder(relabel(tns, idxs_1), idxs_3)))
                 if idxs_3 == idxs_2
@@ -541,7 +541,7 @@ function set_loop_order(node, perms = Dict(), reps = Dict())
         reps[lhs] = SuitableRep(reps)(rhs_2)
         query(lhs, reformat(tns, rhs_2))
     elseif @capture node query(~lhs, reformat(~tns, ~rhs))
-        arg = alias(gensym(:A))
+        arg = alias(fgensym(:A))
         set_loop_order(plan(
             query(A, rhs),
             query(lhs, reformat(tns, A))
@@ -593,7 +593,7 @@ function optimize(prgm)
     prgm = isolate_tables(prgm)
     prgm = lift_subqueries(prgm)
 
-    #I shouldn't use gensym but I do, so this cleans up the names
+    #I shouldn't use fgensym but I do, so this cleans up the names
     prgm = pretty_labels(prgm)
 
     #These steps fuse copy, permutation, and mapjoin statements

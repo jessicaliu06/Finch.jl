@@ -128,9 +128,9 @@ instantiate(ctx, ::VirtualSubFiber{VirtualPatternLevel}, mode::Reader) = FillLea
 function instantiate(ctx, fbr::VirtualSubFiber{VirtualPatternLevel}, mode::Updater)
     val = freshen(ctx, :null)
     push_preamble!(ctx, :($val = false))
-    VirtualScalar(nothing, Bool, false, gensym(), val)
+    VirtualScalar(nothing, Bool, false, fgensym(), val)
 end
 
 function instantiate(ctx, fbr::VirtualHollowSubFiber{VirtualPatternLevel}, mode::Updater)
-    VirtualScalar(nothing, Bool, false, gensym(), fbr.dirty)
+    VirtualScalar(nothing, Bool, false, fgensym(), fbr.dirty)
 end

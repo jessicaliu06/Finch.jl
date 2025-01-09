@@ -53,11 +53,11 @@ function unfurl(ctx, tns::VirtualAbstractArraySlice, ext, mode, proto)
                         preamble = quote
                             $val = $(arr.ex)[$(map(ctx, idx_2)...)]
                         end,
-                        body = (ctx) -> instantiate(ctx, VirtualScalar(nothing, arr.eltype, nothing#=We don't know what init is, but it won't be used here =#, fgensym(), val), mode)
+                        body = (ctx) -> instantiate(ctx, VirtualScalar(nothing, arr.eltype, nothing#=We don't know what init is, but it won't be used here =#, gensym(), val), mode)
                     )
                 else
                     Thunk(
-                        body = (ctx,) -> instantiate(ctx, VirtualScalar(nothing, arr.eltype, nothing#=We don't know what init is, but it won't be used here=#, fgensym(), :($(arr.ex)[$(map(ctx, idx_2)...)])), mode)
+                        body = (ctx,) -> instantiate(ctx, VirtualScalar(nothing, arr.eltype, nothing#=We don't know what init is, but it won't be used here=#, gensym(), :($(arr.ex)[$(map(ctx, idx_2)...)])), mode)
                     )
                 end
             else
@@ -81,11 +81,11 @@ function instantiate(ctx::AbstractCompiler, arr::VirtualAbstractArray, mode)
                 preamble = quote
                     $val = $(arr.ex)[]
                 end,
-                body = (ctx) -> instantiate(ctx, VirtualScalar(nothing, arr.eltype, nothing#=We don't know what init is, but it won't be used here =#, fgensym(), val), mode)
+                body = (ctx) -> instantiate(ctx, VirtualScalar(nothing, arr.eltype, nothing#=We don't know what init is, but it won't be used here =#, gensym(), val), mode)
             )
         else
             Thunk(
-                body = (ctx,) -> instantiate(ctx, VirtualScalar(nothing, arr.eltype, nothing#=We don't know what init is, but it won't be used here=#, fgensym(), :($(arr.ex)[])), mode)
+                body = (ctx,) -> instantiate(ctx, VirtualScalar(nothing, arr.eltype, nothing#=We don't know what init is, but it won't be used here=#, gensym(), :($(arr.ex)[])), mode)
             )
         end
     else 

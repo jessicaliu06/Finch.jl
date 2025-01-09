@@ -64,7 +64,7 @@ ensuring that the variables in `ex` are not mutated by the arguments.
 """
 macro barrier(args_ex...)
     (args, ex) = args_ex[1:end-1], args_ex[end]
-    f = fgensym()
+    f = gensym()
     esc(quote
         $f = Finch.@closure ($(args...),) -> $ex
         $f()

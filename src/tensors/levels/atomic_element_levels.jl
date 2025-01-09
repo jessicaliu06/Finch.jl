@@ -162,7 +162,7 @@ function instantiate(ctx, fbr::VirtualSubFiber{VirtualAtomicElementLevel}, mode:
         preamble = quote
             $val = $(lvl.val)[$(ctx(pos))]
         end,
-        body = (ctx) -> VirtualScalar(nothing, lvl.Tv, lvl.Vf, fgensym(), val)
+        body = (ctx) -> VirtualScalar(nothing, lvl.Tv, lvl.Vf, gensym(), val)
     )
 end
 

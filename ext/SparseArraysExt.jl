@@ -268,7 +268,7 @@ function Finch.unfurl(ctx, tns::VirtualSparseMatrixCSCColumn, ext, mode, ::Union
                     end
                     $dirty = false
                 end,
-                body = (ctx) -> Finch.instantiate(ctx, Finch.VirtualSparseScalar(nothing, arr.Tv, zero(arr.Tv), fgensym(), :($(arr.val)[$(ctx(qos))]), dirty), mode),
+                body = (ctx) -> Finch.instantiate(ctx, Finch.VirtualSparseScalar(nothing, arr.Tv, zero(arr.Tv), gensym(), :($(arr.val)[$(ctx(qos))]), dirty), mode),
                 epilogue = quote
                     if $dirty
                         $(arr.idx)[$qos] = $(ctx(idx))
@@ -463,7 +463,7 @@ function Finch.unfurl(ctx, arr::VirtualSparseVector, ext, mode::Updater, ::Union
                         end
                         $dirty = false
                     end,
-                    body = (ctx) -> Finch.instantiate(ctx, Finch.VirtualSparseScalar(nothing, arr.Tv, zero(arr.Tv), fgensym(), :($(arr.val)[$(ctx(qos))]), dirty), mode),
+                    body = (ctx) -> Finch.instantiate(ctx, Finch.VirtualSparseScalar(nothing, arr.Tv, zero(arr.Tv), gensym(), :($(arr.val)[$(ctx(qos))]), dirty), mode),
                     epilogue = quote
                         if $dirty
                             $(arr.idx)[$qos] = $(ctx(idx))

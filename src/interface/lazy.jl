@@ -38,8 +38,8 @@ function expanddims(arr::LazyTensor{T}, dims) where {T}
     @assert allunique(dims)
     @assert issubset(dims,1:ndims(arr) + length(dims))
     antidims = setdiff(1:ndims(arr) + length(dims), dims)
-    idxs_1 = [field(fgensym(:i)) for _ in 1:ndims(arr)]
-    idxs_2 = [field(fgensym(:i)) for _ in 1:ndims(arr) + length(dims)]
+    idxs_1 = [field(gensym(:i)) for _ in 1:ndims(arr)]
+    idxs_2 = [field(gensym(:i)) for _ in 1:ndims(arr) + length(dims)]
     idxs_2[antidims] .= idxs_1
     data_2 = reorder(relabel(arr.data, idxs_1...), idxs_2...)
     extrude_2 = [false for _ in 1:ndims(arr) + length(dims)]
@@ -48,7 +48,7 @@ function expanddims(arr::LazyTensor{T}, dims) where {T}
 end
 
 function identify(data)
-    lhs = alias(fgensym(:A))
+    lhs = alias(gensym(:A))
     subquery(lhs, data)
 end
 
@@ -56,8 +56,8 @@ LazyTensor(data::Number) = LazyTensor{typeof(data), 0}(immediate(data), (), data
 LazyTensor{T}(data::Number) where {T} = LazyTensor{T, 0}(immediate(data), (), data)
 LazyTensor(arr::Base.AbstractArrayOrBroadcasted) = LazyTensor{eltype(arr)}(arr)
 function LazyTensor{T}(arr::Base.AbstractArrayOrBroadcasted) where {T}
-    name = alias(fgensym(:A))
-    idxs = [field(fgensym(:i)) for _ in 1:ndims(arr)]
+    name = alias(gensym(:A))
+    idxs = [field(gensym(:i)) for _ in 1:ndims(arr)]
     extrude = ntuple(n -> size(arr, n) == 1, ndims(arr))
     tns = subquery(name, table(immediate(arr), idxs...))
     LazyTensor{eltype(arr), ndims(arr)}(tns, extrude, fill_value(arr))
@@ -65,8 +65,8 @@ end
 LazyTensor(arr::AbstractTensor) = LazyTensor{eltype(arr)}(arr)
 LazyTensor(swizzle_arr::SwizzleArray{dims, <:Tensor}) where {dims} = permutedims(LazyTensor(swizzle_arr.body), dims)
 function LazyTensor{T}(arr::AbstractTensor) where {T}
-    name = alias(fgensym(:A))
-    idxs = [field(fgensym(:i)) for _ in 1:ndims(arr)]
+    name = alias(gensym(:A))
+    idxs = [field(gensym(:i)) for _ in 1:ndims(arr)]
     extrude = ntuple(n -> size(arr)[n] == 1, ndims(arr))
     tns = subquery(name, table(immediate(arr), idxs...))
     LazyTensor{eltype(arr), ndims(arr)}(tns, extrude, fill_value(arr))
@@ -90,7 +90,7 @@ end
 function Base.map(f, src::LazyTensor, args...)
     largs = map(LazyTensor, (src, args...))
     extrude = largs[something(findfirst(arg -> length(arg.extrude) > 0, largs), 1)].extrude
-    idxs = [field(fgensym(:i)) for _ in src.extrude]
+    idxs = [field(gensym(:i)) for _ in src.extrude]
     ldatas = map(largs) do larg
         if larg.extrude == extrude
             return relabel(larg.data, idxs...)
@@ -135,7 +135,7 @@ end
 function Base.reduce(op, arg::LazyTensor{T, N}; dims=:, init = initial_value(op, T)) where {T, N}
     dims = dims == Colon() ? (1:N) : collect(dims)
     extrude = ((arg.extrude[n] for n in 1:N if !(n in dims))...,)
-    fields = [field(fgensym(:i)) for _ in 1:N]
+    fields = [field(gensym(:i)) for _ in 1:N]
     S = fixpoint_type(op, init, eltype(arg))
     data = aggregate(immediate(op), immediate(init), relabel(arg.data, fields), fields[dims]...)
     LazyTensor{S}(identify(data), extrude, init)
@@ -160,8 +160,8 @@ function tensordot(A::LazyTensor{T1, N1}, B::LazyTensor{T2, N2}, idxs; mult_op=*
 
     extrude = ((A.extrude[n] for n in 1:N1 if !(n in A_idxs))...,
                 (B.extrude[n] for n in 1:N2 if !(n in B_idxs))...,)
-    A_fields = [field(fgensym(:i)) for _ in 1:N1]
-    B_fields = [field(fgensym(:i)) for _ in 1:N2]
+    A_fields = [field(gensym(:i)) for _ in 1:N1]
+    B_fields = [field(gensym(:i)) for _ in 1:N2]
     reduce_fields = []
     for i in eachindex(A_idxs)
         B_fields[B_idxs[i]] = A_fields[A_idxs[i]]
@@ -197,7 +197,7 @@ function broadcast_to_query(bc::Broadcast.Broadcasted, idxs)
 end
 
 function broadcast_to_query(tns::LazyTensor{T, N}, idxs) where {T, N}
-    idxs_2 = [tns.extrude[i] ? field(fgensym(:idx)) : idxs[i] for i in 1:N]
+    idxs_2 = [tns.extrude[i] ? field(gensym(:idx)) : idxs[i] for i in 1:N]
     data_2 = relabel(tns.data, idxs_2...)
     reorder(data_2, idxs[findall(!, tns.extrude)]...)
 end
@@ -232,7 +232,7 @@ Base.copyto!(out, bc::Broadcasted{LazyStyle{N}}) where {N} = copyto!(out, copy(b
 
 function Base.copy(bc::Broadcasted{LazyStyle{N}}) where {N}
     bc_lgc = broadcast_to_logic(bc)
-    idxs = [field(fgensym(:i)) for _ in 1:N]
+    idxs = [field(gensym(:i)) for _ in 1:N]
     data = reorder(broadcast_to_query(bc_lgc, idxs), idxs)
     extrude = ntuple(n -> broadcast_to_extrude(bc_lgc, n), N)
     def = broadcast_to_default(bc_lgc)
@@ -252,7 +252,7 @@ function Base.permutedims(arg::LazyTensor{T, N}, perm) where {T, N}
     length(perm) == N || throw(ArgumentError("permutedims given wrong number of dimensions"))
     isperm(perm) || throw(ArgumentError("permutedims given invalid permutation"))
     perm = collect(perm)
-    idxs = [field(fgensym(:i)) for _ in 1:N]
+    idxs = [field(gensym(:i)) for _ in 1:N]
     return LazyTensor{T, N}(reorder(relabel(arg.data, idxs...), idxs[perm]...), arg.extrude[perm], arg.fill_value)
 end
 Base.permutedims(arr::SwizzleArray, perm) = swizzle(arr, perm...)
@@ -536,7 +536,7 @@ compute(arg; ctx=get_scheduler(), kwargs...) = compute_parse(set_options(ctx; kw
 compute(args::Tuple; ctx=get_scheduler(), kwargs...) = compute_parse(set_options(ctx; kwargs...), map(lazy, args))
 function compute_parse(ctx, args::Tuple)
     args = collect(args)
-    vars = map(arg -> alias(fgensym(:A)), args)
+    vars = map(arg -> alias(gensym(:A)), args)
     bodies = map((arg, var) -> query(var, arg.data), args, vars)
     prgm = plan(bodies, produces(vars))
 

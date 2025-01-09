@@ -21,9 +21,9 @@ This macro does not support type parameters, varargs, or keyword arguments.
 macro staged(def)
     (@capture def :function(:call(~name, ~args...), ~body)) || throw(ArgumentError("unrecognized function definition in @staged"))
 
-    name_generator = fgensym(Symbol(name, :_generator))
-    name_invokelatest = fgensym(Symbol(name, :_invokelatest))
-    name_eval_invokelatest = fgensym(Symbol(name, :_eval_invokelatest))
+    name_generator = gensym(Symbol(name, :_generator))
+    name_invokelatest = gensym(Symbol(name, :_invokelatest))
+    name_eval_invokelatest = gensym(Symbol(name, :_eval_invokelatest))
 
     def = quote
         function $name_generator($(args...))
@@ -84,11 +84,3 @@ function refresh()
         @eval $def
     end
 end
-
-"""
-    fgensym([tag])
-
-Generate a new fgensym symbol with the given name, for use in Finch.
-"""
-fgensym(tag) = eval(Finch, :(gensym($(QuoteNode(tag)))))
-fgensym() = eval(Finch, :(gensym()))

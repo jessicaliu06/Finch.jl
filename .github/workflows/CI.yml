@@ -26,11 +26,6 @@ jobs:
         arch:
           - x64
           - x86
-        testset:
-          - 'algebra constructors continuous continuous_examples docs'
-          - 'examples fileio galley index interface_einsum interface_asmd'
-          - 'interface_issues issues kernels merges parallel print'
-          - 'representation1d representation2d scheduler simple typical'
         exclude:
           - os: ubuntu-latest
             arch: x86
@@ -56,7 +51,7 @@ jobs:
       - name: Set and Retrieve Github ENV variables
         shell: bash
         run: |
-          echo "JULIA_NUM_THREADS=2 FINCH_TEST_ARGS='-i ${{matrix.testset}}'" >> $GITHUB_ENV
+          echo "JULIA_NUM_THREADS=2" >> $GITHUB_ENV
       - uses: julia-actions/julia-runtest@v1
       - uses: julia-actions/julia-processcoverage@v1
       - uses: codecov/codecov-action@v5

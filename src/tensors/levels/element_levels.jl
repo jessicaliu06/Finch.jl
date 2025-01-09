@@ -50,6 +50,9 @@ set_fill_value!(lvl::ElementLevel{Vf, Tv, Tp}, init) where {Vf, Tv, Tp} =
     ElementLevel{init, Tv, Tp}(lvl.val)
 Base.resize!(lvl::ElementLevel) = lvl
 
+isstructequal(a::T, b::T) where {T <: Element} =
+    a.val == b.val
+
 function Base.show(io::IO, lvl::ElementLevel{Vf, Tv, Tp, Val}) where {Vf, Tv, Tp, Val}
     print(io, "Element{")
     show(io, Vf)

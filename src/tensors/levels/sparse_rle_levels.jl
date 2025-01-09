@@ -119,6 +119,13 @@ end
 @inline level_fill_value(::Type{<:SparseRunListLevel{Ti, Ptr, Left, Right, merge, Lvl}}) where {Ti, Ptr, Left, Right, merge, Lvl}= level_fill_value(Lvl)
 data_rep_level(::Type{<:SparseRunListLevel{Ti, Ptr, Left, Right, merge, Lvl}}) where {Ti, Ptr, Left, Right, merge, Lvl} = SparseData(data_rep_level(Lvl))
 
+isstructequal(a::T, b::T) where {T <: SparseRunList} =
+    a.shape == b.shape &&
+    a.ptr == b.ptr &&
+    a.left == b.left &&
+    a.right == b.right &&
+    isstructequal(a.lvl, b.lvl)
+
 (fbr::AbstractFiber{<:SparseRunListLevel})() = fbr
 function (fbr::SubFiber{<:SparseRunListLevel})(idxs...)
     isempty(idxs) && return fbr

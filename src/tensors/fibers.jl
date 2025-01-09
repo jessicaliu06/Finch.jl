@@ -299,3 +299,18 @@ Base.similar(fbr::AbstractFiber, eltype::Type, dims::Tuple) = similar(fbr, conve
 Base.similar(fbr::AbstractFiber, fill_value, eltype::Type, dims::Tuple) = Tensor(similar_level(fbr.lvl, fill_value, eltype, dims...))
 
 moveto(tns::Tensor, device) = Tensor(moveto(tns.lvl, device))
+
+struct Structure
+    t
+end
+    
+Base.:(==)(a::Structure, b::Structure) = isstructequal(a.t, b.t)
+
+isstructequal(a, b) = a === b
+
+isstructequal(a::T, b::T) where {T <: Tensor} =
+    isstructequal(a.lvl, b.lvl)
+
+isstructequal(a::T, b::T) where {T <: Finch.SubFiber} =
+    isstructequal(a.lvl, b.lvl) &&
+    isstructequal(a.ptr, b.ptr)

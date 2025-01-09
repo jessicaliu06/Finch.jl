@@ -43,6 +43,9 @@ pattern!(lvl::SeparateLevel) = SeparateLevel(pattern!(lvl.lvl), map(pattern!, lv
 set_fill_value!(lvl::SeparateLevel, init) = SeparateLevel(set_fill_value!(lvl.lvl, init), map(lvl_2->set_fill_value!(lvl_2, init), lvl.val))
 Base.resize!(lvl::SeparateLevel, dims...) = SeparateLevel(resize!(lvl.lvl, dims...), map(lvl_2->resize!(lvl_2, dims...), lvl.val))
 
+isstructequal(a::T, b::T) where {T <: Separate} =
+  all(isstructequal(x,y) for (x,y) in zip(a.val, b.val)) && isstructequal(a.lvl, b.lvl)
+
 function Base.show(io::IO, lvl::SeparateLevel{Lvl, Val}) where {Lvl, Val}
     print(io, "Separate(")
     if get(io, :compact, false)

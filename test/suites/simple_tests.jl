@@ -1,5 +1,5 @@
-@testset "simple" begin
-    @info "Testing Simple Examples"
+@testitem "simple" begin
+    using SparseArrays
 
     x = Tensor(Sparse(Element(0.0)))
     y = Tensor(SparseList(Element(0.0)), sprand(10, 0.5))

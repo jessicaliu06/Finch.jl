@@ -1,5 +1,5 @@
-@testset "continuous" begin
-    @info "Testing Continuous Insertion"
+@testitem "continuous" setup=[CheckOutput] skip=true begin
+    include("../data/continuous_data.jl")
     let
         s1 = Scalar(0)
         x = Tensor(SparseRunList{Limit{Float32}}(Element(0)), 10)
@@ -22,7 +22,6 @@
         @test s1.val == 10
     end
 
-    @info "Testing Continuous Usage"
     using StatsBase
     using Random
     using StableRNGs

@@ -63,6 +63,10 @@ Base.resize!(lvl::DenseLevel{Ti}, dims...) where {Ti} =
 @inline level_fill_value(::Type{<:DenseLevel{Ti, Lvl}}) where {Ti, Lvl} = level_fill_value(Lvl)
 data_rep_level(::Type{<:DenseLevel{Ti, Lvl}}) where {Ti, Lvl} = DenseData(data_rep_level(Lvl))
 
+isstructequal(a::T, b::T) where {T <: Dense} =
+    a.shape == b.shape &&
+    isstructequal(a.lvl, b.lvl)
+
 (fbr::AbstractFiber{<:DenseLevel})() = fbr
 function (fbr::SubFiber{<:DenseLevel{Ti}})(idxs...) where {Ti}
     isempty(idxs) && return fbr

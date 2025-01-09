@@ -1,5 +1,5 @@
-@testset "typical" begin
-    @info "Testing Typical Usage"
+@testitem "typical" setup=[CheckOutput] begin
+    using SparseArrays
 
     let
         io = IOBuffer()

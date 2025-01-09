@@ -115,6 +115,13 @@ end
 @inline level_fill_value(::Type{<:SparseByteMapLevel{Ti, Ptr, Tbl, Srt, Lvl}}) where {Ti, Ptr, Tbl, Srt, Lvl}= level_fill_value(Lvl)
 data_rep_level(::Type{<:SparseByteMapLevel{Ti, Ptr, Tbl, Srt, Lvl}}) where {Ti, Ptr, Tbl, Srt, Lvl} = SparseData(data_rep_level(Lvl))
 
+isstructequal(a::T, b::T) where {T <: SparseByteMap} =
+    a.shape == b.shape &&
+    a.ptr == b.ptr &&
+    a.tbl == b.tbl &&
+    a.srt == b.srt &&
+    isstructequal(a.lvl, b.lvl)
+
 (fbr::AbstractFiber{<:SparseByteMapLevel})() = fbr
 function (fbr::SubFiber{<:SparseByteMapLevel{Ti}})(idxs...) where {Ti}
     isempty(idxs) && return fbr

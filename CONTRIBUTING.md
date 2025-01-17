@@ -69,11 +69,18 @@ julia +release~x86 test/runtests.jl --overwrite
 julia +release~x64 test/runtests.jl --overwrite
 ```
 
-The test suite takes a while to run. You can filter to only run a selection of
-test suites by specifying them as positional arguments, e.g.
+The test suite takes a while to run. You can parallelize by setting the `-p`
+option to configure the number of processors.
 
 ```
-./test/runtests.jl constructors conversions representation
+./test/runtests.jl -p 22
+```
+
+You can also filter to only run a selection of test suitesusing the `--include` or
+`--exclude` arguments, or 
+
+```
+./test/runtests.jl --include constructors interface_einsum interface_asmd
 ```
 
 This information is summarized with `./test/runtests.jl --help`

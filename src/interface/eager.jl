@@ -112,14 +112,25 @@ Base.maximum(arr::AbstractTensorOrBroadcast; kwargs...) = reduce(max, arr; init 
 
 Base.extrema(arr::AbstractTensorOrBroadcast; kwargs...) = mapreduce(plex, min1max2, arr; init = (typemax(broadcast_to_eltype(arr)), typemin(broadcast_to_eltype(arr))), kwargs...)
 
+
 function LinearAlgebra.norm(arr::AbstractTensorOrBroadcast, p::Real = 2)
     compute(norm(lazy(arr), p))[]
 end
 
 """
-    expanddims(arr::AbstractTensor, dims)
+expanddims(arr::AbstractTensor, dims)
 
 Expand the dimensions of an array by inserting a new singleton axis or axes that
 will appear at the `dims` position in the expanded array shape.
 """
 expanddims(arr::AbstractTensor, dims) = compute(expanddims(lazy(arr), dims))
+
+"""
+mean(arr::AbstractTensorOrBroadcast; kwargs...)
+
+Calculates the arithmetic mean of the input array `arr`.
+
+Parameters:
+ - `arr` (array) – input array. 
+"""
+mean(arr::AbstractTensorOrBroadcast; kwargs...) = compute(mean(lazy(arr; kwargs...)))

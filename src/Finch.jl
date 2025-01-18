@@ -54,6 +54,7 @@ export lazy, compute, fused, tensordot, @einsum
 export choose, minby, maxby, overwrite, initwrite, filterop, d
 
 export fill_value, AsArray, expanddims, tensor_tree
+export mean
 
 export parallelAnalysis, ParallelAnalysisResults
 export parallel, realextent, extent, dimless

@@ -7,10 +7,10 @@ const AbstractArrayOrBroadcasted = Union{AbstractArray,Broadcasted}
 mutable struct LazyTensor{T, N}
     data
     extrude::NTuple{N, Bool}
-    shape::NTuple{N, UInt64}
+    shape::NTuple{N, Int}
     fill_value::T
 end
-LazyTensor{T}(data, extrude::NTuple{N, Bool}, shape::NTuple{N, UInt64}, fill_value) where {T, N} = LazyTensor{T, N}(data, extrude, shape, fill_value)
+LazyTensor{T}(data, extrude::NTuple{N, Bool}, shape::NTuple{N, Int}, fill_value) where {T, N} = LazyTensor{T, N}(data, extrude, shape, fill_value)
 
 function Base.show(io::IO, tns::LazyTensor)
     join(io, [string(x) for x in tns.shape], "×")
@@ -23,7 +23,7 @@ Base.eltype(::Type{<:LazyTensor{T}}) where {T} = T
 Base.eltype(tns::LazyTensor) = eltype(typeof(tns))
 fill_value(tns::LazyTensor) = tns.fill_value
 
-shape(tns::LazyTensor) = tns.shape
+Base.size(tns::LazyTensor) = tns.shape
 
 Base.getindex(::LazyTensor, i...) = throw(ErrorException("Lazy indexing with named indices is not supported. Call `compute()` first."))
 
@@ -86,6 +86,12 @@ Base.any(arr::LazyTensor; kwargs...) = reduce(or, arr; init = false, kwargs...)
 Base.all(arr::LazyTensor; kwargs...) = reduce(and, arr; init = true, kwargs...)
 Base.minimum(arr::LazyTensor; kwargs...) = reduce(min, arr; init = typemax(eltype(arr)), kwargs...)
 Base.maximum(arr::LazyTensor; kwargs...) = reduce(max, arr; init = typemin(eltype(arr)), kwargs...)
+
+function mean(arr::LazyTensor; kwargs...)
+    arr_sum = sum(arr)
+    arr_count = prod(arr.shape)
+    return arr_sum / arr_count
+end
 
 function Base.mapreduce(f, op, src::LazyTensor, args...; kw...)
     reduce(op, map(f, src, args...); kw...)

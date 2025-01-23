@@ -12,8 +12,7 @@ function initialize_access(tensor_id::Symbol, tensor, index_ids, protocols, inde
         return literal_instance(tensor)
     end
 
-    mode = read ? Reader() : Updater()
-    mode = literal_instance(mode)
+    mode = read ? reader_instance() : updater_instance()
     index_expressions = []
     for i in range(1, length(index_ids))
         index = if cannonicalize

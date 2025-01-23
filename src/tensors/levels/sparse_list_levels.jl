@@ -279,7 +279,7 @@ function virtual_moveto_level(ctx::AbstractCompiler, lvl::VirtualSparseListLevel
     virtual_moveto_level(ctx, lvl.lvl, arch)
 end
 
-function unfurl(ctx, fbr::VirtualSubFiber{VirtualSparseListLevel}, ext, mode::Reader, ::Union{typeof(defaultread), typeof(walk)})
+function unfurl(ctx, fbr::VirtualSubFiber{VirtualSparseListLevel}, ext, mode, ::Union{typeof(defaultread), typeof(walk)})
     (lvl, pos) = (fbr.lvl, fbr.pos)
     tag = lvl.ex
     Tp = postype(lvl)
@@ -327,7 +327,7 @@ function unfurl(ctx, fbr::VirtualSubFiber{VirtualSparseListLevel}, ext, mode::Re
 end
 
 
-function unfurl(ctx, fbr::VirtualSubFiber{VirtualSparseListLevel}, ext, mode::Reader, ::typeof(follow))
+function unfurl(ctx, fbr::VirtualSubFiber{VirtualSparseListLevel}, ext, mode, ::typeof(follow))
     (lvl, pos) = (fbr.lvl, fbr.pos)
     tag = lvl.ex
     Tp = postype(lvl)
@@ -355,7 +355,7 @@ function unfurl(ctx, fbr::VirtualSubFiber{VirtualSparseListLevel}, ext, mode::Re
     )
 end
 
-function unfurl(ctx, fbr::VirtualSubFiber{VirtualSparseListLevel}, ext, mode::Reader, ::typeof(gallop))
+function unfurl(ctx, fbr::VirtualSubFiber{VirtualSparseListLevel}, ext, mode, ::typeof(gallop))
     (lvl, pos) = (fbr.lvl, fbr.pos)
     tag = lvl.ex
     Tp = postype(lvl)
@@ -405,10 +405,10 @@ function unfurl(ctx, fbr::VirtualSubFiber{VirtualSparseListLevel}, ext, mode::Re
     )
 end
 
-unfurl(ctx, fbr::VirtualSubFiber{VirtualSparseListLevel}, ext, mode::Updater, proto) = begin
+unfurl(ctx, fbr::VirtualSubFiber{VirtualSparseListLevel}, ext, mode, proto::Union{typeof(defaultupdate), typeof(extrude)}) = begin
     unfurl(ctx, VirtualHollowSubFiber(fbr.lvl, fbr.pos, freshen(ctx, :null)), ext, mode, proto)
 end
-function unfurl(ctx, fbr::VirtualHollowSubFiber{VirtualSparseListLevel}, ext, mode::Updater, ::Union{typeof(defaultupdate), typeof(extrude)})
+function unfurl(ctx, fbr::VirtualHollowSubFiber{VirtualSparseListLevel}, ext, mode, ::Union{typeof(defaultupdate), typeof(extrude)})
     (lvl, pos) = (fbr.lvl, fbr.pos)
     tag = lvl.ex
     Tp = postype(lvl)

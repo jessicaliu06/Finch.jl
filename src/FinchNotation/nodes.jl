@@ -1,9 +1,3 @@
-struct Reader end
-struct Updater end
-
-const reader = Reader()
-const updater = Updater()
-
 const IS_TREE = 1
 const IS_STATEFUL = 2
 const IS_CONST = 4
@@ -18,6 +12,8 @@ const ID = 8
     tag       =  5ID | IS_TREE
     call      =  6ID | IS_TREE
     access    =  7ID | IS_TREE
+    reader    =  8ID | IS_TREE
+    updater   =  9ID | IS_TREE
     cached    = 10ID | IS_TREE
     assign    = 11ID | IS_TREE | IS_STATEFUL
     loop      = 12ID | IS_TREE | IS_STATEFUL
@@ -98,6 +94,22 @@ access is in-place.
 access
 
 """
+    reader()
+
+Finch AST expression representing a read-only mode for a tensor access. Declare,
+freeze, and thaw statements can change the mode of a tensor.
+"""
+reader
+
+"""
+    updater()
+
+Finch AST expression representing an update-only mode for a tensor access.
+Declare, freeze, and thaw statements can change the mode of a tensor.
+"""
+updater
+
+"""
     cached(val, ref)
 
 Finch AST expression `val`, equivalent to the quoted expression `ref`
@@ -147,14 +159,16 @@ declare
 """
     freeze(tns)
 
-Finch AST statement that freezes `tns` in the current scope.
+Finch AST statement that freezes `tns` in the current scope, moving the tensor
+from update-only mode to read-only mode.
 """
 freeze
 
 """
     thaw(tns)
 
-Finch AST statement that thaws `tns` in the current scope.
+Finch AST statement that thaws `tns` in the current scope, moving the tensor from
+read-only mode to update-only mode.
 """
 thaw
 
@@ -259,6 +273,8 @@ function FinchNode(kind::FinchNodeKind, args::Vector)
     elseif (kind === value || kind === literal || kind === index || kind === variable || kind === virtual) && length(args) == 2
         return FinchNode(kind, args[1], args[2], FinchNode[])
     elseif (kind === cached && length(args) == 2) ||
+        (kind === reader && length(args) == 0) ||
+        (kind === updater && length(args) == 0) ||
         (kind === access && length(args) >= 2) ||
         (kind === tag && length(args) == 2) ||
         (kind === call && length(args) >= 1) ||
@@ -318,7 +334,7 @@ function Base.getproperty(node::FinchNode, sym::Symbol)
 end
 
 function Base.show(io::IO, node::FinchNode)
-    if node.kind === literal || node.kind === index || node.kind === variable || node.kind === virtual
+    if node.kind === literal || node.kind === index || node.kind === variable || node.kind === virtual || node.kind === reader || node.kind === updater
         print(io, node.kind, "(", node.val, ")")
     elseif node.kind === value
         print(io, node.kind, "(", node.val, ", ", node.type, ")")
@@ -392,8 +408,6 @@ virtual.
 finch_leaf(arg) = literal(arg)
 finch_leaf(arg::Type) = literal(arg)
 finch_leaf(arg::Function) = literal(arg)
-finch_leaf(arg::Reader) = literal(arg)
-finch_leaf(arg::Updater) = literal(arg)
 finch_leaf(arg::FinchNode) = arg
 
 Base.convert(::Type{FinchNode}, x) = finch_leaf(x)

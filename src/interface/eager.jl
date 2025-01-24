@@ -123,7 +123,7 @@ expanddims(arr::AbstractTensor, dims)
 Expand the dimensions of an array by inserting a new singleton axis or axes that
 will appear at the `dims` position in the expanded array shape.
 """
-expanddims(arr::AbstractTensor, dims) = compute(expanddims(lazy(arr), dims))
+    expanddims(arr::AbstractTensor, dims) = compute(expanddims(lazy(arr), dims))
 
 """
 mean(arr::AbstractTensorOrBroadcast; kwargs...)
@@ -133,4 +133,5 @@ Calculates the arithmetic mean of the input array `arr`.
 Parameters:
  - `arr` (array) – input array. 
 """
-mean(arr::AbstractTensorOrBroadcast; kwargs...) = compute(mean(lazy(arr; kwargs...)))
+# TODO: Move to StatisticsExt.jl
+    mean(arr::AbstractTensorOrBroadcast; kwargs...) = compute(mean(lazy(arr; kwargs...)))

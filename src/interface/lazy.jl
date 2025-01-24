@@ -4,7 +4,7 @@ using Base: broadcasted
 using LinearAlgebra
 const AbstractArrayOrBroadcasted = Union{AbstractArray,Broadcasted}
 
-mutable struct LazyTensor{T, N}
+mutable struct LazyTensor{T, N} # TODO: Add shape parameterization
     data
     extrude::NTuple{N, Bool}
     shape::NTuple{N, Int}
@@ -13,7 +13,7 @@ end
 LazyTensor{T}(data, extrude::NTuple{N, Bool}, shape::NTuple{N, Int}, fill_value) where {T, N} = LazyTensor{T, N}(data, extrude, shape, fill_value)
 
 function Base.show(io::IO, tns::LazyTensor)
-    join(io, [string(x) for x in tns.shape], "×")
+    join(io, tns.shape, "×")
     print(io, "-LazyTensor{", eltype(tns), "}")
 end
 
@@ -87,12 +87,6 @@ Base.all(arr::LazyTensor; kwargs...) = reduce(and, arr; init = true, kwargs...)
 Base.minimum(arr::LazyTensor; kwargs...) = reduce(min, arr; init = typemax(eltype(arr)), kwargs...)
 Base.maximum(arr::LazyTensor; kwargs...) = reduce(max, arr; init = typemin(eltype(arr)), kwargs...)
 
-function mean(arr::LazyTensor; kwargs...)
-    arr_sum = sum(arr)
-    arr_count = prod(arr.shape)
-    return arr_sum / arr_count
-end
-
 function Base.mapreduce(f, op, src::LazyTensor, args...; kw...)
     reduce(op, map(f, src, args...); kw...)
 end
@@ -118,7 +112,7 @@ end
 
 function Base.map!(dst, f, src::LazyTensor, args...)
     res = map(f, src, args...)
-    return LazyTensor(identify(reformat(dst, res.data)), res.extrude, res.size, res.fill_value)
+    return LazyTensor(identify(reformat(dst, res.data)), res.extrude, res.shape, res.fill_value)
 end
 
 function initial_value(op, T)
@@ -186,6 +180,13 @@ function tensordot(A::LazyTensor{T1, N1}, B::LazyTensor{T2, N2}, idxs; mult_op=*
     T = return_type(DefaultAlgebra(), mult_op, T1, T2)
     S = fixpoint_type(add_op, init, T)
     return LazyTensor{S}(identify(AB_reduce), extrude, shape, init)
+end
+
+# TODO: Move to StatisticsExt.jl
+function mean(arr::LazyTensor{T, N}; kwargs...) where {T, N}
+    arr_sum = sum(arr)
+    arr_count = prod(arr.shape)
+    return arr_sum / arr_count
 end
 
 struct LazyStyle{N} <: BroadcastStyle end

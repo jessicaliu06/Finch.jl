@@ -182,13 +182,6 @@ function tensordot(A::LazyTensor{T1, N1}, B::LazyTensor{T2, N2}, idxs; mult_op=*
     return LazyTensor{S}(identify(AB_reduce), extrude, shape, init)
 end
 
-# TODO: Move to StatisticsExt.jl
-function mean(arr::LazyTensor{T, N}; kwargs...) where {T, N}
-    arr_sum = sum(arr)
-    arr_count = prod(arr.shape)
-    return arr_sum / arr_count
-end
-
 struct LazyStyle{N} <: BroadcastStyle end
 Base.Broadcast.BroadcastStyle(F::Type{<:LazyTensor{T, N}}) where {T, N} = LazyStyle{N}()
 Base.Broadcast.broadcastable(tns::LazyTensor) = tns

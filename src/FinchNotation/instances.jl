@@ -14,7 +14,7 @@ struct AssignInstance{Lhs, Op, Rhs} <: FinchNodeInstance lhs::Lhs; op::Op; rhs::
 struct CallInstance{Op, Args<:Tuple} <: FinchNodeInstance op::Op; args::Args end
 struct AccessInstance{Tns, Mode, Idxs} <: FinchNodeInstance tns::Tns; mode::Mode; idxs::Idxs end
 struct ReaderInstance{} <: FinchNodeInstance end
-struct UpdaterInstance{} <: FinchNodeInstance end
+struct UpdaterInstance{Op} <: FinchNodeInstance op::Op end
 struct TagInstance{Var, Bind} <: FinchNodeInstance var::Var; bind::Bind end
 struct YieldBindInstance{Args} <: FinchNodeInstance args::Args end
 
@@ -39,7 +39,7 @@ Base.getproperty(::VariableInstance{val}, name::Symbol) where {val} = name == :n
 @inline call_instance(op, args...) = CallInstance(op, args)
 @inline access_instance(tns, mode, idxs...) = AccessInstance(tns, mode, idxs)
 @inline reader_instance() = ReaderInstance()
-@inline updater_instance() = UpdaterInstance()
+@inline updater_instance(op) = UpdaterInstance(op)
 @inline tag_instance(var, bind) = TagInstance(var, bind)
 @inline yieldbind_instance(args...) = YieldBindInstance(args)
 
@@ -105,7 +105,7 @@ SyntaxInterface.arguments(node::AssignInstance) = [node.lhs, node.op, node.rhs]
 SyntaxInterface.arguments(node::CallInstance) = [node.op, node.args...]
 SyntaxInterface.arguments(node::AccessInstance) = [node.tns, node.mode, node.idxs...]
 SyntaxInterface.arguments(node::ReaderInstance) = []
-SyntaxInterface.arguments(node::UpdaterInstance) = []
+SyntaxInterface.arguments(node::UpdaterInstance) = [node.op]
 SyntaxInterface.arguments(node::TagInstance) = [node.var, node.bind]
 SyntaxInterface.arguments(node::YieldBindInstance) = node.args
 

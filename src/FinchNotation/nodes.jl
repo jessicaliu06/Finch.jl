@@ -102,10 +102,11 @@ freeze, and thaw statements can change the mode of a tensor.
 reader
 
 """
-    updater()
+    updater(op)
 
-Finch AST expression representing an update-only mode for a tensor access.
-Declare, freeze, and thaw statements can change the mode of a tensor.
+Finch AST expression representing an update-only mode for a tensor access, using
+the reduction operator `op`.  Declare, freeze, and thaw statements can change
+the mode of a tensor.
 """
 updater
 
@@ -274,7 +275,7 @@ function FinchNode(kind::FinchNodeKind, args::Vector)
         return FinchNode(kind, args[1], args[2], FinchNode[])
     elseif (kind === cached && length(args) == 2) ||
         (kind === reader && length(args) == 0) ||
-        (kind === updater && length(args) == 0) ||
+        (kind === updater && length(args) == 1) ||
         (kind === access && length(args) >= 2) ||
         (kind === tag && length(args) == 2) ||
         (kind === call && length(args) >= 1) ||

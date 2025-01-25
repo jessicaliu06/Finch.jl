@@ -325,7 +325,7 @@ function freeze_level!(ctx::AbstractCompiler, lvl::VirtualSparseRunListLevel, po
                             check = VirtualScalar(:UNREACHABLE, Bool, false, :check, checkval)
                             exts = virtual_level_size(ctx_2, lvl.buf)
                             inds = [index(freshen(ctx_2, :i, n)) for n = 1:length(exts)]
-                            prgm = assign(access(check, updater()), and, call(isequal, access(left, reader(), inds...), access(right, reader(), inds...)))
+                            prgm = assign(access(check, updater(and)), and, call(isequal, access(left, reader(), inds...), access(right, reader(), inds...)))
                             for (ind, ext) in zip(inds, exts)
                                 prgm = loop(ind, ext, prgm)
                             end
@@ -347,7 +347,8 @@ function freeze_level!(ctx::AbstractCompiler, lvl::VirtualSparseRunListLevel, po
                         set_binding!(ctx_2, dst, virtual(VirtualSubFiber(lvl.lvl, value(q_2, Tp))))
                         exts = virtual_level_size(ctx_2, lvl.buf)
                         inds = [index(freshen(ctx_2, :i, n)) for n = 1:length(exts)]
-                        prgm = assign(access(dst, updater(), inds...), initwrite(virtual_level_fill_value(lvl.lvl)), access(src, reader(), inds...))
+                        op = initwrite(virtual_level_fill_value(lvl.lvl))
+                        prgm = assign(access(dst, updater(op), inds...), op, access(src, reader(), inds...))
                         for (ind, ext) in zip(inds, exts)
                             prgm = loop(ind, ext, prgm)
                         end

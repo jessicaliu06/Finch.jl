@@ -53,7 +53,7 @@ function set_declared!(ctx::ScopeContext, var, val)
     @assert get(ctx.modes, var, reader()).kind === reader
     push!(ctx.defs, var)
     set_binding!(ctx, var, val)
-    ctx.modes[var] = updater()
+    ctx.modes[var] = updater(auto)
 end
 
 """
@@ -77,7 +77,7 @@ function set_thawed!(ctx::ScopeContext, var, val)
     @assert var.kind === variable
     @assert get(ctx.modes, var, reader()).kind === reader
     set_binding!(ctx, var, val)
-    ctx.modes[var] = updater()
+    ctx.modes[var] = updater(auto)
 end
 """
     get_tensor_mode(ctx, var)

@@ -71,7 +71,7 @@ function (ctx::EnforceLifecyclesVisitor)(node::FinchNode)
         if get(ctx.modes, node.tns, reader()).kind === updater
             node = block(freeze(node.tns), node)
         end
-        ctx.modes[node.tns] = updater()
+        ctx.modes[node.tns] = updater(auto)
         node
     elseif node.kind === freeze
         haskey(ctx.modes, node.tns) || throw(EnforceLifecyclesError("cannot freeze undefined $(node.tns)"))
@@ -80,14 +80,14 @@ function (ctx::EnforceLifecyclesVisitor)(node::FinchNode)
         node
     elseif node.kind === thaw
         get(ctx.modes, node.tns, reader()).kind === updater && return block()
-        ctx.modes[node.tns] = updater()
+        ctx.modes[node.tns] = updater(auto)
         node
     elseif node.kind === assign
         return open_stmt(assign(ctx(node.lhs), ctx(node.op), ctx(node.rhs)), ctx)
     elseif node.kind === access
         idxs = map(ctx, node.idxs)
         uses = get(ctx.scoped_uses, getroot(node.tns), ctx.global_uses)
-        get(uses, getroot(node.tns), node.mode) != node.mode &&
+        get(uses, getroot(node.tns), node.mode).kind != node.mode.kind && ## updater(auto)
             throw(EnforceLifecyclesError("cannot mix reads and writes to $(node.tns) outside of defining scope (hint: perhaps add a declaration like `var .= 0` or use an updating operator like `var += 1`)"))
         uses[getroot(node.tns)] = node.mode
         access(node.tns, node.mode, idxs...)

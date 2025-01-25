@@ -47,7 +47,7 @@ function (ctx::LogicMachine)(ex)
         loop_idxs = withsubsequence(intersect(idxs_1, idxs_2), idxs_2)
         lhs_idxs = idxs_2
         res = tag_instance(variable_instance(:res), tns.val)
-        lhs = access_instance(res, updater_instance(), map(idx -> index_instance(idx.name), lhs_idxs)...)
+        lhs = access_instance(res, updater_instance(auto), map(idx -> index_instance(idx.name), lhs_idxs)...)
         (rhs, rhs_idxs) = lower_pointwise_logic(ctx, reorder(relabel(arg, idxs_1...), idxs_2...))
         body = assign_instance(lhs, literal_instance(initwrite(fill_value(tns.val))), rhs)
         for idx in loop_idxs
@@ -70,7 +70,7 @@ function (ctx::LogicMachine)(ex)
         loop_idxs = getfields(arg)
         lhs_idxs = setdiff(getfields(arg), idxs_1)
         res = tag_instance(variable_instance(:res), tns.val)
-        lhs = access_instance(res, updater_instance(), map(idx -> index_instance(idx.name), lhs_idxs)...)
+        lhs = access_instance(res, updater_instance(auto), map(idx -> index_instance(idx.name), lhs_idxs)...)
         (rhs, rhs_idxs) = lower_pointwise_logic(ctx, arg)
         body = assign_instance(lhs, literal_instance(op.val), rhs)
         for idx in loop_idxs

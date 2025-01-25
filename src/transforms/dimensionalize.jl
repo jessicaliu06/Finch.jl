@@ -70,7 +70,7 @@ function (ctx::DeclareDimensions)(node::FinchNode)
             shape = virtual_size(ctx.ctx, node.tns)
             shape = map(suggest, shape)
             for hint in ctx.hints[node.tns]
-                @assert @capture hint access(~tns, updater(), ~idxs...)
+                @assert @capture hint access(~tns, updater(~f), ~idxs...)
                 shape = map(zip(shape, idxs)) do (dim, idx)
                     if isindex(idx)
                         resultdim(ctx.ctx, dim, ctx.dims[idx])

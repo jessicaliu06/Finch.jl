@@ -17,7 +17,7 @@ struct VirtualDiagMask <: AbstractVirtualTensor end
 
 virtualize(ctx, ex, ::Type{DiagMask}) = VirtualDiagMask()
 FinchNotation.finch_leaf(x::VirtualDiagMask) = virtual(x)
-Finch.virtual_size(ctx, ::VirtualDiagMask) = (dimless, dimless)
+Finch.virtual_size(ctx, ::VirtualDiagMask) = (auto, auto)
 
 struct VirtualDiagMaskColumn
     j
@@ -68,7 +68,7 @@ struct VirtualUpTriMask <: AbstractVirtualTensor end
 
 virtualize(ctx, ex, ::Type{UpTriMask}) = VirtualUpTriMask()
 FinchNotation.finch_leaf(x::VirtualUpTriMask) = virtual(x)
-Finch.virtual_size(ctx, ::VirtualUpTriMask) = (dimless, dimless)
+Finch.virtual_size(ctx, ::VirtualUpTriMask) = (auto, auto)
 
 struct VirtualUpTriMaskColumn
     j
@@ -117,7 +117,7 @@ struct VirtualLoTriMask <: AbstractVirtualTensor end
 
 virtualize(ctx, ex, ::Type{LoTriMask}) = VirtualLoTriMask()
 FinchNotation.finch_leaf(x::VirtualLoTriMask) = virtual(x)
-Finch.virtual_size(ctx, ::VirtualLoTriMask) = (dimless, dimless)
+Finch.virtual_size(ctx, ::VirtualLoTriMask) = (auto, auto)
 
 struct VirtualLoTriMaskColumn
     j
@@ -166,7 +166,7 @@ struct VirtualBandMask <: AbstractVirtualTensor end
 
 virtualize(ctx, ex, ::Type{BandMask}) = VirtualBandMask()
 FinchNotation.finch_leaf(x::VirtualBandMask) = virtual(x)
-Finch.virtual_size(ctx, ::VirtualBandMask) = (dimless, dimless, dimless)
+Finch.virtual_size(ctx, ::VirtualBandMask) = (auto, auto, auto)
 
 struct VirtualBandMaskSlice
     j_lo
@@ -230,7 +230,7 @@ function virtualize(ctx, ex, ::Type{SplitMask})
 end
 
 FinchNotation.finch_leaf(x::VirtualSplitMask) = virtual(x)
-Finch.virtual_size(ctx, arr::VirtualSplitMask) = (dimless, Extent(literal(1), arr.P))
+Finch.virtual_size(ctx, arr::VirtualSplitMask) = (auto, Extent(literal(1), arr.P))
 
 struct VirtualSplitMaskColumn
     P

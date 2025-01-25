@@ -61,7 +61,7 @@ unwrap(ctx, arr::VirtualPermissiveArray, var) = call(permissive, unwrap(ctx, arr
 lower(ctx::AbstractCompiler, tns::VirtualPermissiveArray, ::DefaultStyle) = :(PermissiveArray($(ctx(tns.body)), $(tns.dims)))
 
 virtual_size(ctx::AbstractCompiler, arr::VirtualPermissiveArray) =
-    ifelse.(arr.dims, (dimless,), virtual_size(ctx, arr.body))
+    ifelse.(arr.dims, (auto,), virtual_size(ctx, arr.body))
 
 virtual_resize!(ctx::AbstractCompiler, arr::VirtualPermissiveArray, dims...) =
     virtual_resize!(ctx, arr.body, ifelse.(arr.dims, virtual_size(ctx, arr.body), dim))
@@ -138,7 +138,7 @@ function unfurl(ctx, tns::VirtualPermissiveArray, ext, mode, proto)
     tns_2 = unfurl(ctx, tns.body, ext, mode, proto)
     dims = virtual_size(ctx, tns.body)
     garb = (mode.kind === reader) ? FillLeaf(literal(missing)) : FillLeaf(Null())
-    if tns.dims[end] && dims[end] != dimless
+    if tns.dims[end] && dims[end] != auto
         VirtualPermissiveArray(
             Unfurled(
                 tns,

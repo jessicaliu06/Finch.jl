@@ -33,13 +33,13 @@ combine_style(a::JumperStyle, b::PhaseStyle) = b
 jumper_seek(ctx, node::Jumper, ext) = node.seek(ctx, ext)
 jumper_seek(ctx, node, ext) = quote end
 
-jumper_range(ctx, node, ext) = dimless
+jumper_range(ctx, node, ext) = auto
 
 function jumper_range(ctx, node::FinchNode, ext)
     if @capture node access(~tns::isvirtual, ~i...)
         jumper_range(ctx, tns.val, ext)
     else
-        return dimless
+        return auto
     end
 end
 

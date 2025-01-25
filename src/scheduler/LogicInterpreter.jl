@@ -52,7 +52,7 @@ function (ctx::LogicMachine)(ex)
         body = assign_instance(lhs, literal_instance(initwrite(fill_value(tns.val))), rhs)
         for idx in loop_idxs
             if idx in rhs_idxs
-                body = loop_instance(index_instance(idx.name), dimless, body)
+                body = loop_instance(index_instance(idx.name), auto, body)
             elseif idx in lhs_idxs
                 body = loop_instance(index_instance(idx.name), call_instance(literal_instance(extent), literal_instance(1), literal_instance(1)), body)
             end
@@ -75,7 +75,7 @@ function (ctx::LogicMachine)(ex)
         body = assign_instance(lhs, literal_instance(op.val), rhs)
         for idx in loop_idxs
             if idx in rhs_idxs
-                body = loop_instance(index_instance(idx.name), dimless, body)
+                body = loop_instance(index_instance(idx.name), auto, body)
             elseif idx in lhs_idxs
                 body = loop_instance(index_instance(idx.name), call_instance(literal_instance(extent), literal_instance(1), literal_instance(1)), body)
             end

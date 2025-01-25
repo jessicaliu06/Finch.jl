@@ -69,15 +69,15 @@ unwrap(ctx, arr::VirtualProductArray, var) = call(products, unwrap(ctx, arr.body
 
 lower(ctx::AbstractCompiler, tns::VirtualProductArray, ::DefaultStyle) = :(ProductArray($(ctx(tns.body)), $(tns.dim)))
 
-#virtual_size(ctx::AbstractCompiler, arr::FillLeaf) = (dimless,) # this is needed for multidimensional convolution..
-#virtual_size(ctx::AbstractCompiler, arr::Simplify) = (dimless,)
+#virtual_size(ctx::AbstractCompiler, arr::FillLeaf) = (auto,) # this is needed for multidimensional convolution..
+#virtual_size(ctx::AbstractCompiler, arr::Simplify) = (auto,)
 
 function virtual_size(ctx::AbstractCompiler, arr::VirtualProductArray)
     dims = virtual_size(ctx, arr.body)
-    return (dims[1:arr.dim - 1]..., dimless, dimless, dims[arr.dim + 1:end]...)
+    return (dims[1:arr.dim - 1]..., auto, auto, dims[arr.dim + 1:end]...)
 end
 function virtual_resize!(ctx::AbstractCompiler, arr::VirtualProductArray, dims...)
-    virtual_resize!(ctx, arr.body, dims[1:arr.dim - 1]..., dimless, dims[arr.dim + 2:end]...)
+    virtual_resize!(ctx, arr.body, dims[1:arr.dim - 1]..., auto, dims[arr.dim + 2:end]...)
 end
 
 instantiate(arr::VirtualProductArray, ctx, mode) =

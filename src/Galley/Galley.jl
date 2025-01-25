@@ -17,7 +17,7 @@ using Finch.FinchNotation: index_instance, variable_instance, tag_instance, lite
                         access_instance,  reader_instance, updater_instance, assign_instance,
                         loop_instance, declare_instance, block_instance, define_instance,
                         call_instance, freeze_instance, thaw_instance, finch_unparse_program,
-                        Dimensionless
+                        Auto
 using Finch.FinchLogic
 
 export galley

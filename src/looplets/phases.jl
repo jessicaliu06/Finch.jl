@@ -17,11 +17,11 @@ function phase_range(ctx, node::FinchNode, ext)
     if @capture node access(~tns::isvirtual, ~i...)
         phase_range(ctx, tns.val, ext)
     else
-        return dimless
+        return auto
     end
 end
 
-phase_range(ctx, node, ext) = dimless
+phase_range(ctx, node, ext) = auto
 phase_range(ctx, node::Phase, ext) = node.range(ctx, ext)
 
 function phase_body(ctx, node::FinchNode, ext, ext_2)

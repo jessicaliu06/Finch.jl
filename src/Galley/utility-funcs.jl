@@ -117,7 +117,7 @@ function get_sparsity_structure(tensor::Tensor)
     full_prgm = assign_instance(output_instance, literal_instance(initwrite(false)), tensor_instance)
 
     for index in indices
-        full_prgm = loop_instance(index_instance(index_sym_dict[index]), Dimensionless(), full_prgm)
+        full_prgm = loop_instance(index_instance(index_sym_dict[index]), Auto(), full_prgm)
     end
 
     initializer = declare_instance(variable_instance(:output_tensor), literal_instance(false))
@@ -182,7 +182,7 @@ function one_off_reduce(op,
     full_prgm = assign_instance(output_access, op_instance, tensor_instance)
 
     for index in reverse(loop_index_instances)
-        full_prgm = loop_instance(index, Dimensionless(), full_prgm)
+        full_prgm = loop_instance(index, Auto(), full_prgm)
     end
     initializer = declare_instance(output_variable, literal_instance(0.0))
     full_prgm = block_instance(initializer, full_prgm)
@@ -202,7 +202,7 @@ function count_non_default(A)
     prgm = assign_instance(count_access, literal_instance(+), prgm)
     loop_index_instances = [index_instance(index_sym_dict[idx]) for idx in reverse(indexes)]
     for idx in reverse(loop_index_instances)
-        prgm = loop_instance(idx, Dimensionless(), prgm)
+        prgm = loop_instance(idx, Auto(), prgm)
     end
     prgm = block_instance(declare_instance(tag_instance(variable_instance(:count), count), literal_instance(0)), prgm)
     Finch.execute(prgm, mode=:fast)

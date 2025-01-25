@@ -45,7 +45,7 @@ function (ctx::DeclareDimensions)(node::FinchNode)
         length(idxs) < length(shape) && throw(DimensionMismatch("less indices than dimensions in $(sprint(show, MIME("text/plain"), node))"))
         idxs = map(zip(shape, idxs)) do (dim, idx)
             if isindex(idx)
-                ctx.dims[idx] = resultdim(ctx.ctx, dim, get(ctx.dims, idx, dimless))
+                ctx.dims[idx] = resultdim(ctx.ctx, dim, get(ctx.dims, idx, auto))
                 idx
             else
                 ctx(idx) #Probably not strictly necessary to preserve the result of this, since this expr can't contain a statement and so won't be modified
@@ -58,7 +58,7 @@ function (ctx::DeclareDimensions)(node::FinchNode)
         end
         ctx.dims[node.idx] = node.ext.val
         body = ctx(node.body)
-        ctx.dims[node.idx] != dimless || throw(FinchCompileError("could not resolve dimension of index $(node.idx)"))
+        ctx.dims[node.idx] != auto || throw(FinchCompileError("could not resolve dimension of index $(node.idx)"))
         return loop(node.idx, cache_dim!(ctx.ctx, getname(node.idx), resolvedim(ctx.dims[node.idx])), body)
     elseif node.kind === block
         block(map(ctx, node.bodies)...)
@@ -75,7 +75,7 @@ function (ctx::DeclareDimensions)(node::FinchNode)
                     if isindex(idx)
                         resultdim(ctx.ctx, dim, ctx.dims[idx])
                     else
-                        resultdim(ctx.ctx, dim, dimless) #TODO I can't think of a case where this doesn't equal `dim`
+                        resultdim(ctx.ctx, dim, auto) #TODO I can't think of a case where this doesn't equal `dim`
                     end
                 end
             end

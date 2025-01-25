@@ -20,7 +20,7 @@ const program_nodes = (
     tag = (ex) -> :(finch_leaf($(esc(ex)))),
     literal = literal,
     leaf = (ex) -> :(finch_leaf($(esc(ex)))),
-    dimless = :(finch_leaf(dimless))
+    auto = :(finch_leaf(auto))
 )
 
 const instance_nodes = (
@@ -42,7 +42,7 @@ const instance_nodes = (
     tag = (ex) -> :($tag_instance($(variable_instance(ex)), $finch_leaf_instance($(esc(ex))))),
     literal = literal_instance,
     leaf = (ex) -> :($finch_leaf_instance($(esc(ex)))),
-    dimless = :($finch_leaf_instance(dimless))
+    auto = :($finch_leaf_instance(auto))
 )
 
 d() = 1
@@ -98,15 +98,15 @@ julia> x[]
 overwrite(l, r) = r
 
 """
-    Dimensionless()
+    Auto()
 
 A singleton type representing the lack of a dimension.  This is used in place of
 a dimension when we want to avoid dimensionality checks. In the `@finch` macro,
-you can write `Dimensionless()` with an underscore as `for i = _`, allowing
+you can write `Auto()` with an underscore as `for i = _`, allowing
 finch to pick up the loop bounds from the tensors automatically.
 """
-struct Dimensionless end
-const dimless = Dimensionless()
+struct Auto end
+const auto = Auto()
 function extent end
 function realextent end
 
@@ -116,7 +116,7 @@ end
 
 function (ctx::FinchParserVisitor)(ex::Symbol)
     if ex == :_ || ex == :(:)
-        return :($dimless)
+        return :($auto)
     elseif ex in evaluable_exprs
         return ctx.nodes.literal(@eval($ex))
     else
@@ -457,7 +457,7 @@ function finch_unparse_program(ctx, node::Union{FinchNode, FinchNodeInstance})
         @assert operation(node.var) === variable
         node.var.name
     elseif operation(node) === virtual
-        if node.val == dimless
+        if node.val == auto
             :_
         else
             ctx(node)

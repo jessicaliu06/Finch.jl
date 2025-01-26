@@ -8,8 +8,8 @@ function Finch.virtualize(ctx, ex, ::Type{FinchNotation.IndexInstance{name}}) wh
 end
 Finch.virtualize(ctx, ex, ::Type{FinchNotation.DefineInstance{Lhs, Rhs, Body}}) where {Lhs, Rhs, Body} = define(virtualize(ctx, :($ex.lhs), Lhs), virtualize(ctx, :($ex.rhs), Rhs), virtualize(ctx, :($ex.body), Body))
 Finch.virtualize(ctx, ex, ::Type{FinchNotation.DeclareInstance{Tns, Init, Op}}) where {Tns, Init, Op} = declare(virtualize(ctx, :($ex.tns), Tns), virtualize(ctx, :($ex.init), Init), virtualize(ctx, :($ex.op), Op))
-Finch.virtualize(ctx, ex, ::Type{FinchNotation.FreezeInstance{Tns}}) where {Tns} = freeze(virtualize(ctx, :($ex.tns), Tns))
-Finch.virtualize(ctx, ex, ::Type{FinchNotation.ThawInstance{Tns}}) where {Tns} = thaw(virtualize(ctx, :($ex.tns), Tns))
+Finch.virtualize(ctx, ex, ::Type{FinchNotation.FreezeInstance{Tns, Op}}) where {Tns, Op} = freeze(virtualize(ctx, :($ex.tns), Tns), virtualize(ctx, :($ex.op), Op))
+Finch.virtualize(ctx, ex, ::Type{FinchNotation.ThawInstance{Tns, Op}}) where {Tns, Op} = thaw(virtualize(ctx, :($ex.tns), Tns), virtualize(ctx, :($ex.op), Op))
 function Finch.virtualize(ctx, ex, ::Type{FinchNotation.BlockInstance{Bodies}}) where {Bodies}
     bodies = map(enumerate(Bodies.parameters)) do (n, Body)
         virtualize(ctx, :($ex.bodies[$n]), Body)

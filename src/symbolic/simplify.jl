@@ -191,11 +191,11 @@ function get_simplify_rules(alg, shash)
                 end
             end
         end),
-        (@rule block(~s1..., thaw(~a::isvariable), ~s2..., freeze(~a), ~s3...) => if ortho(a, s2)
+        (@rule block(~s1..., thaw(~a::isvariable, ~f), ~s2..., freeze(~a, ~f), ~s3...) => if ortho(a, s2)
             block(s1..., s2..., s3...)
         end),
 
-        (@rule block(~s1..., freeze(~a::isvariable), ~s2..., thaw(~a), ~s3...) => if ortho(a, s2)
+        (@rule block(~s1..., freeze(~a::isvariable, ~f), ~s2..., thaw(~a, ~f), ~s3...) => if ortho(a, s2)
             block(s1..., s2..., s3...)
         end),
     ]

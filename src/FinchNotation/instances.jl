@@ -5,8 +5,8 @@ struct IndexInstance{name} <: FinchNodeInstance end
 struct VariableInstance{name} <: FinchNodeInstance end
 struct DefineInstance{Lhs, Rhs, Body} <: FinchNodeInstance lhs::Lhs; rhs::Rhs; body::Body end
 struct DeclareInstance{Tns, Init, Op} <: FinchNodeInstance tns::Tns; init::Init; op::Op end
-struct FreezeInstance{Tns} <: FinchNodeInstance tns::Tns end
-struct ThawInstance{Tns} <: FinchNodeInstance tns::Tns end
+struct FreezeInstance{Tns, Op} <: FinchNodeInstance tns::Tns; op::Op end
+struct ThawInstance{Tns, Op} <: FinchNodeInstance tns::Tns; op::Op end
 struct BlockInstance{Bodies} <: FinchNodeInstance bodies::Bodies end
 struct LoopInstance{Idx, Ext, Body} <: FinchNodeInstance idx::Idx; ext::Ext; body::Body end
 struct SieveInstance{Cond, Body} <: FinchNodeInstance cond::Cond; body::Body end
@@ -27,8 +27,8 @@ Base.getproperty(::VariableInstance{val}, name::Symbol) where {val} = name == :n
 @inline variable_instance(name) = VariableInstance{name}()
 @inline define_instance(lhs, rhs, body) = DefineInstance(lhs, rhs, body)
 @inline declare_instance(tns, init, op) = DeclareInstance(tns, init, op)
-@inline freeze_instance(tns) = FreezeInstance(tns)
-@inline thaw_instance(tns) = ThawInstance(tns)
+@inline freeze_instance(tns, op) = FreezeInstance(tns, op)
+@inline thaw_instance(tns, op) = ThawInstance(tns, op)
 @inline block_instance(bodies...) = BlockInstance(bodies)
 @inline loop_instance(idx, ext, body) = LoopInstance(idx, ext, body)
 @inline loop_instance(body) = body

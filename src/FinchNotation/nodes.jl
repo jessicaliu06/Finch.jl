@@ -158,18 +158,18 @@ Finch AST statement that declares `tns` with an initial value `init` reduced wit
 declare
 
 """
-    freeze(tns)
+    freeze(tns, op)
 
-Finch AST statement that freezes `tns` in the current scope, moving the tensor
-from update-only mode to read-only mode.
+Finch AST statement that freezes `tns` in the current scope after modifications
+with `op`, moving the tensor from update-only mode to read-only mode.
 """
 freeze
 
 """
-    thaw(tns)
+    thaw(tns, op)
 
 Finch AST statement that thaws `tns` in the current scope, moving the tensor from
-read-only mode to update-only mode.
+read-only mode to update-only mode with a reduction operator `op`.
 """
 thaw
 
@@ -284,8 +284,8 @@ function FinchNode(kind::FinchNodeKind, args::Vector)
         (kind === assign && length(args) == 3) ||
         (kind === define && length(args) == 3) ||
         (kind === declare && length(args) == 3) ||
-        (kind === freeze && length(args) == 1) ||
-        (kind === thaw && length(args) == 1) ||
+        (kind === freeze && length(args) == 2) ||
+        (kind === thaw && length(args) == 2) ||
         (kind === block) ||
         (kind === yieldbind)
         return FinchNode(kind, nothing, nothing, args)
@@ -327,7 +327,9 @@ function Base.getproperty(node::FinchNode, sym::Symbol)
     elseif node.kind === declare && sym === :init node.children[2]
     elseif node.kind === declare && sym === :op node.children[3]
     elseif node.kind === freeze && sym === :tns node.children[1]
+    elseif node.kind === freeze && sym === :op node.children[2]
     elseif node.kind === thaw && sym === :tns node.children[1]
+    elseif node.kind === thaw && sym === :op node.children[2]
     elseif node.kind === block && sym === :bodies node.children
     elseif node.kind === yieldbind && sym === :args node.children
     else

@@ -28,7 +28,7 @@ function close_scope(prgm, ctx::EnforceLifecyclesVisitor)
     prgm = ctx(prgm)
     for tns in getmodified(prgm)
         if ctx.modes[tns].kind !== reader
-            prgm = block(prgm, freeze(tns))
+            prgm = block(prgm, freeze(tns, auto))
         end
     end
     prgm
@@ -49,9 +49,9 @@ function open_stmt(prgm, ctx::EnforceLifecyclesVisitor)
     for (tns, mode) in ctx.uses
         cur_mode = get(ctx.modes, tns, reader())
         if mode.kind === reader && cur_mode.kind === updater
-            prgm = block(freeze(tns), prgm)
+            prgm = block(freeze(tns, auto), prgm)
         elseif mode.kind === updater && cur_mode.kind === reader
-            prgm = block(thaw(tns), prgm)
+            prgm = block(thaw(tns, auto), prgm)
         end
         ctx.modes[tns] = mode
     end
@@ -69,7 +69,7 @@ function (ctx::EnforceLifecyclesVisitor)(node::FinchNode)
     elseif node.kind === declare
         ctx.scoped_uses[node.tns] = ctx.uses
         if get(ctx.modes, node.tns, reader()).kind === updater
-            node = block(freeze(node.tns), node)
+            node = block(freeze(node.tns, auto), node)
         end
         ctx.modes[node.tns] = updater(auto)
         node

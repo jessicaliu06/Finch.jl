@@ -258,9 +258,9 @@ function unwrap_roots(ctx, root)
             getroot(A)
         elseif @capture(node, declare(~A, ~i, ~op))
             A
-        elseif @capture(node, freeze(~A))
+        elseif @capture(node, freeze(~A, ~op))
             A
-        elseif @capture(node, thaw(~A))
+        elseif @capture(node, thaw(~A, ~op))
             A
         end
     end))
@@ -275,8 +275,8 @@ function unwrap_roots(ctx, root)
             root = Rewrite(Postwalk(@rule tns => val_2))(root)
             root = Rewrite(Postwalk(Chain([
                 (@rule declare(val_2, ~i, ~op) => declare(tns, i, op)),
-                (@rule freeze(val_2) => freeze(tns)),
-                (@rule thaw(val_2) => thaw(tns)),
+                (@rule freeze(val_2, ~op) => freeze(tns, op)),
+                (@rule thaw(val_2, ~op) => thaw(tns, op)),
             ])))(root)
         end
     end

@@ -503,7 +503,7 @@
             x = Tensor(Dense(Element(0.0)))
             y = Tensor(Dense(Element(0.0)))
 
-            @test_throws Finch.FinchConcurrencyError begin
+            @test_throws Finch.EnforceLifecyclesError begin
                 @finch_code begin
                     y .= 0
                     for j = parallel(_)

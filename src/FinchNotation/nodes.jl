@@ -305,6 +305,7 @@ function Base.getproperty(node::FinchNode, sym::Symbol)
     elseif node.kind === variable && sym === :name node.val::Symbol
     elseif node.kind === tag && sym === :var node.children[1]
     elseif node.kind === tag && sym === :bind node.children[2]
+    elseif node.kind === updater && sym === :op node.children[1]
     elseif node.kind === access && sym === :tns node.children[1]
     elseif node.kind === access && sym === :mode node.children[2]
     elseif node.kind === access && sym === :idxs @view node.children[3:end]

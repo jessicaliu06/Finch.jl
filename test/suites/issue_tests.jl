@@ -470,6 +470,8 @@
                 for i=_
                     C[i, j] *= beta
                 end
+            end
+            for j=_
                 for k=_
                     let foo = alpha * B[k, j]
                         for i=_

@@ -29,9 +29,9 @@ get_mode_flag(ctx::FinchCompiler) = ctx.mode
 get_binding(ctx::FinchCompiler, var) = get_binding(ctx.scope, var)
 has_binding(ctx::FinchCompiler, var) = has_binding(ctx.scope, var)
 set_binding!(ctx::FinchCompiler, var, val) = set_binding!(ctx.scope, var, val)
-set_declared!(ctx::FinchCompiler, var, val) = set_declared!(ctx.scope, var, val)
+set_declared!(ctx::FinchCompiler, var, val, op) = set_declared!(ctx.scope, var, val, op)
 set_frozen!(ctx::FinchCompiler, var, val) = set_frozen!(ctx.scope, var, val)
-set_thawed!(ctx::FinchCompiler, var, val) = set_thawed!(ctx.scope, var, val)
+set_thawed!(ctx::FinchCompiler, var, val, op) = set_thawed!(ctx.scope, var, val, op)
 get_tensor_mode(ctx::FinchCompiler, var) = get_tensor_mode(ctx.scope, var)
 function open_scope(f::F, ctx::FinchCompiler) where {F}
     open_scope(ctx.scope) do scope_2
@@ -143,13 +143,13 @@ function lower(ctx::AbstractCompiler, root::FinchNode, ::DefaultStyle)
                 ctx(block(head.bodies..., body))
             elseif head.kind === declare
                 val_2 = declare!(ctx, get_binding(ctx, head.tns), head.init)
-                set_declared!(ctx, head.tns, val_2)
+                set_declared!(ctx, head.tns, val_2, head.op)
             elseif head.kind === freeze
                 val_2 = freeze!(ctx, get_binding(ctx, head.tns))
                 set_frozen!(ctx, head.tns, val_2)
             elseif head.kind === thaw
                 val_2 = thaw!(ctx, get_binding(ctx, head.tns))
-                set_thawed!(ctx, head.tns, val_2)
+                set_thawed!(ctx, head.tns, val_2, head.op)
             else
                 preamble = contain(ctx) do ctx_2
                     ctx_2(instantiate!(ctx_2, head))

@@ -57,7 +57,7 @@ function (ctx::LogicMachine)(ex)
                 body = loop_instance(index_instance(idx.name), call_instance(literal_instance(extent), literal_instance(1), literal_instance(1)), body)
             end
         end
-        body = block_instance(declare_instance(res, literal_instance(fill_value(tns.val))), body, yieldbind_instance(res))
+        body = block_instance(declare_instance(res, literal_instance(fill_value(tns.val)), literal_instance(auto)), body, yieldbind_instance(res))
         if ctx.verbose
             print("Running: ")
             display(body)
@@ -80,7 +80,7 @@ function (ctx::LogicMachine)(ex)
                 body = loop_instance(index_instance(idx.name), call_instance(literal_instance(extent), literal_instance(1), literal_instance(1)), body)
             end
         end
-        body = block_instance(declare_instance(res, literal_instance(fill_value(tns.val))), body, yieldbind_instance(res))
+        body = block_instance(declare_instance(res, literal_instance(fill_value(tns.val)), literal_instance(auto)), body, yieldbind_instance(res))
         if ctx.verbose
             print("Running: ")
             display(body)

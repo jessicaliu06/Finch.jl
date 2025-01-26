@@ -4,7 +4,7 @@ struct LiteralInstance{val} <: FinchNodeInstance end
 struct IndexInstance{name} <: FinchNodeInstance end
 struct VariableInstance{name} <: FinchNodeInstance end
 struct DefineInstance{Lhs, Rhs, Body} <: FinchNodeInstance lhs::Lhs; rhs::Rhs; body::Body end
-struct DeclareInstance{Tns, Init} <: FinchNodeInstance tns::Tns; init::Init end
+struct DeclareInstance{Tns, Init, Op} <: FinchNodeInstance tns::Tns; init::Init; op::Op end
 struct FreezeInstance{Tns} <: FinchNodeInstance tns::Tns end
 struct ThawInstance{Tns} <: FinchNodeInstance tns::Tns end
 struct BlockInstance{Bodies} <: FinchNodeInstance bodies::Bodies end
@@ -26,7 +26,7 @@ Base.getproperty(::VariableInstance{val}, name::Symbol) where {val} = name == :n
 @inline index_instance(name) = IndexInstance{name}()
 @inline variable_instance(name) = VariableInstance{name}()
 @inline define_instance(lhs, rhs, body) = DefineInstance(lhs, rhs, body)
-@inline declare_instance(tns, init) = DeclareInstance(tns, init)
+@inline declare_instance(tns, init, op) = DeclareInstance(tns, init, op)
 @inline freeze_instance(tns) = FreezeInstance(tns)
 @inline thaw_instance(tns) = ThawInstance(tns)
 @inline block_instance(bodies...) = BlockInstance(bodies)
@@ -95,7 +95,7 @@ SyntaxInterface.operation(::TagInstance) = tag
 SyntaxInterface.operation(::YieldBindInstance) = yieldbind
 
 SyntaxInterface.arguments(node::DefineInstance) = [node.lhs, node.rhs, node.body]
-SyntaxInterface.arguments(node::DeclareInstance) = [node.tns, node.init]
+SyntaxInterface.arguments(node::DeclareInstance) = [node.tns, node.init, node.op]
 SyntaxInterface.arguments(node::FreezeInstance) = [node.tns]
 SyntaxInterface.arguments(node::ThawInstance) = [node.tns]
 SyntaxInterface.arguments(node::BlockInstance) = node.bodies

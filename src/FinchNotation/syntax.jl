@@ -137,7 +137,9 @@ function (ctx::FinchParserVisitor)(ex::Expr)
     elseif @capture ex :elseif(~args...)
         throw(FinchSyntaxError("Finch does not support elseif."))
     elseif @capture ex :(.=)(~tns, ~init)
-        return :($(ctx.nodes.declare)($(ctx(tns)), $(ctx(init))))
+        return :($(ctx.nodes.declare)($(ctx(tns)), $(ctx(init)), $(ctx.nodes.literal)(auto)))
+    elseif @capture ex :macrocall($(Symbol("@declare")), ~ln::islinenum, ~tns, ~init, ~op)
+        return :($(ctx.nodes.declare)($(ctx(tns)), $(ctx(init)), $(ctx(op))))
     elseif @capture ex :macrocall($(Symbol("@freeze")), ~ln::islinenum, ~tns)
         return :($(ctx.nodes.freeze)($(ctx(tns))))
     elseif @capture ex :macrocall($(Symbol("@thaw")), ~ln::islinenum, ~tns)
@@ -406,10 +408,20 @@ function display_statement(io, mime, node::Union{FinchNode, FinchNodeInstance}, 
         print(io, ">>= ")
         display_expression(io, mime, node.rhs)
     elseif operation(node) === declare
-        print(io, " "^indent)
-        display_expression(io, mime, node.tns)
-        print(io, " .= ")
-        display_expression(io, mime, node.init)
+        if operation(node.op) === literal && node.op.val === auto
+            print(io, " "^indent)
+            display_expression(io, mime, node.tns)
+            print(io, " .= ")
+            display_expression(io, mime, node.init)
+        else
+            print(io, " "^indent * "@declare(")
+            display_expression(io, mime, node.tns)
+            print(io, ", ")
+            display_expression(io, mime, node.init)
+            print(io, ", ")
+            display_expression(io, mime, node.op)
+            print(io, ")")
+        end
     elseif operation(node) === freeze
         print(io, " "^indent * "@freeze(")
         display_expression(io, mime, node.tns)
@@ -496,7 +508,12 @@ function finch_unparse_program(ctx, node::Union{FinchNode, FinchNodeInstance})
     elseif operation(node) === declare
         tns = finch_unparse_program(ctx, node.tns)
         init = finch_unparse_program(ctx, node.init)
-        :($tns .= $init)
+        if operation(node.op) === literal && node.op.val === auto
+            :($tns .= $init)
+        else
+            op = finch_unparse_program(ctx, node.op)
+            :(@declare($tns, $init, $op))
+        end
     elseif operation(node) === freeze
         tns = finch_unparse_program(ctx, node.tns)
         :(@freeze($tns))

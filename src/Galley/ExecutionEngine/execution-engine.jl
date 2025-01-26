@@ -126,7 +126,7 @@ function execute_query(alias_dict, q::PlanNode, verbose, cannonicalize, return_p
                                         read=false,
                                         cannonicalize=cannonicalize)
     dec_instance = declare_instance(variable_instance(output_name),
-                                                 literal_instance(output_default))
+                                                 literal_instance(output_default), literal_instance(auto))
 
     prgm_instance = assign_instance(output_access, literal_instance(agg_op), rhs_instance)
     loop_order = [cannonicalize ? index_instance(index_sym_dict[i]) : index_instance(i) for i in loop_order]

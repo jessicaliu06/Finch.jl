@@ -151,9 +151,9 @@ A new scope is introduced to evaluate `body`.
 define
 
 """
-    declare(tns, init)
+    declare(tns, init, op)
 
-Finch AST statement that declares `tns` with an initial value `init` in the current scope.
+Finch AST statement that declares `tns` with an initial value `init` reduced with `op` in the current scope.
 """
 declare
 
@@ -283,7 +283,7 @@ function FinchNode(kind::FinchNodeKind, args::Vector)
         (kind === sieve && length(args) == 2) ||
         (kind === assign && length(args) == 3) ||
         (kind === define && length(args) == 3) ||
-        (kind === declare && length(args) == 2) ||
+        (kind === declare && length(args) == 3) ||
         (kind === freeze && length(args) == 1) ||
         (kind === thaw && length(args) == 1) ||
         (kind === block) ||
@@ -325,6 +325,7 @@ function Base.getproperty(node::FinchNode, sym::Symbol)
     elseif node.kind === define && sym === :body node.children[3]
     elseif node.kind === declare && sym === :tns node.children[1]
     elseif node.kind === declare && sym === :init node.children[2]
+    elseif node.kind === declare && sym === :op node.children[3]
     elseif node.kind === freeze && sym === :tns node.children[1]
     elseif node.kind === thaw && sym === :tns node.children[1]
     elseif node.kind === block && sym === :bodies node.children

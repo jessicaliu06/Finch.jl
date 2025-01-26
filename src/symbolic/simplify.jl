@@ -143,7 +143,7 @@ function get_simplify_rules(alg, shash)
         (@rule loop(~idx, ~ext::isvirtual, ~body) => begin
             body_contain_idx = idx ∈ getunbound(body)
             if !body_contain_idx
-                decl_in_scope = filter(!isnothing, map(node-> if @capture(node, declare(~tns, ~init)) tns
+                decl_in_scope = filter(!isnothing, map(node-> if @capture(node, declare(~tns, ~init, ~op)) tns
                                                               elseif @capture(node, define(~var, ~val, ~body_2)) var
                                                               end, PostOrderDFS(body)))
                 Postwalk(@rule assign(access(~lhs, updater(~g), ~j...), ~f, ~rhs) => begin #updater(auto)
@@ -176,7 +176,7 @@ function get_simplify_rules(alg, shash)
             if ortho(getroot(lhs), s1) && ortho(getroot(lhs), s2)
                 if idx ∉ j && idx ∉ getunbound(rhs)
                     body = block(s1..., assign(access(lhs, updater(f), j...), f, rhs), s2...)
-                    decl_in_scope = filter(!isnothing, map(node-> if @capture(node, declare(~tns, ~init)) tns
+                    decl_in_scope = filter(!isnothing, map(node-> if @capture(node, declare(~tns, ~init, ~op)) tns
                                                                     elseif @capture(node, define(~var, ~val, ~body_2)) var
                                                                     end, PostOrderDFS(body)))
 

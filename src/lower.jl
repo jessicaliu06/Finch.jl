@@ -298,7 +298,7 @@ function lower_parallel_loop(ctx, root, ext::ParallelDimension, device::VirtualC
     i = freshen(ctx, :i)
 
     decl_in_scope = unique(filter(!isnothing, map(node-> begin
-        if @capture(node, declare(~tns, ~init))
+        if @capture(node, declare(~tns, ~init, ~op))
             tns
         end
     end, PostOrderDFS(root.body))))

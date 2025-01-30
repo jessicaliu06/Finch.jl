@@ -12,8 +12,7 @@ function initialize_access(tensor_id::Symbol, tensor, index_ids, protocols, inde
         return literal_instance(tensor)
     end
 
-    mode = read ? Reader() : Updater()
-    mode = literal_instance(mode)
+    mode = read ? reader_instance() : updater_instance(auto)
     index_expressions = []
     for i in range(1, length(index_ids))
         index = if cannonicalize
@@ -127,12 +126,12 @@ function execute_query(alias_dict, q::PlanNode, verbose, cannonicalize, return_p
                                         read=false,
                                         cannonicalize=cannonicalize)
     dec_instance = declare_instance(variable_instance(output_name),
-                                                 literal_instance(output_default))
+                                                 literal_instance(output_default), literal_instance(auto))
 
     prgm_instance = assign_instance(output_access, literal_instance(agg_op), rhs_instance)
     loop_order = [cannonicalize ? index_instance(index_sym_dict[i]) : index_instance(i) for i in loop_order]
     for index in reverse(loop_order)
-        prgm_instance = loop_instance(index, Dimensionless(), prgm_instance)
+        prgm_instance = loop_instance(index, Auto(), prgm_instance)
     end
     prgm_instance = block_instance(dec_instance, prgm_instance)
 

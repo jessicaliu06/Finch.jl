@@ -1,4 +1,4 @@
-using Finch.FinchNotation: block_instance, declare_instance, call_instance, loop_instance, index_instance, variable_instance, tag_instance, access_instance, assign_instance, literal_instance, yieldbind_instance
+using Finch.FinchNotation: block_instance, declare_instance, call_instance, loop_instance, index_instance, variable_instance, tag_instance, access_instance, reader_instance, updater_instance, assign_instance, literal_instance, yieldbind_instance
 
 @kwdef struct PointwiseMachineLowerer
     ctx
@@ -19,7 +19,7 @@ function (ctx::PointwiseMachineLowerer)(ex)
         idxs_3 = map(enumerate(idxs_1)) do (n, idx)
             idx in idxs_2 ? index_instance(idx.name) : first(axes(ctx.ctx.scope[arg])[n])
         end
-        access_instance(tag_instance(variable_instance(arg.name), ctx.ctx.scope[arg]), literal_instance(reader), idxs_3...)
+        access_instance(tag_instance(variable_instance(arg.name), ctx.ctx.scope[arg]), reader_instance(), idxs_3...)
     elseif (@capture ex reorder(~arg::isimmediate, ~idxs...))
         literal_instance(arg.val)
     elseif ex.kind === immediate
@@ -47,17 +47,17 @@ function (ctx::LogicMachine)(ex)
         loop_idxs = withsubsequence(intersect(idxs_1, idxs_2), idxs_2)
         lhs_idxs = idxs_2
         res = tag_instance(variable_instance(:res), tns.val)
-        lhs = access_instance(res, literal_instance(updater), map(idx -> index_instance(idx.name), lhs_idxs)...)
+        lhs = access_instance(res, updater_instance(auto), map(idx -> index_instance(idx.name), lhs_idxs)...)
         (rhs, rhs_idxs) = lower_pointwise_logic(ctx, reorder(relabel(arg, idxs_1...), idxs_2...))
         body = assign_instance(lhs, literal_instance(initwrite(fill_value(tns.val))), rhs)
         for idx in loop_idxs
             if idx in rhs_idxs
-                body = loop_instance(index_instance(idx.name), dimless, body)
+                body = loop_instance(index_instance(idx.name), auto, body)
             elseif idx in lhs_idxs
                 body = loop_instance(index_instance(idx.name), call_instance(literal_instance(extent), literal_instance(1), literal_instance(1)), body)
             end
         end
-        body = block_instance(declare_instance(res, literal_instance(fill_value(tns.val))), body, yieldbind_instance(res))
+        body = block_instance(declare_instance(res, literal_instance(fill_value(tns.val)), literal_instance(auto)), body, yieldbind_instance(res))
         if ctx.verbose
             print("Running: ")
             display(body)
@@ -70,17 +70,17 @@ function (ctx::LogicMachine)(ex)
         loop_idxs = getfields(arg)
         lhs_idxs = setdiff(getfields(arg), idxs_1)
         res = tag_instance(variable_instance(:res), tns.val)
-        lhs = access_instance(res, literal_instance(updater), map(idx -> index_instance(idx.name), lhs_idxs)...)
+        lhs = access_instance(res, updater_instance(auto), map(idx -> index_instance(idx.name), lhs_idxs)...)
         (rhs, rhs_idxs) = lower_pointwise_logic(ctx, arg)
         body = assign_instance(lhs, literal_instance(op.val), rhs)
         for idx in loop_idxs
             if idx in rhs_idxs
-                body = loop_instance(index_instance(idx.name), dimless, body)
+                body = loop_instance(index_instance(idx.name), auto, body)
             elseif idx in lhs_idxs
                 body = loop_instance(index_instance(idx.name), call_instance(literal_instance(extent), literal_instance(1), literal_instance(1)), body)
             end
         end
-        body = block_instance(declare_instance(res, literal_instance(fill_value(tns.val))), body, yieldbind_instance(res))
+        body = block_instance(declare_instance(res, literal_instance(fill_value(tns.val)), literal_instance(auto)), body, yieldbind_instance(res))
         if ctx.verbose
             print("Running: ")
             display(body)

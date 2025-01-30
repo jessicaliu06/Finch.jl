@@ -4,15 +4,17 @@ struct LiteralInstance{val} <: FinchNodeInstance end
 struct IndexInstance{name} <: FinchNodeInstance end
 struct VariableInstance{name} <: FinchNodeInstance end
 struct DefineInstance{Lhs, Rhs, Body} <: FinchNodeInstance lhs::Lhs; rhs::Rhs; body::Body end
-struct DeclareInstance{Tns, Init} <: FinchNodeInstance tns::Tns; init::Init end
-struct FreezeInstance{Tns} <: FinchNodeInstance tns::Tns end
-struct ThawInstance{Tns} <: FinchNodeInstance tns::Tns end
+struct DeclareInstance{Tns, Init, Op} <: FinchNodeInstance tns::Tns; init::Init; op::Op end
+struct FreezeInstance{Tns, Op} <: FinchNodeInstance tns::Tns; op::Op end
+struct ThawInstance{Tns, Op} <: FinchNodeInstance tns::Tns; op::Op end
 struct BlockInstance{Bodies} <: FinchNodeInstance bodies::Bodies end
 struct LoopInstance{Idx, Ext, Body} <: FinchNodeInstance idx::Idx; ext::Ext; body::Body end
 struct SieveInstance{Cond, Body} <: FinchNodeInstance cond::Cond; body::Body end
 struct AssignInstance{Lhs, Op, Rhs} <: FinchNodeInstance lhs::Lhs; op::Op; rhs::Rhs end
 struct CallInstance{Op, Args<:Tuple} <: FinchNodeInstance op::Op; args::Args end
 struct AccessInstance{Tns, Mode, Idxs} <: FinchNodeInstance tns::Tns; mode::Mode; idxs::Idxs end
+struct ReaderInstance{} <: FinchNodeInstance end
+struct UpdaterInstance{Op} <: FinchNodeInstance op::Op end
 struct TagInstance{Var, Bind} <: FinchNodeInstance var::Var; bind::Bind end
 struct YieldBindInstance{Args} <: FinchNodeInstance args::Args end
 
@@ -24,9 +26,9 @@ Base.getproperty(::VariableInstance{val}, name::Symbol) where {val} = name == :n
 @inline index_instance(name) = IndexInstance{name}()
 @inline variable_instance(name) = VariableInstance{name}()
 @inline define_instance(lhs, rhs, body) = DefineInstance(lhs, rhs, body)
-@inline declare_instance(tns, init) = DeclareInstance(tns, init)
-@inline freeze_instance(tns) = FreezeInstance(tns)
-@inline thaw_instance(tns) = ThawInstance(tns)
+@inline declare_instance(tns, init, op) = DeclareInstance(tns, init, op)
+@inline freeze_instance(tns, op) = FreezeInstance(tns, op)
+@inline thaw_instance(tns, op) = ThawInstance(tns, op)
 @inline block_instance(bodies...) = BlockInstance(bodies)
 @inline loop_instance(idx, ext, body) = LoopInstance(idx, ext, body)
 @inline loop_instance(body) = body
@@ -36,14 +38,14 @@ Base.getproperty(::VariableInstance{val}, name::Symbol) where {val} = name == :n
 @inline assign_instance(lhs, op, rhs) = AssignInstance(lhs, op, rhs)
 @inline call_instance(op, args...) = CallInstance(op, args)
 @inline access_instance(tns, mode, idxs...) = AccessInstance(tns, mode, idxs)
+@inline reader_instance() = ReaderInstance()
+@inline updater_instance(op) = UpdaterInstance(op)
 @inline tag_instance(var, bind) = TagInstance(var, bind)
 @inline yieldbind_instance(args...) = YieldBindInstance(args)
 
 @inline finch_leaf_instance(arg::Type) = literal_instance(arg)
 @inline finch_leaf_instance(arg::Function) = literal_instance(arg)
 @inline finch_leaf_instance(arg::FinchNodeInstance) = arg
-@inline finch_leaf_instance(arg::Reader) = literal_instance(arg)
-@inline finch_leaf_instance(arg::Updater) = literal_instance(arg)
 @inline finch_leaf_instance(arg) = arg
 
 SyntaxInterface.istree(node::FinchNodeInstance) = Int(operation(node)) & IS_TREE != 0
@@ -63,6 +65,8 @@ instance_ctrs = Dict(
 	assign => assign_instance,
 	call => call_instance,
 	access => access_instance,
+	reader => reader_instance,
+	updater => updater_instance,
 	variable => variable_instance,
 	tag => tag_instance,
 	yieldbind => yieldbind_instance,
@@ -84,12 +88,14 @@ SyntaxInterface.operation(::SieveInstance) = sieve
 SyntaxInterface.operation(::AssignInstance) = assign
 SyntaxInterface.operation(::CallInstance) = call
 SyntaxInterface.operation(::AccessInstance) = access
+SyntaxInterface.operation(::ReaderInstance) = reader
+SyntaxInterface.operation(::UpdaterInstance) = updater
 SyntaxInterface.operation(::VariableInstance) = variable
 SyntaxInterface.operation(::TagInstance) = tag
 SyntaxInterface.operation(::YieldBindInstance) = yieldbind
 
 SyntaxInterface.arguments(node::DefineInstance) = [node.lhs, node.rhs, node.body]
-SyntaxInterface.arguments(node::DeclareInstance) = [node.tns, node.init]
+SyntaxInterface.arguments(node::DeclareInstance) = [node.tns, node.init, node.op]
 SyntaxInterface.arguments(node::FreezeInstance) = [node.tns]
 SyntaxInterface.arguments(node::ThawInstance) = [node.tns]
 SyntaxInterface.arguments(node::BlockInstance) = node.bodies
@@ -98,6 +104,8 @@ SyntaxInterface.arguments(node::SieveInstance) = [node.cond, node.body]
 SyntaxInterface.arguments(node::AssignInstance) = [node.lhs, node.op, node.rhs]
 SyntaxInterface.arguments(node::CallInstance) = [node.op, node.args...]
 SyntaxInterface.arguments(node::AccessInstance) = [node.tns, node.mode, node.idxs...]
+SyntaxInterface.arguments(node::ReaderInstance) = []
+SyntaxInterface.arguments(node::UpdaterInstance) = [node.op]
 SyntaxInterface.arguments(node::TagInstance) = [node.var, node.bind]
 SyntaxInterface.arguments(node::YieldBindInstance) = node.args
 

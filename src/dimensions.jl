@@ -1,9 +1,9 @@
-FinchNotation.finch_leaf(x::Dimensionless) = virtual(x)
-FinchNotation.finch_leaf_instance(x::Dimensionless) = value_instance(x)
-virtualize(ctx, ex, ::Type{Dimensionless}) = dimless
+FinchNotation.finch_leaf(x::Auto) = virtual(x)
+FinchNotation.finch_leaf_instance(x::Auto) = value_instance(x)
+virtualize(ctx, ex, ::Type{Auto}) = auto
 
-getstart(::Dimensionless) = error("asked for start of dimensionless range")
-getstop(::Dimensionless) = error("asked for stop of dimensionless range")
+getstart(::Auto) = error("asked for start of dimensionless range")
+getstop(::Auto) = error("asked for stop of dimensionless range")
 
 struct UnknownDimension end
 
@@ -33,7 +33,7 @@ combinedim(ctx, ::B, ::A)
 """
 combinedim(ctx, a, b) = UnknownDimension()
 
-combinedim(ctx, a::Dimensionless, b) = b
+combinedim(ctx, a::Auto, b) = b
 
 @kwdef struct Extent
     start
@@ -85,7 +85,7 @@ combinedim(ctx, a::Extent, b::Extent) =
         stop = checklim(ctx, a.stop, b.stop)
     )
 
-combinedim(ctx, a::Dimensionless, b::Extent) = b
+combinedim(ctx, a::Auto, b::Extent) = b
 
 struct SuggestedExtent
     ext
@@ -97,7 +97,7 @@ Base.:(==)(a::SuggestedExtent, b::SuggestedExtent) = a.ext == b.ext
 
 suggest(ext) = SuggestedExtent(ext)
 suggest(ext::SuggestedExtent) = ext
-suggest(ext::Dimensionless) = dimless
+suggest(ext::Auto) = auto
 
 resolvedim(ext::Symbol) = error()
 resolvedim(ext::SuggestedExtent) = resolvedim(ext.ext)
@@ -105,7 +105,7 @@ cache_dim!(ctx, tag, ext::SuggestedExtent) = SuggestedExtent(cache_dim!(ctx, tag
 
 combinedim(ctx, a::SuggestedExtent, b::Extent) = b
 
-combinedim(ctx, a::SuggestedExtent, b::Dimensionless) = a
+combinedim(ctx, a::SuggestedExtent, b::Auto) = a
 
 combinedim(ctx, a::SuggestedExtent, b::SuggestedExtent) = SuggestedExtent(combinedim(ctx, a.ext, b.ext))
 
@@ -184,7 +184,7 @@ function shiftdim(ext::ContinuousExtent, delta)
 end
 
 
-shiftdim(ext::Dimensionless, delta) = dimless
+shiftdim(ext::Auto, delta) = auto
 shiftdim(ext::ParallelDimension, delta) = ParallelDimension(ext, shiftdim(ext.ext, delta), ext.device)
 
 function shiftdim(ext::FinchNode, body)
@@ -208,7 +208,7 @@ function scaledim(ext::ContinuousExtent, scale)
     )
 end
 
-scaledim(ext::Dimensionless, scale) = dimless
+scaledim(ext::Auto, scale) = auto
 scaledim(ext::ParallelDimension, scale) = ParallelDimension(ext, scaledim(ext.ext, scale), ext.device)
 
 function scaledim(ext::FinchNode, body)
@@ -227,9 +227,9 @@ function virtual_intersect(ctx, a, b)
     error()
 end
 
-virtual_intersect(ctx, a::Dimensionless, b) = b
-virtual_intersect(ctx, a, b::Dimensionless) = a
-virtual_intersect(ctx, a::Dimensionless, b::Dimensionless) = b
+virtual_intersect(ctx, a::Auto, b) = b
+virtual_intersect(ctx, a, b::Auto) = a
+virtual_intersect(ctx, a::Auto, b::Auto) = b
 
 function virtual_intersect(ctx, a::Extent, b::Extent)
     Extent(
@@ -238,9 +238,9 @@ function virtual_intersect(ctx, a::Extent, b::Extent)
     )
 end
 
-virtual_union(ctx, a::Dimensionless, b) = b
-virtual_union(ctx, a, b::Dimensionless) = a
-virtual_union(ctx, a::Dimensionless, b::Dimensionless) = b
+virtual_union(ctx, a::Auto, b) = b
+virtual_union(ctx, a, b::Auto) = a
+virtual_union(ctx, a::Auto, b::Auto) = b
 
 #virtual_union(ctx, a, b) = virtual_union(ctx, promote(a, b)...)
 function virtual_union(ctx, a::Extent, b::Extent)
@@ -291,7 +291,7 @@ getstop(ext::FinchNode) = ext.kind === virtual ? getstop(ext.val) : ext
 measure(ext::ContinuousExtent) = call(-, ext.stop, ext.start) # TODO: Think carefully, Not quite sure!
 
 combinedim(ctx, a::ContinuousExtent, b::ContinuousExtent) = ContinuousExtent(checklim(ctx, a.start, b.start), checklim(ctx, a.stop, b.stop))
-combinedim(ctx, a::Dimensionless, b::ContinuousExtent) = b
+combinedim(ctx, a::Auto, b::ContinuousExtent) = b
 combinedim(ctx, a::Extent, b::ContinuousExtent) = throw(ArgumentError("Extent and ContinuousExtent cannot interact ...yet"))
 
 combinedim(ctx, a::SuggestedExtent, b::ContinuousExtent) = b

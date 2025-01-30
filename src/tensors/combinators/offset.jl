@@ -20,8 +20,10 @@ is_atomic(ctx, lvl::VirtualOffsetArray) = is_atomic(ctx, lvl.body)
 is_concurrent(ctx, lvl::VirtualOffsetArray) = is_concurrent(ctx, lvl.body)
 
 Base.show(io::IO, ex::VirtualOffsetArray) = Base.show(io, MIME"text/plain"(), ex)
+Base.show(io::IO, mime::MIME"text/plain", ex::VirtualOffsetArray) =
+	print(io, "VirtualOffsetArray($(ex.body), $(ex.delta))")
 
-Base.summary(io::IO, ex::VirtualOffsetArray) = print(io, "VOffset($(summary(ex.body)), $(ex.delta))")
+Base.summary(io::IO, mime::MIME"text/plain", ex::VirtualOffsetArray) = print(io, "VOffset($(summary(ex.body)), $(ex.delta))")
 
 FinchNotation.finch_leaf(x::VirtualOffsetArray) = virtual(x)
 

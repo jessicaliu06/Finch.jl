@@ -14,13 +14,13 @@ const program_nodes = (
     call = call,
     access = access,
     yieldbind = yieldbind,
-    reader = literal(reader),
-    updater = literal(updater),
+    reader = reader,
+    updater = updater,
     variable = variable,
     tag = (ex) -> :(finch_leaf($(esc(ex)))),
     literal = literal,
     leaf = (ex) -> :(finch_leaf($(esc(ex)))),
-    dimless = :(finch_leaf(dimless))
+    auto = :(finch_leaf(auto))
 )
 
 const instance_nodes = (
@@ -36,13 +36,13 @@ const instance_nodes = (
     call = call_instance,
     access = access_instance,
     yieldbind = yieldbind_instance,
-    reader = literal_instance(reader),
-    updater = literal_instance(updater),
+    reader = reader_instance,
+    updater = updater_instance,
     variable = variable_instance,
     tag = (ex) -> :($tag_instance($(variable_instance(ex)), $finch_leaf_instance($(esc(ex))))),
     literal = literal_instance,
     leaf = (ex) -> :($finch_leaf_instance($(esc(ex)))),
-    dimless = :($finch_leaf_instance(dimless))
+    auto = :($finch_leaf_instance(auto))
 )
 
 d() = 1
@@ -98,15 +98,15 @@ julia> x[]
 overwrite(l, r) = r
 
 """
-    Dimensionless()
+    Auto()
 
 A singleton type representing the lack of a dimension.  This is used in place of
 a dimension when we want to avoid dimensionality checks. In the `@finch` macro,
-you can write `Dimensionless()` with an underscore as `for i = _`, allowing
+you can write `Auto()` with an underscore as `for i = _`, allowing
 finch to pick up the loop bounds from the tensors automatically.
 """
-struct Dimensionless end
-const dimless = Dimensionless()
+struct Auto end
+const auto = Auto()
 function extent end
 function realextent end
 
@@ -116,7 +116,7 @@ end
 
 function (ctx::FinchParserVisitor)(ex::Symbol)
     if ex == :_ || ex == :(:)
-        return :($dimless)
+        return :($auto)
     elseif ex in evaluable_exprs
         return ctx.nodes.literal(@eval($ex))
     else
@@ -137,11 +137,13 @@ function (ctx::FinchParserVisitor)(ex::Expr)
     elseif @capture ex :elseif(~args...)
         throw(FinchSyntaxError("Finch does not support elseif."))
     elseif @capture ex :(.=)(~tns, ~init)
-        return :($(ctx.nodes.declare)($(ctx(tns)), $(ctx(init))))
-    elseif @capture ex :macrocall($(Symbol("@freeze")), ~ln::islinenum, ~tns)
-        return :($(ctx.nodes.freeze)($(ctx(tns))))
-    elseif @capture ex :macrocall($(Symbol("@thaw")), ~ln::islinenum, ~tns)
-        return :($(ctx.nodes.thaw)($(ctx(tns))))
+        return :($(ctx.nodes.declare)($(ctx(tns)), $(ctx(init)), $(ctx.nodes.literal)(auto)))
+    elseif @capture ex :macrocall($(Symbol("@declare")), ~ln::islinenum, ~tns, ~init, ~op)
+        return :($(ctx.nodes.declare)($(ctx(tns)), $(ctx(init)), $(ctx(op))))
+    elseif @capture ex :macrocall($(Symbol("@freeze")), ~ln::islinenum, ~tns, ~op)
+        return :($(ctx.nodes.freeze)($(ctx(tns)), $(ctx(op))))
+    elseif @capture ex :macrocall($(Symbol("@thaw")), ~ln::islinenum, ~tns, ~op)
+        return :($(ctx.nodes.thaw)($(ctx(tns)), $(ctx(op))))
     elseif @capture ex :for(:block(), ~body)
         return ctx(body)
     elseif @capture ex :for(:block(:(=)(~idx, ~ext), ~tail...), ~body)
@@ -199,17 +201,17 @@ function (ctx::FinchParserVisitor)(ex::Expr)
         return :($(ctx.nodes.yieldbind)($(ctx(arg))))
     elseif @capture ex :ref(~tns, ~idxs...)
         mode = ctx.nodes.reader
-        return :($(ctx.nodes.access)($(ctx(tns)), $mode, $(map(ctx, idxs)...)))
+        return :($(ctx.nodes.access)($(ctx(tns)), $mode(), $(map(ctx, idxs)...)))
     elseif (@capture ex (~op)(~lhs, ~rhs)) && haskey(incs, op)
         return ctx(:($lhs << $(incs[op]) >>= $rhs))
     elseif @capture ex :(=)(:ref(~tns, ~idxs...), ~rhs)
         mode = ctx.nodes.updater
-        lhs = :($(ctx.nodes.access)($(ctx(tns)), $mode, $(map(ctx, idxs)...)))
         op = :($(ctx.nodes.literal)($initwrite))
+        lhs = :($(ctx.nodes.access)($(ctx(tns)), $mode($op), $(map(ctx, idxs)...)))
         return :($(ctx.nodes.assign)($lhs, $op, $(ctx(rhs))))
     elseif @capture ex :>>=(:call(:<<, :ref(~tns, ~idxs...), ~op), ~rhs)
         mode = ctx.nodes.updater
-        lhs = :($(ctx.nodes.access)($(ctx(tns)), $mode, $(map(ctx, idxs)...)))
+        lhs = :($(ctx.nodes.access)($(ctx(tns)), $mode($(ctx(op))), $(map(ctx, idxs)...)))
         return :($(ctx.nodes.assign)($lhs, $(ctx(op)), $(ctx(rhs))))
     elseif @capture ex :>>=(:call(:<<, ~lhs, ~op), ~rhs)
         error("Finch doesn't support incrementing definitions of variables")
@@ -406,17 +408,31 @@ function display_statement(io, mime, node::Union{FinchNode, FinchNodeInstance}, 
         print(io, ">>= ")
         display_expression(io, mime, node.rhs)
     elseif operation(node) === declare
-        print(io, " "^indent)
-        display_expression(io, mime, node.tns)
-        print(io, " .= ")
-        display_expression(io, mime, node.init)
+        if operation(node.op) === literal && node.op.val === auto
+            print(io, " "^indent)
+            display_expression(io, mime, node.tns)
+            print(io, " .= ")
+            display_expression(io, mime, node.init)
+        else
+            print(io, " "^indent * "@declare(")
+            display_expression(io, mime, node.tns)
+            print(io, ", ")
+            display_expression(io, mime, node.init)
+            print(io, ", ")
+            display_expression(io, mime, node.op)
+            print(io, ")")
+        end
     elseif operation(node) === freeze
         print(io, " "^indent * "@freeze(")
         display_expression(io, mime, node.tns)
+        print(io, ", ")
+        display_expression(io, mime, node.op)
         print(io, ")")
     elseif operation(node) === thaw
         print(io, " "^indent * "@thaw(")
         display_expression(io, mime, node.tns)
+        print(io, ", ")
+        display_expression(io, mime, node.op)
         print(io, ")")
     elseif operation(node) === yieldbind
         print(io, " "^indent * "return (")
@@ -457,7 +473,7 @@ function finch_unparse_program(ctx, node::Union{FinchNode, FinchNodeInstance})
         @assert operation(node.var) === variable
         node.var.name
     elseif operation(node) === virtual
-        if node.val == dimless
+        if node.val == auto
             :_
         else
             ctx(node)
@@ -496,10 +512,16 @@ function finch_unparse_program(ctx, node::Union{FinchNode, FinchNodeInstance})
     elseif operation(node) === declare
         tns = finch_unparse_program(ctx, node.tns)
         init = finch_unparse_program(ctx, node.init)
-        :($tns .= $init)
+        if operation(node.op) === literal && node.op.val === auto
+            :($tns .= $init)
+        else
+            op = finch_unparse_program(ctx, node.op)
+            :(@declare($tns, $init, $op))
+        end
     elseif operation(node) === freeze
         tns = finch_unparse_program(ctx, node.tns)
-        :(@freeze($tns))
+        op = finch_unparse_program(ctx, node.op)
+        :(@freeze($tns, $op))
     elseif operation(node) === thaw
         tns = finch_unparse_program(ctx, node.tns)
         :(@thaw($tns))

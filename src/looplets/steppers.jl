@@ -35,13 +35,13 @@ combine_style(a::StepperStyle, b::PhaseStyle) = b
 stepper_seek(ctx, node::Stepper, ext) = node.seek(ctx, ext)
 stepper_seek(ctx, node, ext) = quote end
 
-stepper_range(ctx, node, ext) = dimless
+stepper_range(ctx, node, ext) = auto
 
 function stepper_range(ctx, node::FinchNode, ext)
     if @capture node access(~tns::isvirtual, ~i...)
         stepper_range(ctx, tns.val, ext)
     else
-        return dimless
+        return auto
     end
 end
 

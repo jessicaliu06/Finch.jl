@@ -14,7 +14,7 @@ module FinchNotation
     export tag
     export call
     export cached
-    export reader, Reader, updater, Updater, access
+    export reader, updater, access
     export define, declare, thaw, freeze
     export block
     export protocol
@@ -38,7 +38,7 @@ module FinchNotation
 
     export getval, getname
 
-    export overwrite, initwrite, Dimensionless, dimless, extent, realextent
+    export overwrite, initwrite, Auto, auto, extent, realextent
 
     export d
 

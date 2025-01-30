@@ -74,10 +74,10 @@ lower(ctx::AbstractCompiler, tns::VirtualToeplitzArray, ::DefaultStyle) = :(Toep
 
 function virtual_size(ctx::AbstractCompiler, arr::VirtualToeplitzArray)
     dims = virtual_size(ctx, arr.body)
-    return (dims[1:arr.dim - 1]..., dimless, dimless, dims[arr.dim + 1:end]...)
+    return (dims[1:arr.dim - 1]..., auto, auto, dims[arr.dim + 1:end]...)
 end
 virtual_resize!(ctx::AbstractCompiler, arr::VirtualToeplitzArray, dims...) =
-    virtual_resize!(ctx, arr.body, dims[1:arr.dim - 1]..., dimless, dims[arr.dim + 2:end]...)
+    virtual_resize!(ctx, arr.body, dims[1:arr.dim - 1]..., auto, dims[arr.dim + 2:end]...)
 
 instantiate(ctx, arr::VirtualToeplitzArray, mode) =
     VirtualToeplitzArray(instantiate(ctx, arr.body, mode), arr.dim)

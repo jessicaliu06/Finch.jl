@@ -80,6 +80,8 @@ Tensors must enter and exit scope in read mode. Finch inserts
 
 Tensor lifecycle statements consist of:
 ```@docs
+reader
+updater
 declare
 freeze
 thaw

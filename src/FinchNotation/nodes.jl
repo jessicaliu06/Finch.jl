@@ -1,9 +1,3 @@
-struct Reader end
-struct Updater end
-
-const reader = Reader()
-const updater = Updater()
-
 const IS_TREE = 1
 const IS_STATEFUL = 2
 const IS_CONST = 4
@@ -18,6 +12,8 @@ const ID = 8
     tag       =  5ID | IS_TREE
     call      =  6ID | IS_TREE
     access    =  7ID | IS_TREE
+    reader    =  8ID | IS_TREE
+    updater   =  9ID | IS_TREE
     cached    = 10ID | IS_TREE
     assign    = 11ID | IS_TREE | IS_STATEFUL
     loop      = 12ID | IS_TREE | IS_STATEFUL
@@ -98,6 +94,23 @@ access is in-place.
 access
 
 """
+    reader()
+
+Finch AST expression representing a read-only mode for a tensor access. Declare,
+freeze, and thaw statements can change the mode of a tensor.
+"""
+reader
+
+"""
+    updater(op)
+
+Finch AST expression representing an update-only mode for a tensor access, using
+the reduction operator `op`.  Declare, freeze, and thaw statements can change
+the mode of a tensor.
+"""
+updater
+
+"""
     cached(val, ref)
 
 Finch AST expression `val`, equivalent to the quoted expression `ref`
@@ -138,23 +151,25 @@ A new scope is introduced to evaluate `body`.
 define
 
 """
-    declare(tns, init)
+    declare(tns, init, op)
 
-Finch AST statement that declares `tns` with an initial value `init` in the current scope.
+Finch AST statement that declares `tns` with an initial value `init` reduced with `op` in the current scope.
 """
 declare
 
 """
-    freeze(tns)
+    freeze(tns, op)
 
-Finch AST statement that freezes `tns` in the current scope.
+Finch AST statement that freezes `tns` in the current scope after modifications
+with `op`, moving the tensor from update-only mode to read-only mode.
 """
 freeze
 
 """
-    thaw(tns)
+    thaw(tns, op)
 
-Finch AST statement that thaws `tns` in the current scope.
+Finch AST statement that thaws `tns` in the current scope, moving the tensor from
+read-only mode to update-only mode with a reduction operator `op`.
 """
 thaw
 
@@ -259,6 +274,8 @@ function FinchNode(kind::FinchNodeKind, args::Vector)
     elseif (kind === value || kind === literal || kind === index || kind === variable || kind === virtual) && length(args) == 2
         return FinchNode(kind, args[1], args[2], FinchNode[])
     elseif (kind === cached && length(args) == 2) ||
+        (kind === reader && length(args) == 0) ||
+        (kind === updater && length(args) == 1) ||
         (kind === access && length(args) >= 2) ||
         (kind === tag && length(args) == 2) ||
         (kind === call && length(args) >= 1) ||
@@ -266,9 +283,9 @@ function FinchNode(kind::FinchNodeKind, args::Vector)
         (kind === sieve && length(args) == 2) ||
         (kind === assign && length(args) == 3) ||
         (kind === define && length(args) == 3) ||
-        (kind === declare && length(args) == 2) ||
-        (kind === freeze && length(args) == 1) ||
-        (kind === thaw && length(args) == 1) ||
+        (kind === declare && length(args) == 3) ||
+        (kind === freeze && length(args) == 2) ||
+        (kind === thaw && length(args) == 2) ||
         (kind === block) ||
         (kind === yieldbind)
         return FinchNode(kind, nothing, nothing, args)
@@ -288,6 +305,7 @@ function Base.getproperty(node::FinchNode, sym::Symbol)
     elseif node.kind === variable && sym === :name node.val::Symbol
     elseif node.kind === tag && sym === :var node.children[1]
     elseif node.kind === tag && sym === :bind node.children[2]
+    elseif node.kind === updater && sym === :op node.children[1]
     elseif node.kind === access && sym === :tns node.children[1]
     elseif node.kind === access && sym === :mode node.children[2]
     elseif node.kind === access && sym === :idxs @view node.children[3:end]
@@ -308,8 +326,11 @@ function Base.getproperty(node::FinchNode, sym::Symbol)
     elseif node.kind === define && sym === :body node.children[3]
     elseif node.kind === declare && sym === :tns node.children[1]
     elseif node.kind === declare && sym === :init node.children[2]
+    elseif node.kind === declare && sym === :op node.children[3]
     elseif node.kind === freeze && sym === :tns node.children[1]
+    elseif node.kind === freeze && sym === :op node.children[2]
     elseif node.kind === thaw && sym === :tns node.children[1]
+    elseif node.kind === thaw && sym === :op node.children[2]
     elseif node.kind === block && sym === :bodies node.children
     elseif node.kind === yieldbind && sym === :args node.children
     else
@@ -392,8 +413,6 @@ virtual.
 finch_leaf(arg) = literal(arg)
 finch_leaf(arg::Type) = literal(arg)
 finch_leaf(arg::Function) = literal(arg)
-finch_leaf(arg::Reader) = literal(arg)
-finch_leaf(arg::Updater) = literal(arg)
 finch_leaf(arg::FinchNode) = arg
 
 Base.convert(::Type{FinchNode}, x) = finch_leaf(x)

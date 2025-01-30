@@ -42,7 +42,7 @@ function ensure_concurrent(root, ctx)
 
     #get local definitions
     locals = Set(filter(!isnothing, map(PostOrderDFS(body)) do node
-        if @capture(node, declare(~tns, ~init)) tns end
+        if @capture(node, declare(~tns, ~init, ~op)) tns end
     end))
 
     #get nonlocal assignments and group by root

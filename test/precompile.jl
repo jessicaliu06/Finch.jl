@@ -16,7 +16,7 @@ let
     for (n, T) in enumerate(Ts)
         if n > 1
             tok = time()
-            estimated = ceil(Int, (tok - tik)/(n - 1) * (length(Ts) - n + 1))
+            estimated = ceil(Int, (tok - tik) / (n - 1) * (length(Ts) - n + 1))
             @info "Precompiling common tensor formats... (estimated: $(fld(estimated, 60)) minutes and $(mod(estimated, 60)) seconds)"
         else
             @info "Precompiling common tensor formats..."
@@ -59,7 +59,7 @@ let
     for (n, format) in enumerate(formats)
         if n > 1
             tok = time()
-            estimated = ceil(Int, (tok - tik)/(n - 1) * (length(formats) - n + 1))
+            estimated = ceil(Int, (tok - tik) / (n - 1) * (length(formats) - n + 1))
             @info "Precompiling common tensor operations... (estimated: $(fld(estimated, 60)) minutes and $(mod(estimated, 60)) seconds)"
         else
             @info "Precompiling common tensor operations..."
@@ -84,7 +84,7 @@ let
             A .& B
             A .| B
         end
-        if eltype(format) <: Union{Integer, AbstractFloat} && eltype(format) != Bool
+        if eltype(format) <: Union{Integer,AbstractFloat} && eltype(format) != Bool
             sum(A)
             A .+ B
             A .- B
@@ -96,10 +96,12 @@ let
     begin
         A = lazy(Tensor(Dense(Element(0.0)), fsprand(10, 100)))
         B = lazy(Tensor(Dense(SparseList(Element(0.0))), fsprand(10, 10, 100)))
-        C = lazy(Tensor(Dense(SparseList(SparseList(Element(0.0)))), fsprand(10, 10, 10, 100)))
-        compute(sum(A .* B .* C), ctx=galley_scheduler())
-        
-        compute(sum((A .* B) .+ C), ctx=galley_scheduler())
+        C = lazy(
+            Tensor(Dense(SparseList(SparseList(Element(0.0)))), fsprand(10, 10, 10, 100))
+        )
+        compute(sum(A .* B .* C); ctx=galley_scheduler())
+
+        compute(sum((A .* B) .+ C); ctx=galley_scheduler())
     end
 
     @info "Done!"

@@ -77,7 +77,7 @@ option to configure the number of processors.
 ```
 
 You can also filter to only run a selection of test suitesusing the `--include` or
-`--exclude` arguments, or 
+`--exclude` arguments, or
 
 ```
 ./test/runtests.jl --include constructors interface_einsum interface_asmd

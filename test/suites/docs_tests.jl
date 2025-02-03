@@ -1,4 +1,4 @@
-@testitem "docs" skip=(Sys.WORD_SIZE != 64) begin
+@testitem "docs" skip = (Sys.WORD_SIZE != 64) begin
     using ..Main: parsed_args
     using FileWatching
 

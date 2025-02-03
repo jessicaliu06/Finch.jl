@@ -27,7 +27,7 @@ end
 
 function aggs_to_mapjoins(prgm)
     Rewrite(Fixpoint(Prewalk(Chain([
-        (@rule aggregate(~op, ~init, ~arg) => arg where isnothing(init)),
+        (@rule aggregate(~op, ~init, ~arg) => if isnothing(init) arg end),
         (@rule aggregate(~op, ~init, ~arg) => mapjoin(op, init, arg)),
     ]))))(prgm)
 end
@@ -71,8 +71,10 @@ function remove_reorders(prgm::LogicNode)
             expr = expr.arg
         end
         output_idx_order = Finch.getfields(expr)
-        expr = Rewrite(Fixpoint(Postwalk(Chain([(@rule reorder(~arg, ~idxs2...) =>
-                            reorder(aggregate(nothing, nothing, arg, setdiff(getfields(arg), idxs2)...), idxs2...) where length(idxs2) < length(getfields(arg)))]))))(expr)
+        expr = Rewrite(Fixpoint(Postwalk(@rule reorder(~arg, ~idxs2...) =>
+            if length(idxs2) < length(getfields(arg))
+                reorder(aggregate(nothing, nothing, arg, setdiff(getfields(arg), idxs2)...), idxs2...)
+            end)))(expr)
         bc_idxs = Set()
         for n in PostOrderDFS(expr)
             if n.kind == reorder

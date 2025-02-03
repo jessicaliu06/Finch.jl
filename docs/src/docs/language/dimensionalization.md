@@ -18,6 +18,7 @@ for i = 1:3
         end
     end
 end
+end
 ```
 
 In the above code, the second dimension of `A` must match the first dimension of
@@ -35,6 +36,7 @@ exempt a tensor from dimensionalization by wrapping the corresponding index in
 y .= 0
 for i = 1:3
     y[~i] += x[i]
+end
 end
 ```
 does not set the dimension of `y`, and `y` does not participate in

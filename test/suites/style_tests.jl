@@ -1,4 +1,4 @@
-@testitem "style" skip=(!Base.Sys.isunix()) begin #https://github.com/domluna/JuliaFormatter.jl/issues/898
+@testitem "style" skip = (!Base.Sys.isunix()) begin #https://github.com/domluna/JuliaFormatter.jl/issues/898
     using ..Main: parsed_args
     using JuliaFormatter
     using FileWatching

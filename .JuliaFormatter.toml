@@ -1,4 +1,4 @@
-ignore = ["reference32", "reference64"]
+ignore = ["test/reference32", "test/reference64"]
 format_markdown = true
 style = "blue"
 join_lines_based_on_source = true

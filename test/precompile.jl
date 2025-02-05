@@ -12,13 +12,16 @@ let
             @info "Precompiling common tensor formats..."
         end
         f = zero(T)
-        append!(formats, [
-            Scalar(f, rand(T)),
-            Tensor(Dense(Element(f)), rand(T, 2)),
-            Tensor(SparseList(Element(f)), rand(T, 2)),
-            Tensor(Dense(Dense(Element(f))), rand(T, 2, 2)),
-            Tensor(Dense(SparseList(Element(f))), rand(T, 2, 2)),
-        ])
+        append!(
+            formats,
+            [
+                Scalar(f, rand(T)),
+                Tensor(Dense(Element(f)), rand(T, 2)),
+                Tensor(SparseList(Element(f)), rand(T, 2)),
+                Tensor(Dense(Dense(Element(f))), rand(T, 2, 2)),
+                Tensor(Dense(SparseList(Element(f))), rand(T, 2, 2)),
+            ],
+        )
     end
 
     for (n, format) in enumerate(formats)

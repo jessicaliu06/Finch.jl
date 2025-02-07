@@ -44,7 +44,7 @@ function expanddims(arr::LazyTensor{T}, dims) where {T}
     data_2 = reorder(relabel(arr.data, idxs_1...), idxs_2...)
     extrude_2 = [false for _ in 1:ndims(arr) + length(dims)]
     extrude_2[antidims] .= arr.extrude
-    shape_2 = [0 for _ in 1:ndims(arr) + length(dims)]
+    shape_2 = [1 for _ in 1:ndims(arr) + length(dims)]
     shape_2[antidims] .= arr.shape
     return LazyTensor{T, ndims(arr) + length(dims)}(data_2, tuple(extrude_2...), tuple(shape_2...), fill_value(arr))
 end

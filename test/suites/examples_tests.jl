@@ -3,9 +3,6 @@
     using LinearAlgebra
     using Graphs, SimpleWeightedGraphs
 
-    using Plots
-    using GraphPlot  # Optional, for better layout options
-
     include(joinpath(@__DIR__, "../../docs/examples/bfs.jl"))
     include(joinpath(@__DIR__, "../../docs/examples/dfs.jl"))
     include(joinpath(@__DIR__, "../../docs/examples/pagerank.jl"))

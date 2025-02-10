@@ -321,16 +321,15 @@ end
         y = Tensor(Dense(Element(0.0)))
         A = Tensor(Dense(SparseList(Element(0.0))))
         x = Tensor(SparseList(Element(0.0)))
-        Finch.execute_code(:ex, typeof(Finch.@finch_program_instance begin
-                for j in _, i in _
-                    y[i] += A[i, j] * x[j]
-                end
+        @finch_code begin
+            for j in _, i in _
+                y[i] += A[i, j] * x[j]
             end
-        ))
+        end
 
         formats = []
         Ts = [Int, Float64]#, Bool]
-    
+
         tik = time()
         for (n, T) in enumerate(Ts)
             if n > 1
@@ -352,7 +351,7 @@ end
                 ],
             )
         end
-    
+
         for (n, format) in enumerate(formats)
             if n > 1
                 tok = time()
@@ -363,7 +362,7 @@ end
             end
             A = deepcopy(format)
             B = deepcopy(format)
-    
+
             if ndims(format) > 0
                 dropfills(A)
                 copyto!(A, B)
@@ -399,7 +398,7 @@ end
                 end
             end
         end
-    
+
         @info "Done!"
     end
 end

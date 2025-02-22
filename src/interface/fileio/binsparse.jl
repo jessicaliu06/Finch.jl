@@ -277,7 +277,7 @@ function bspwrite_tensor(
     io, arr::SwizzleArray{dims,<:Tensor}, attrs=OrderedDict()
 ) where {dims}
     desc = OrderedDict(
-        "tensor" => OrderedDict{Any,Any}(
+        "custom" => OrderedDict{Any,Any}(
             "level" => OrderedDict()
         ),
         "fill" => true,
@@ -288,11 +288,11 @@ function bspwrite_tensor(
         "attrs" => attrs,
     )
     if !issorted(reverse(collect(dims)))
-        desc["tensor"]["transpose"] = reverse(collect(dims)) .- 1
+        desc["custom"]["transpose"] = reverse(collect(dims)) .- 1
     end
-    bspwrite_level(io, desc, desc["tensor"]["level"], arr.body.lvl)
-    if haskey(bspwrite_format_lookup, desc["tensor"])
-        desc["format"] = bspwrite_format_lookup[desc["tensor"]]
+    bspwrite_level(io, desc, desc["custom"]["level"], arr.body.lvl)
+    if haskey(bspwrite_format_lookup, desc["custom"])
+        desc["format"] = bspwrite_format_lookup[desc["custom"]]
     end
     bspwrite_header(io, json(Dict("binsparse" => desc), 4))
 end
@@ -330,7 +330,7 @@ function bspread(f)
     desc = bspread_header(f)["binsparse"]
     @assert desc["version"] == "$BINSPARSE_VERSION"
     fmt = OrderedDict{Any,Any}(
-        get(() -> bspread_tensor_lookup[desc["format"]], desc, "tensor")
+        get(() -> bspread_tensor_lookup[desc["format"]], desc, "custom")
     )
     if !haskey(fmt, "transpose")
         fmt["transpose"] = collect(0:(length(desc["shape"]) - 1))

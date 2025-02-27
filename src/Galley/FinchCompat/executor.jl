@@ -72,7 +72,7 @@ function get_stats_dict(ctx::GalleyOptimizer, prgm)
     deferred_prgm = Finch.defer_tables(:prgm, prgm)
     expr_stats_dict = Dict{Expr, TensorStats}()
     idx_counter = 0
-    cannonical_idx = Dict()
+    cannonical_idx = Dict{IndexExpr, IndexExpr}()
     for node in PostOrderDFS(deferred_prgm)
         if node.kind == table
             cannonical_idxs = Symbol[]

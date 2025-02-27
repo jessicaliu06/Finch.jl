@@ -70,14 +70,16 @@ Returns a dictionary mapping the location of input tensors in the program to the
 """
 function get_stats_dict(ctx::GalleyOptimizer, prgm)
     deferred_prgm = Finch.defer_tables(:prgm, prgm)
-    expr_stats_dict = Dict{Expr, TensorStats}()
+    expr_stats_dict = Dict{Expr,TensorStats}()
     idx_counter = 0
-    cannonical_idx = Dict{IndexExpr, IndexExpr}()
+    cannonical_idx = Dict{IndexExpr,IndexExpr}()
     for node in PostOrderDFS(deferred_prgm)
         if node.kind == table
             cannonical_idxs = Symbol[]
             for i in node.idxs
-                push!(cannonical_idxs, get!(cannonical_idx, i.name, Symbol("i_$idx_counter")))
+                push!(
+                    cannonical_idxs, get!(cannonical_idx, i.name, Symbol("i_$idx_counter"))
+                )
                 idx_counter += 1
             end
             expr_stats_dict[node.tns.ex] = ctx.estimator(
@@ -120,11 +122,17 @@ function Finch.set_options(
     )
 end
 
-StatsDict = Dict{Expr, TensorStats}
-galley_codes = Dict{Tuple{GalleyOptimizer, Number, LogicNode}, Vector{Tuple{StatsDict, Tuple{Function, Expr}}}}()
+StatsDict = Dict{Expr,TensorStats}
+galley_codes = Dict{
+    Tuple{GalleyOptimizer,Number,LogicNode},Vector{Tuple{StatsDict,Tuple{Function,Expr}}}
+}()
 function (ctx::AdaptiveExecutor)(prgm)
     cur_stats_dict::StatsDict = get_stats_dict(ctx.ctx, prgm)
-    stats_list::Vector{Tuple{StatsDict, Tuple{Function, Expr}}} = get!(galley_codes, (ctx.ctx, ctx.threshold, Finch.get_structure(prgm)), Vector{Tuple{StatsDict, Tuple{Function, Expr}}}())
+    stats_list::Vector{Tuple{StatsDict,Tuple{Function,Expr}}} = get!(
+        galley_codes,
+        (ctx.ctx, ctx.threshold, Finch.get_structure(prgm)),
+        Vector{Tuple{StatsDict,Tuple{Function,Expr}}}(),
+    )
     valid_match = nothing
     for (stats_dict, f_code) in stats_list
         if all(

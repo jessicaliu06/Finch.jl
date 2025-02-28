@@ -68,9 +68,9 @@ end
 
 Returns a dictionary mapping the location of input tensors in the program to their statistics objects.
 """
-function get_stats_dict(ctx::GalleyOptimizer, prgm)
+function get_stats_list(ctx::GalleyOptimizer, prgm)
     deferred_prgm = Finch.defer_tables(:prgm, prgm)
-    expr_stats_dict = Dict{Expr,TensorStats}()
+    stats_list = Vector{TensorStats}()
     idx_counter = 0
     cannonical_idx = Dict{IndexExpr,IndexExpr}()
     for node in PostOrderDFS(deferred_prgm)
@@ -82,12 +82,12 @@ function get_stats_dict(ctx::GalleyOptimizer, prgm)
                 )
                 idx_counter += 1
             end
-            expr_stats_dict[node.tns.ex] = ctx.estimator(
+            push!(stats_list, ctx.estimator(
                 node.tns.imm, cannonical_idxs
-            )
+            ))
         end
     end
-    return expr_stats_dict
+    return stats_list
 end
 
 """
@@ -122,22 +122,22 @@ function Finch.set_options(
     )
 end
 
-StatsDict = Dict{Expr,TensorStats}
+StatsList = Vector{TensorStats}
 galley_codes = Dict{
-    Tuple{GalleyOptimizer,Number,LogicNode},Vector{Tuple{StatsDict,Tuple{Function,Expr}}}
+    Tuple{GalleyOptimizer,Number,LogicNode},Vector{Tuple{StatsList,Tuple{Function,Expr}}}
 }()
 function (ctx::AdaptiveExecutor)(prgm)
-    cur_stats_dict::StatsDict = get_stats_dict(ctx.ctx, prgm)
-    stats_list::Vector{Tuple{StatsDict,Tuple{Function,Expr}}} = get!(
+    cur_stats_list::StatsList = get_stats_list(ctx.ctx, prgm)
+    all_stats_lists::Vector{Tuple{StatsList,Tuple{Function,Expr}}} = get!(
         galley_codes,
         (ctx.ctx, ctx.threshold, Finch.get_structure(prgm)),
-        Vector{Tuple{StatsDict,Tuple{Function,Expr}}}(),
+        Vector{Tuple{StatsList,Tuple{Function,Expr}}}(),
     )
     valid_match = nothing
-    for (stats_dict, f_code) in stats_list
+    for (stats_list, f_code) in all_stats_lists
         if all(
-            issimilar(cur_stats, stats_dict[cur_expr], ctx.threshold) for
-            (cur_expr, cur_stats) in cur_stats_dict
+            issimilar(cur_stats, stats_list[i], ctx.threshold) for
+            (i, cur_stats) in enumerate(cur_stats_list)
         )
             valid_match = f_code
             break
@@ -146,7 +146,7 @@ function (ctx::AdaptiveExecutor)(prgm)
     if isnothing(valid_match)
         thunk = Finch.logic_executor_code(ctx.ctx, prgm)
         valid_match = (eval(thunk), thunk)
-        push!(stats_list, (cur_stats_dict, valid_match))
+        push!(all_stats_lists, (cur_stats_list, valid_match))
     end
     (f, code) = valid_match
     if ctx.verbose

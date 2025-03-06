@@ -26,20 +26,28 @@ isdefined(Base, :get_extension) ? (using Statistics) : (using ..Statistics)
     Statistics.mean(f, tns:: AbstractTensorOrBroadcast; dims=:) = compute(_mean(f, lazy(tns), dims))
 
 function _premean(logic, tns:: LazyTensor{T, N}, dims=:) where {T, N}
+    # keepdims = !(dims == Colon())
     dims = dims == Colon() ? (1:N) : collect(dims)
+    # extrude = keepdims ? 
+        # (((n in dims) ? true : tns.extrude[n] for n in 1:N)...,) :
     extrude = ((tns.extrude[n] for n in 1:N if !(n in dims))...,)
+    # shape = keepdims ? 
+    #     (((n in dims) ? 1 : tns.shape[n] for n in 1:N)...,) :
     shape = ((tns.shape[n] for n in 1:N if !(n in dims))...,)
     init = 0
     fields = [field(gensym(:i)) for _ in 1:N]
     S = fixpoint_type(+, init, eltype(tns))
-    data = aggregate(immediate(+), immediate(init), logic(tns.data, fields), fields[dims]...)
+    data = aggregate(
+        immediate(+), immediate(init), logic(tns.data, fields), fields[dims]...
+    )
     n = mapreduce(i -> tns.shape[i], *, unique(dims); init=1)
+    # new_N = keepdims ? ndims(tns) : ndims(tns) - length(dims)
     result = LazyTensor{S}(identify(data), extrude, shape, init)
     return (result, n)
 end
 
 function _mean(f, tns:: LazyTensor{T, N}, dims=:) where {T, N}
-    logic = (arr, fields) -> mapjoin(immediate(f), relabel(arr, fields))
+    logic = (arr, fields) -> mapjoin(immediate(f), relabel(arr, fields...))
     result, count = _premean(logic, tns, dims)
     return result ./ count
 end
@@ -69,9 +77,9 @@ end
 
 function _var(tns::LazyTensor, corrected, m, dims)
   if m === nothing
-      m = Statistics.mean(tns; dims=dims)
-      m = expanddims(m, (ndims(m)+1):ndims(tns))
-    #   mean = dims === Colon() ? mean[] : mean
+        m = Statistics.mean(tns; dims=dims)
+        m = expanddims(m, (ndims(m)+1):ndims(tns))
+        #   mean = dims === Colon() ? mean[] : mean
   end
   return varm(tns, m; corrected=corrected, dims=dims)
 end

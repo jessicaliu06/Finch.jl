@@ -1,3 +1,7 @@
+```@meta
+CurrentModule = Finch
+```
+
 # Parallel Processing in Finch
 
 ## Modelling the Architecture
@@ -32,7 +36,7 @@ resident in the current task to process operations on that tensor, such as loops
 over the indices, accesses to the tensor, or `declare`, `freeze`, or `thaw`.
 Upon entering a parallel loop, we must transfer the tensor to the tasks
 where it is needed. Upon exiting the parallel loop, we may need to combine
-the data from multiple tasks into a single tensor.
+the data from multiple tasks into a single tensor. 
 
 All tensor and buffer transfers are accomplished with the `transfer` function.
 
@@ -74,12 +78,12 @@ DeviceShared
 
 The `transfer` function is used to distribute tensors and their constituent
 buffers to different memory spaces.  We can ask for the default local, shared,
-or global memory spaces of an `AbstractDevice` with the `localmemory`, etc.
+or global memory spaces of an `AbstractDevice` with the `local_memory`, etc.
 trait functions.
 
 ```@docs
 transfer
-localmemory
-sharedmemory
-globalmemory
+local_memory
+shared_memory
+global_memory
 ```

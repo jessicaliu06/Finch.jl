@@ -55,9 +55,9 @@ function postype(::Type{SparsePointLevel{Ti,Idx,Lvl}}) where {Ti,Idx,Lvl}
     return postype(Lvl)
 end
 
-function moveto(lvl::SparsePointLevel{Ti,Idx,Lvl}, Tm) where {Ti,Idx,Lvl}
-    lvl_2 = moveto(lvl.lvl, Tm)
-    idx_2 = moveto(lvl.idx, Tm)
+function transfer(lvl::SparsePointLevel{Ti,Idx,Lvl}, Tm, style) where {Ti,Idx,Lvl}
+    lvl_2 = transfer(Tm, lvl.lvl)
+    idx_2 = transfer(Tm, lvl.idx)
     return SparsePointLevel{Ti}(lvl_2, lvl.shape, idx_2)
 end
 
@@ -151,8 +151,8 @@ function (fbr::SubFiber{<:SparsePointLevel{Ti}})(idxs...) where {Ti}
 end
 
 mutable struct VirtualSparsePointLevel <: AbstractVirtualLevel
+    tag
     lvl
-    ex
     Ti
     idx
     shape
@@ -174,18 +174,20 @@ end
 function virtualize(
     ctx, ex, ::Type{SparsePointLevel{Ti,Idx,Lvl}}, tag=:lvl
 ) where {Ti,Idx,Lvl}
-    sym = freshen(ctx, tag)
+    tag = freshen(ctx, tag)
     idx = freshen(ctx, tag, :_idx)
+    stop = freshen(ctx, tag, :_stop)
     push_preamble!(
         ctx,
         quote
-            $sym = $ex
-            $idx = $sym.idx
+            $tag = $ex
+            $idx = $tag.idx
+            $stop = $tag.shape
         end,
     )
-    lvl_2 = virtualize(ctx, :($sym.lvl), Lvl, sym)
-    shape = value(:($sym.shape), Int)
-    VirtualSparsePointLevel(lvl_2, sym, Ti, idx, shape)
+    shape = value(stop, Int)
+    lvl_2 = virtualize(ctx, :($tag.lvl), Lvl, tag)
+    VirtualSparsePointLevel(tag, lvl_2, Ti, idx, shape)
 end
 function lower(ctx::AbstractCompiler, lvl::VirtualSparsePointLevel, ::DefaultStyle)
     quote
@@ -195,6 +197,31 @@ function lower(ctx::AbstractCompiler, lvl::VirtualSparsePointLevel, ::DefaultSty
             $(lvl.idx),
         )
     end
+end
+
+function distribute_level(
+    ctx::AbstractCompiler, lvl::VirtualSparsePointLevel, arch, diff, style
+)
+    return diff[lvl.tag] = VirtualSparsePointLevel(
+        lvl.tag,
+        distribute_level(ctx, lvl.lvl, arch, diff, style),
+        lvl.Ti,
+        distribute_buffer(ctx, lvl.idx, arch, style),
+        lvl.shape)
+end
+
+function redistribute(ctx::AbstractCompiler, lvl::VirtualSparsePointLevel, diff)
+    get(
+        diff,
+        lvl.tag,
+        VirtualSparsePointLevel(
+            lvl.tag,
+            redistribute(ctx, lvl.lvl, diff),
+            lvl.Ti,
+            lvl.idx,
+            lvl.shape,
+        ),
+    )
 end
 
 Base.summary(lvl::VirtualSparsePointLevel) = "SparsePoint($(summary(lvl.lvl)))"
@@ -254,25 +281,6 @@ function thaw_level!(ctx::AbstractCompiler, lvl::VirtualSparsePointLevel, pos_st
     return lvl
 end
 
-function virtual_moveto_level(ctx::AbstractCompiler, lvl::VirtualSparsePointLevel, arch)
-    ptr_2 = freshen(ctx, lvl.ptr)
-    idx_2 = freshen(ctx, lvl.idx)
-    push_preamble!(
-        ctx,
-        quote
-            $idx_2 = $(lvl.idx)
-            $(lvl.idx) = $moveto($(lvl.idx), $(ctx(arch)))
-        end,
-    )
-    push_epilogue!(
-        ctx,
-        quote
-            $(lvl.idx) = $idx_2
-        end,
-    )
-    virtual_moveto_level(ctx, lvl.lvl, arch)
-end
-
 function unfurl(
     ctx,
     fbr::VirtualSubFiber{VirtualSparsePointLevel},
@@ -281,7 +289,7 @@ function unfurl(
     ::Union{typeof(defaultread),typeof(walk)},
 )
     (lvl, pos) = (fbr.lvl, fbr.pos)
-    tag = lvl.ex
+    tag = lvl.tag
     Tp = postype(lvl)
     Ti = lvl.Ti
     my_i = freshen(ctx, tag, :_i)
@@ -332,7 +340,7 @@ function unfurl(
     ::Union{typeof(defaultupdate),typeof(extrude)},
 )
     (lvl, pos) = (fbr.lvl, fbr.pos)
-    tag = lvl.ex
+    tag = lvl.tag
     dirty = freshen(ctx, tag, :dirty)
     Tp = postype(lvl)
     pos = cache!(ctx, :pos, simplify(ctx, pos))

@@ -835,7 +835,7 @@ end
                 # https://github.com/finch-tensor/Finch.jl/issues/686
                 let
                     A = fsprand(5, 5, 3)
-                    @test countstored(A - A) == 3 skip=(key!="default")
+                    @test countstored(A - A) == 3 skip = (key != "default")
                 end
             end
         end

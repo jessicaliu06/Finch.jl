@@ -56,53 +56,36 @@ function Base.isequal(A::AbstractArray, B::AbstractTensor)
     return helper_isequal(A, B)
 end
 
-@staged function helper_argmin(A, dim)
-   idxs = [Symbol(:i_, n) for n in 1:ndims(A)]
-   exts = Expr(:block, (:($idx = _) for idx in reverse(idxs))...)
-   return quote
-       x = [Scalar(Inf => CartesianIndex(zeros(Int, ndims(A))...)) for _ in 1:ndims(A)] # for _ in 1:ndims(A)
-       @finch $(Expr(
-           :for,
-           exts,
-           quote
-               x[1][] <<minby>>= A[$(idxs...)] => CartesianIndex($(idxs...))
-               # if x[] < A[$(idxs...)] 
-               #      x[] = A[$(idxs...)] => CartesianIndex($(idxs...))
-               # end
-           end,
-       ))
-       return x
-   end
+function helper_argmin(A, dims)
+    @assert 1 <= dims <= length(size(A))
+    if (length(size(A)) >= 2)
+        return map(x -> x[2], reduce(minby, map(Pair, A, CartesianIndices(size(A))), dims=dims, init=Inf=>CartesianIndex(fill(0, length(size(A)))...)))
+    else
+        return map(x -> x[2], reduce(minby, map(Pair, A, 0), dims=dims, init=Inf=>0))
+    end
 end
 
-function Base.argmin(A::AbstractTensor, dim::int)
-    return helper_argmin(A, dim)
+function Base.argmin(A::AbstractTensor, dims::Number)
+    return helper_argmin(A, dims)
 end
 
-function Base.argmin(A::AbstractArray, dim::int)
-    return helper_argmin(A, dim)
+function Base.argmin(A::AbstractArray, dims::Number)
+    return helper_argmin(A, dims)
 end
 
-@staged function helper_argmax(A)
-   idxs = [Symbol(:i_, n) for n in 1:ndims(A)]
-   exts = Expr(:block, (:($idx = _) for idx in reverse(idxs))...)
-   return quote
-       x = Scalar(-Inf => CartesianIndex(zeros(Int, ndims(A))...))
-       @finch $(Expr(
-           :for,
-           exts,
-           quote
-               x[] <<maxby>>= A[$(idxs...)] => CartesianIndex($(idxs...))
-           end,
-       ))
-       return x
-   end
+function helper_argmax(A, dims)
+    @assert 1 <= dims <= length(size(A))
+    if (length(size(A)) >= 2)
+        return map(x -> x[2], reduce(maxby, map(Pair, A, CartesianIndices(size(A))), dims=dims, init=-Inf=>CartesianIndex(fill(0, length(size(A)))...)))
+    else
+        return map(x -> x[2], reduce(maxby, map(Pair, A, 0), dims=dims, init=-Inf=>0))
+    end
 end
 
-function Base.argmax(A::AbstractTensor, dim::int)
-    return helper_argmax(A, dim)
+function Base.argmax(A::AbstractTensor, dims::Number)
+    return helper_argmax(A, dims)
 end
 
-function Base.argmax(A::AbstractArray, dim::int)
-    return helper_argmax(A, dim)
+function Base.argmin(A::AbstractArray, dims::Number)
+    return helper_argmax(A, dims)
 end

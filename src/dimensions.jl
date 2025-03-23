@@ -142,30 +142,40 @@ function checklim(ctx::AbstractCompiler, a::FinchNode, b::FinchNode)
     end
 end
 
+@enum Scheduler static = 1 dynamic = 2
+
 struct ParallelDimension
     ext
     device
+    scheduler
 end
 
 """
-    parallel(ext, device=CPU(nthreads()))
+    parallel(ext, device=CPU(nthreads()), scheduler=static)
 
-A dimension `ext` that is parallelized over `device`. The `ext` field is usually
+A dimension `ext` that is parallelized over `device` using `scheduler` scheduling. The `ext` field is usually
 `_`, or dimensionless, but can be any standard dimension argument.
 """
-parallel(dim, device=CPU(nthreads())) = ParallelDimension(dim, device)
+parallel(dim, device=CPU(nthreads()), scheduler=static) =
+    ParallelDimension(dim, device, scheduler)
 
 function virtual_call(ctx, ::typeof(parallel), ext)
     if ext.kind === virtual
-        n = cache!(ctx, :n, value(:(Threads.nthreads()), Int))
-        virtual_call(ctx, parallel, ext, finch_leaf(VirtualCPU(nothing, n)))
+        virtual_call(ctx, parallel, ext, literal(CPU()), static)
     end
 end
 
 function virtual_call(ctx, ::typeof(parallel), ext, device)
-    device = resolve(ctx, device) #TODO this feels broken
     if ext.kind === virtual
-        ParallelDimension(ext.val, device)
+        virtual_call(ctx, parallel, ext, device, static)
+    end
+end
+
+function virtual_call(ctx, ::typeof(parallel), ext, device, scheduler)
+    # TODO: This might need to be fixed
+    device = virtualize(ctx, :($device.val), CPU)
+    if ext.kind === virtual
+        ParallelDimension(ext.val, device, scheduler)
     end
 end
 
@@ -177,17 +187,20 @@ getstart(ext::ParallelDimension) = getstart(ext.ext)
 getstop(ext::ParallelDimension) = getstop(ext.ext)
 
 function combinedim(ctx, a::ParallelDimension, b::Extent)
-    ParallelDimension(resultdim(ctx, a.ext, b), a.device)
+    ParallelDimension(resultdim(ctx, a.ext, b), a.device, a.scheduler)
 end
 combinedim(ctx, a::ParallelDimension, b::SuggestedExtent) = a
 function combinedim(ctx, a::ParallelDimension, b::ParallelDimension)
     @assert a.device == b.device
-    ParallelDimension(combinedim(ctx, a.ext, b.ext), a.device)
+    @assert a.scheduler == b.scheduler
+    ParallelDimension(combinedim(ctx, a.ext, b.ext), a.device, a.scheduler)
 end
 
-resolvedim(ext::ParallelDimension) = ParallelDimension(resolvedim(ext.ext), ext.device)
+function resolvedim(ext::ParallelDimension)
+    ParallelDimension(resolvedim(ext.ext), ext.device, ext.scheduler)
+end
 function cache_dim!(ctx, tag, ext::ParallelDimension)
-    ParallelDimension(cache_dim!(ctx, tag, ext.ext), ext.device)
+    ParallelDimension(cache_dim!(ctx, tag, ext.ext), ext.device, ext.scheduler)
 end
 
 promote_rule(::Type{Extent}, ::Type{Extent}) = Extent
@@ -207,7 +220,7 @@ end
 
 shiftdim(ext::Auto, delta) = auto
 function shiftdim(ext::ParallelDimension, delta)
-    ParallelDimension(ext, shiftdim(ext.ext, delta), ext.device)
+    ParallelDimension(ext, shiftdim(ext.ext, delta), ext.device, ext.scheduler)
 end
 
 function shiftdim(ext::FinchNode, body)
@@ -233,7 +246,7 @@ end
 
 scaledim(ext::Auto, scale) = auto
 function scaledim(ext::ParallelDimension, scale)
-    ParallelDimension(ext, scaledim(ext.ext, scale), ext.device)
+    ParallelDimension(ext, scaledim(ext.ext, scale), ext.device, ext.scheduler)
 end
 
 function scaledim(ext::FinchNode, body)

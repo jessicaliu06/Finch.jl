@@ -48,7 +48,7 @@ macro allows us to see the result of applying a macro. Let's examine what
 happens when we use the `@finch` macro (we've stripped line numbers from the
 result to clean it up):
 
-```jldoctest example1; filter=r"Finch.FinchNotation."
+```jldoctest example1; filter=r"Finch\.(FinchNotation\.)?"
 julia> Finch.regensym(Finch.striplines((@macroexpand @finch (C .= 0;
        for i in _
            C[i] = A[i] * B[i]

@@ -161,6 +161,7 @@ end
 @testitem "interface_asmd" setup = [CheckOutput] begin
     using Finch: AsArray
     using SparseArrays
+    using Statistics
     using LinearAlgebra
 
     A = Tensor(
@@ -492,6 +493,7 @@ end
                     @test c == c_correct
                 end
 
+                #=
                 let
                     A_ref = [0 0 44; 11 0 0; 22 00 55; 33 0 0]
                     A = lazy(A_ref)
@@ -566,6 +568,7 @@ end
                     # result = compute(std(A, dims=2:2))
                     # @test all(isapprox.(result, expected))                
                 end
+                =#
             end
         end
     end

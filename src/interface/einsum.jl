@@ -36,7 +36,10 @@ function einsum_access(tns::EinsumTensor, idxs...)
 end
 
 function einsum_op(op, args::EinsumArgument...)
-    EinsumArgument{op((arg.fill_value for arg in args)...), return_type(DefaultAlgebra(), op, map(eltype, args)...)}(
+    EinsumArgument{
+        op((fill_value(arg) for arg in args)...),
+        return_type(DefaultAlgebra(), op, map(eltype, args)...),
+    }(
         reduce(result_style, [arg.style for arg in args]; init=EinsumEagerStyle()),
         mapjoin(op, (arg.data for arg in args)...),
         merge((arg.shape for arg in reverse(args))...),
@@ -44,7 +47,7 @@ function einsum_op(op, args::EinsumArgument...)
 end
 
 function einsum_immediate(val)
-    EinsumArgument{val, typeof(val)}(EinsumEagerStyle(), immediate(val), Dict())
+    EinsumArgument{val,typeof(val)}(EinsumEagerStyle(), immediate(val), Dict())
 end
 
 struct EinsumProgram{Style,Arg<:LazyTensor}
@@ -53,23 +56,25 @@ struct EinsumProgram{Style,Arg<:LazyTensor}
 end
 
 function einsum(
-    ::typeof(overwrite), arg::EinsumArgument{Vf, Tv}, idxs...; init=nothing
-) where {T}
+    ::typeof(overwrite), arg::EinsumArgument{Vf}, idxs...; init=nothing
+) where {Vf}
     einsum(initwrite(Vf), arg, idxs...; init=Vf)
 end
 
-function einsum(op, arg::EinsumArgument{Vf, Tv}, idxs...; init=initial_value(op, Tv)) where {Tv}
+function einsum(
+    op, arg::EinsumArgument{Vf,Tv}, idxs...; init=initial_value(op, Tv)
+) where {Vf,Tv}
     shape = ntuple(n -> arg.shape[idxs[n]], length(idxs))
     data = reorder(
         aggregate(
             immediate(op),
             immediate(init),
             arg.data,
-            map(field, setdiff(collect(keys(arg.extrude)), idxs))...,
+            map(field, setdiff(collect(keys(arg.shape)), idxs))...,
         ),
         map(field, idxs)...,
     )
-    einsum_execute(arg.style, LazyTensor{init, typeof(init)}(data, shape))
+    einsum_execute(arg.style, LazyTensor{init,typeof(init)}(data, shape))
 end
 
 function einsum_execute(::EinsumEagerStyle, arg)

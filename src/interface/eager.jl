@@ -178,3 +178,33 @@ Expand the dimensions of an array by inserting a new singleton axis or axes that
 will appear at the `dims` position in the expanded array shape.
 """
 expanddims(arr::AbstractTensor, dims) = compute(expanddims(lazy(arr), dims))
+
+function Statistics.mean(tns::AbstractTensorOrBroadcast; dims=:)
+    compute(mean(lazy(tns); dims=dims))
+end
+
+function Statistics.mean(f, tns::AbstractTensorOrBroadcast; dims=:)
+    compute(mean(f, lazy(tns); dims=dims))
+end
+
+function Statistics.varm(tns::AbstractTensorOrBroadcast, m; corrected=true, dims=:)
+    compute(varm(lazy(tns), m; corrected=corrected, dims=dims))
+end
+
+function Statistics.var(
+    tns::AbstractTensorOrBroadcast; corrected=true, mean=nothing, dims=:
+)
+    compute(var(lazy(tns); corrected=corrected, mean=mean, dims=dims))
+end
+
+function Statistics.stdm(
+    tns::AbstractTensorOrBroadcast, m; corrected=true, dims=:
+)
+    compute(stdm(lazy(tns), lazy(m); corrected=corrected, dims=dims))
+end
+
+function Statistics.std(
+    tns::AbstractTensorOrBroadcast; corrected=true, mean=nothing, dims=:
+)
+    compute(stdm(lazy(tns); corrected=corrected, mean=mean, dims=dims))
+end

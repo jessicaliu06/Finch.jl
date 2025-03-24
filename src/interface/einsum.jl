@@ -7,14 +7,14 @@ combine_style(::EinsumEagerStyle, ::EinsumLazyStyle) = EinsumLazyStyle()
 einsum_style(arg) = EinsumEagerStyle()
 einsum_style(::LazyTensor) = EinsumLazyStyle()
 
-struct EinsumTensor{Style, Arg <: LazyTensor}
+struct EinsumTensor{Style,Arg<:LazyTensor}
     style::Style
     arg::Arg
 end
 
 einsum_tensor(tns) = EinsumTensor(einsum_style(tns), lazy(tns))
 
-struct EinsumArgument{T, Style}
+struct EinsumArgument{T,Style}
     style::Style
     data::LogicNode
     extrude::Dict{Symbol, Bool}
@@ -44,16 +44,18 @@ einsum_op(op, args::EinsumArgument...) = EinsumArgument{return_type(DefaultAlgeb
 
 einsum_immediate(val) = EinsumArgument{typeof(val)}(EinsumEagerStyle(), immediate(val), Dict(), Dict(), val)
 
-struct EinsumProgram{Style, Arg <: LazyTensor}
+struct EinsumProgram{Style,Arg<:LazyTensor}
     style::Style
     arg::Arg
 end
 
-function einsum(::typeof(overwrite), arg::EinsumArgument{T}, idxs...; init = nothing) where {T}
+function einsum(
+    ::typeof(overwrite), arg::EinsumArgument{T}, idxs...; init=nothing
+) where {T}
     einsum(initwrite(arg.fill_value), arg, idxs...; init=arg.fill_value)
 end
 
-function einsum(op, arg::EinsumArgument{T}, idxs...; init = initial_value(op, T)) where {T}
+function einsum(op, arg::EinsumArgument{T}, idxs...; init=initial_value(op, T)) where {T}
     extrude = ntuple(n -> arg.extrude[idxs[n]], length(idxs))
     shape = ntuple(n -> arg.shape[idxs[n]], length(idxs))
     data = reorder(aggregate(immediate(op), immediate(init), arg.data, map(field, setdiff(collect(keys(arg.extrude)), idxs))...), map(field, idxs)...)
@@ -77,10 +79,13 @@ end
 
 function (ctx::EinsumArgumentParserVisitor)(ex)
     if @capture ex :ref(~tns, ~idxs...)
-        tns isa Symbol || ArgumentError("Einsum expressions must reference named tensor Symbols.")
-        tns != ctx.output || ArgumentError("Einsum expressions must not reference the output tensor.")
+        tns isa Symbol ||
+            ArgumentError("Einsum expressions must reference named tensor Symbols.")
+        tns != ctx.output ||
+            ArgumentError("Einsum expressions must not reference the output tensor.")
         for idx in idxs
-            idx isa Symbol || ArgumentError("Einsum expressions must use named index Symbols.")
+            idx isa Symbol ||
+                ArgumentError("Einsum expressions must use named index Symbols.")
         end
         my_tns = get!(ctx.inputs, tns) do
             res = freshen(ctx.space, tns)
@@ -120,13 +125,17 @@ function (ctx::EinsumParserVisitor)(ex)
         elseif @capture ex :(=)(~lhs, ~rhs)
             return ctx(:($lhs << $overwrite >>= $rhs))
         elseif @capture ex :>>=(:call(:<<, :ref(~tns, ~idxs...), ~op), ~rhs)
-            tns isa Symbol || ArgumentError("Einsum expressions must reference named tensor Symbols.")
+            tns isa Symbol ||
+                ArgumentError("Einsum expressions must reference named tensor Symbols.")
             for idx in idxs
-                idx isa Symbol || ArgumentError("Einsum expressions must use named index Symbols.")
+                idx isa Symbol ||
+                    ArgumentError("Einsum expressions must use named index Symbols.")
             end
             arg = EinsumArgumentParserVisitor(ctx.preamble, ctx.space, tns, Dict())(rhs)
             quote
-                $(esc(tns)) = $einsum($(esc(op)), $arg, $(map(QuoteNode, idxs)...);$(map(esc, ctx.opts)...),)
+                $(esc(tns)) = $einsum(
+                    $(esc(op)), $arg, $(map(QuoteNode, idxs)...); $(map(esc, ctx.opts)...)
+                )
             end
         else
             throw(FinchNotation.FinchSyntaxError("Invalid einsum expression: $ex"))
@@ -164,8 +173,9 @@ Here are a few examples:
 ```
 """
 macro einsum(opts_ex...)
-    length(opts_ex) >= 1 || throw(ArgumentError("Expected at least one argument to @finch(opts..., ex)"))
-    (opts, ex) = (opts_ex[1:end-1], opts_ex[end])
+    length(opts_ex) >= 1 ||
+        throw(ArgumentError("Expected at least one argument to @finch(opts..., ex)"))
+    (opts, ex) = (opts_ex[1:(end - 1)], opts_ex[end])
     preamble = Expr(:block)
     space = Namespace()
     res = EinsumParserVisitor(preamble, space, opts)(ex)

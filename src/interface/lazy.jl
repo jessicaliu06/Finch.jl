@@ -17,7 +17,7 @@ function Base.show(io::IO, tns::LazyTensor)
     print(io, "-LazyTensor{", eltype(tns), "}")
 end
 
-Base.ndims(::Type{LazyTensor{T, N}}) where {T, N} = N
+Base.ndims(::Type{LazyTensor{T,N}}) where {T,N} = N
 Base.ndims(tns::LazyTensor) = ndims(typeof(tns))
 Base.eltype(::Type{<:LazyTensor{T}}) where {T} = T
 Base.eltype(tns::LazyTensor) = eltype(typeof(tns))
@@ -25,24 +25,34 @@ fill_value(tns::LazyTensor) = tns.fill_value
 
 Base.size(tns::LazyTensor) = tns.shape
 
-Base.getindex(::LazyTensor, i...) = throw(ErrorException("Lazy indexing with named indices is not supported. Call `compute()` first."))
+function Base.getindex(::LazyTensor, i...)
+    throw(
+        ErrorException(
+            "Lazy indexing with named indices is not supported. Call `compute()` first."
+        ),
+    )
+end
 
-function Base.getindex(arr::LazyTensor{T, N}, idxs::Vararg{Union{Nothing, Colon}}) where {T, N}
+function Base.getindex(arr::LazyTensor{T,N}, idxs::Vararg{Union{Nothing,Colon}}) where {T,N}
     if length(idxs) - count(isnothing, idxs) != N
-        throw(ArgumentError("Cannot index a lazy tensor with more or fewer `:` dims than it had original dims."))
+        throw(
+            ArgumentError(
+                "Cannot index a lazy tensor with more or fewer `:` dims than it had original dims."
+            ),
+        )
     end
     return expanddims(arr, findall(isnothing, idxs))
 end
 
 function expanddims(arr::LazyTensor{T}, dims) where {T}
     @assert allunique(dims)
-    @assert issubset(dims,1:ndims(arr) + length(dims))
-    antidims = setdiff(1:ndims(arr) + length(dims), dims)
+    @assert issubset(dims, 1:(ndims(arr) + length(dims)))
+    antidims = setdiff(1:(ndims(arr) + length(dims)), dims)
     idxs_1 = [field(gensym(:i)) for _ in 1:ndims(arr)]
-    idxs_2 = [field(gensym(:i)) for _ in 1:ndims(arr) + length(dims)]
+    idxs_2 = [field(gensym(:i)) for _ in 1:(ndims(arr) + length(dims))]
     idxs_2[antidims] .= idxs_1
     data_2 = reorder(relabel(arr.data, idxs_1...), idxs_2...)
-    extrude_2 = [false for _ in 1:ndims(arr) + length(dims)]
+    extrude_2 = [false for _ in 1:(ndims(arr) + length(dims))]
     extrude_2[antidims] .= arr.extrude
     shape_2 = [1 for _ in 1:ndims(arr) + length(dims)]
     shape_2[antidims] .= arr.shape
@@ -66,7 +76,9 @@ function LazyTensor{T}(arr::Base.AbstractArrayOrBroadcasted) where {T}
     LazyTensor{eltype(arr), ndims(arr)}(tns, extrude, shape, fill_value(arr))
 end
 LazyTensor(arr::AbstractTensor) = LazyTensor{eltype(arr)}(arr)
-LazyTensor(swizzle_arr::SwizzleArray{dims, <:Tensor}) where {dims} = permutedims(LazyTensor(swizzle_arr.body), dims)
+function LazyTensor(swizzle_arr::SwizzleArray{dims,<:Tensor}) where {dims}
+    permutedims(LazyTensor(swizzle_arr.body), dims)
+end
 function LazyTensor{T}(arr::AbstractTensor) where {T}
     name = alias(gensym(:A))
     idxs = [field(gensym(:i)) for _ in 1:ndims(arr)]
@@ -75,17 +87,20 @@ function LazyTensor{T}(arr::AbstractTensor) where {T}
     tns = subquery(name, table(immediate(arr), idxs...))
     LazyTensor{eltype(arr), ndims(arr)}(tns, extrude, shape, fill_value(arr))
 end
-LazyTensor{T}(swizzle_arr::SwizzleArray{dims, <:Tensor}) where {T, dims} = permutedims(LazyTensor{T}(swizzle_arr.body), dims)
 LazyTensor(data::LazyTensor) = data
 
 swizzle(arr::LazyTensor, dims...) = permutedims(arr, dims)
 
 Base.sum(arr::LazyTensor; kwargs...) = reduce(+, arr; kwargs...)
 Base.prod(arr::LazyTensor; kwargs...) = reduce(*, arr; kwargs...)
-Base.any(arr::LazyTensor; kwargs...) = reduce(or, arr; init = false, kwargs...)
-Base.all(arr::LazyTensor; kwargs...) = reduce(and, arr; init = true, kwargs...)
-Base.minimum(arr::LazyTensor; kwargs...) = reduce(min, arr; init = typemax(eltype(arr)), kwargs...)
-Base.maximum(arr::LazyTensor; kwargs...) = reduce(max, arr; init = typemin(eltype(arr)), kwargs...)
+Base.any(arr::LazyTensor; kwargs...) = reduce(or, arr; init=false, kwargs...)
+Base.all(arr::LazyTensor; kwargs...) = reduce(and, arr; init=true, kwargs...)
+function Base.minimum(arr::LazyTensor; kwargs...)
+    reduce(min, arr; init=typemax(eltype(arr)), kwargs...)
+end
+function Base.maximum(arr::LazyTensor; kwargs...)
+    reduce(max, arr; init=typemin(eltype(arr)), kwargs...)
+end
 
 function Base.mapreduce(f, op, src::LazyTensor, args...; kw...)
     reduce(op, map(f, src, args...); kw...)
@@ -131,12 +146,14 @@ function fixpoint_type(op, z, T)
     R = typeof(z)
     while R != S
         S = R
-        R = Union{R, return_type(DefaultAlgebra(), op, R, T)}
+        R = Union{R,return_type(DefaultAlgebra(), op, R, T)}
     end
     R
 end
 
-function Base.reduce(op, arg::LazyTensor{T, N}; dims=:, init = initial_value(op, T)) where {T, N}
+function Base.reduce(
+    op, arg::LazyTensor{T,N}; dims=:, init=initial_value(op, T)
+) where {T,N}
     dims = dims == Colon() ? (1:N) : collect(dims)
     extrude = ((arg.extrude[n] for n in 1:N if !(n in dims))...,)
     shape = ((arg.shape[n] for n in 1:N if !(n in dims))...,)
@@ -146,21 +163,40 @@ function Base.reduce(op, arg::LazyTensor{T, N}; dims=:, init = initial_value(op,
     LazyTensor{S}(identify(data), extrude, shape, init)
 end
 
-tensordot(A::LazyTensor, B::Union{AbstractTensor, AbstractArray}, idxs; kwargs...) = tensordot(A, LazyTensor(B), idxs; kwargs...)
-tensordot(A::Union{AbstractTensor, AbstractArray}, B::LazyTensor, idxs; kwargs...) = tensordot(LazyTensor(A), B, idxs; kwargs...)
+function tensordot(A::LazyTensor, B::Union{AbstractTensor,AbstractArray}, idxs; kwargs...)
+    tensordot(A, LazyTensor(B), idxs; kwargs...)
+end
+function tensordot(A::Union{AbstractTensor,AbstractArray}, B::LazyTensor, idxs; kwargs...)
+    tensordot(LazyTensor(A), B, idxs; kwargs...)
+end
 
 # tensordot takes in two tensors `A` and `B` and performs a product and contraction
-function tensordot(A::LazyTensor{T1, N1}, B::LazyTensor{T2, N2}, idxs; mult_op=*, add_op=+, init = initial_value(add_op, return_type(DefaultAlgebra(), mult_op, T1, T2))) where {T1, T2, N1, N2}
+function tensordot(
+    A::LazyTensor{T1,N1},
+    B::LazyTensor{T2,N2},
+    idxs;
+    mult_op=*,
+    add_op=+,
+    init=initial_value(add_op, return_type(DefaultAlgebra(), mult_op, T1, T2)),
+) where {T1,T2,N1,N2}
     if idxs isa Number
         idxs = ([i for i in 1:idxs], [i for i in 1:idxs])
     end
     A_idxs = idxs[1]
     B_idxs = idxs[2]
     if length(A_idxs) != length(B_idxs)
-        throw(ArgumentError("lists of contraction indices must be the same length for both inputs"))
+        throw(
+            ArgumentError(
+                "lists of contraction indices must be the same length for both inputs"
+            ),
+        )
     end
     if any([i > N1 for i in A_idxs]) || any([i > N2 for i in B_idxs])
-        throw(ArgumentError("contraction indices cannot be greater than the number of dimensions"))
+        throw(
+            ArgumentError(
+                "contraction indices cannot be greater than the number of dimensions"
+            ),
+        )
     end
 
     extrude = ((A.extrude[n] for n in 1:N1 if !(n in A_idxs))...,
@@ -183,10 +219,16 @@ function tensordot(A::LazyTensor{T1, N1}, B::LazyTensor{T2, N2}, idxs; mult_op=*
 end
 
 struct LazyStyle{N} <: BroadcastStyle end
-Base.Broadcast.BroadcastStyle(F::Type{<:LazyTensor{T, N}}) where {T, N} = LazyStyle{N}()
+Base.Broadcast.BroadcastStyle(F::Type{<:LazyTensor{T,N}}) where {T,N} = LazyStyle{N}()
 Base.Broadcast.broadcastable(tns::LazyTensor) = tns
-Base.Broadcast.BroadcastStyle(a::LazyStyle{M}, b::LazyStyle{N}) where {M, N} = LazyStyle{max(M, N)}()
-Base.Broadcast.BroadcastStyle(a::LazyStyle{M}, b::Broadcast.AbstractArrayStyle{N}) where {M, N} = LazyStyle{max(M, N)}()
+function Base.Broadcast.BroadcastStyle(a::LazyStyle{M}, b::LazyStyle{N}) where {M,N}
+    LazyStyle{max(M, N)}()
+end
+function Base.Broadcast.BroadcastStyle(
+    a::LazyStyle{M}, b::Broadcast.AbstractArrayStyle{N}
+) where {M,N}
+    LazyStyle{max(M, N)}()
+end
 
 function broadcast_to_logic(bc::Broadcast.Broadcasted)
     broadcasted(bc.f, map(broadcast_to_logic, bc.args)...)
@@ -204,7 +246,7 @@ function broadcast_to_query(bc::Broadcast.Broadcasted, idxs)
     mapjoin(immediate(bc.f), map(arg -> broadcast_to_query(arg, idxs), bc.args)...)
 end
 
-function broadcast_to_query(tns::LazyTensor{T, N}, idxs) where {T, N}
+function broadcast_to_query(tns::LazyTensor{T,N}, idxs) where {T,N}
     idxs_2 = [tns.extrude[i] ? field(gensym(:idx)) : idxs[i] for i in 1:N]
     data_2 = relabel(tns.data, idxs_2...)
     reorder(data_2, idxs[findall(!, tns.extrude)]...)
@@ -264,9 +306,10 @@ function Base.copyto!(dst::AbstractArray, src::LazyTensor{T, N}) where {T, N}
     return LazyTensor{T, N}(reformat(immediate(dst), src.data), src.extrude, src.shape, src.fill_value)
 end
 
-Base.permutedims(arg::LazyTensor{T, 2}) where {T} = permutedims(arg, [2, 1])
-function Base.permutedims(arg::LazyTensor{T, N}, perm) where {T, N}
-    length(perm) == N || throw(ArgumentError("permutedims given wrong number of dimensions"))
+Base.permutedims(arg::LazyTensor{T,2}) where {T} = permutedims(arg, [2, 1])
+function Base.permutedims(arg::LazyTensor{T,N}, perm) where {T,N}
+    length(perm) == N ||
+        throw(ArgumentError("permutedims given wrong number of dimensions"))
     isperm(perm) || throw(ArgumentError("permutedims given invalid permutation"))
     perm = collect(perm)
     idxs = [field(gensym(:i)) for _ in 1:N]
@@ -274,87 +317,105 @@ function Base.permutedims(arg::LazyTensor{T, N}, perm) where {T, N}
 end
 Base.permutedims(arr::SwizzleArray, perm) = swizzle(arr, perm...)
 
-Base.:+(
+function Base.:+(
     x::LazyTensor,
-    y::Union{LazyTensor, AbstractTensor, Base.AbstractArrayOrBroadcasted, Number},
-    z::Union{LazyTensor, AbstractTensor, Base.AbstractArrayOrBroadcasted, Number}...
-) = map(+, x, y, z...)
-Base.:+(
-    x::Union{LazyTensor, AbstractTensor, Base.AbstractArrayOrBroadcasted, Number},
+    y::Union{LazyTensor,AbstractTensor,Base.AbstractArrayOrBroadcasted,Number},
+    z::Union{LazyTensor,AbstractTensor,Base.AbstractArrayOrBroadcasted,Number}...,
+)
+    map(+, x, y, z...)
+end
+function Base.:+(
+    x::Union{LazyTensor,AbstractTensor,Base.AbstractArrayOrBroadcasted,Number},
     y::LazyTensor,
-    z::Union{LazyTensor, AbstractTensor, Base.AbstractArrayOrBroadcasted, Number}...
-) = map(+, y, x, z...)
-Base.:+(
+    z::Union{LazyTensor,AbstractTensor,Base.AbstractArrayOrBroadcasted,Number}...,
+)
+    map(+, y, x, z...)
+end
+function Base.:+(
     x::LazyTensor,
     y::LazyTensor,
-    z::Union{LazyTensor, AbstractTensor, Base.AbstractArrayOrBroadcasted, Number}...
-) = map(+, x, y, z...)
+    z::Union{LazyTensor,AbstractTensor,Base.AbstractArrayOrBroadcasted,Number}...,
+)
+    map(+, x, y, z...)
+end
 Base.:*(
     x::LazyTensor,
     y::Number,
-    z::Number...
+    z::Number...,
 ) = map(*, x, y, z...)
 Base.:*(
     x::Number,
     y::LazyTensor,
-    z::Number...
+    z::Number...,
 ) = map(*, y, x, z...)
 
+function Base.:*(
+    A::LazyTensor,
+    B::Union{LazyTensor,AbstractTensor,AbstractArray},
+)
+    tensordot(A, B, (2, 1))
+end
+function Base.:*(
+    A::Union{LazyTensor,AbstractTensor,AbstractArray},
+    B::LazyTensor,
+)
+    tensordot(A, B, (2, 1))
+end
 Base.:*(
     A::LazyTensor,
-    B::Union{LazyTensor, AbstractTensor, AbstractArray}
-) = tensordot(A, B, (2, 1))
-Base.:*(
-    A::Union{LazyTensor, AbstractTensor, AbstractArray},
-    B::LazyTensor
-) = tensordot(A, B, (2, 1))
-Base.:*(
-    A::LazyTensor,
-    B::LazyTensor
+    B::LazyTensor,
 ) = tensordot(A, B, (2, 1))
 
 Base.:-(x::LazyTensor) = map(-, x)
 
-Base.:-(x::LazyTensor, y::Union{LazyTensor, AbstractTensor, Base.AbstractArrayOrBroadcasted, Number}) = map(-, x, y)
-Base.:-(x::Union{LazyTensor, AbstractTensor, Base.AbstractArrayOrBroadcasted, Number}, y::LazyTensor) = map(-, x, y)
-Base.:-(x::LazyTensor, y::LazyTensor) = map(-, x, y)
+Base.:-(x::LazyTensor, y::Union{LazyTensor,AbstractTensor,Base.AbstractArrayOrBroadcasted,Number}) = map(-, x, y)
+Base.:-(x::Union{LazyTensor,AbstractTensor,Base.AbstractArrayOrBroadcasted,Number}, y::LazyTensor) = map(-, x, y)
+Base.:-(x::LazyTensor, y::LazyTensor)                                                              = map(-, x, y)
 
 Base.:/(x::LazyTensor, y::Number) = map(/, x, y)
 Base.:/(x::Number, y::LazyTensor) = map(\, y, x)
-
 
 min1max2((a, b), (c, d)) = (min(a, c), max(b, d))
 plex(a) = (a, a)
 isassociative(::AbstractAlgebra, ::typeof(min1max2)) = true
 iscommutative(::AbstractAlgebra, ::typeof(min1max2)) = true
 isidempotent(::AbstractAlgebra, ::typeof(min1max2)) = true
-isidentity(alg::AbstractAlgebra, ::typeof(min1max2), x::Tuple) = !ismissing(x) && isinf(x[1]) && x[1] > 0 && isinf(x[2]) && x[2] < 0
-isannihilator(alg::AbstractAlgebra, ::typeof(min1max2), x::Tuple) = !ismissing(x) && isinf(x[1]) && x[1] < 0 && isinf(x[2]) && x[2] > 0
-Base.extrema(arr::LazyTensor; kwargs...) = mapreduce(plex, min1max2, arr; init = (typemax(eltype(arr)), typemin(eltype(arr))), kwargs...)
+function isidentity(alg::AbstractAlgebra, ::typeof(min1max2), x::Tuple)
+    !ismissing(x) && isinf(x[1]) && x[1] > 0 && isinf(x[2]) && x[2] < 0
+end
+function isannihilator(alg::AbstractAlgebra, ::typeof(min1max2), x::Tuple)
+    !ismissing(x) && isinf(x[1]) && x[1] < 0 && isinf(x[2]) && x[2] > 0
+end
+function Base.extrema(arr::LazyTensor; kwargs...)
+    mapreduce(
+        plex, min1max2, arr; init=(typemax(eltype(arr)), typemin(eltype(arr))), kwargs...
+    )
+end
 
-struct Square{T, S}
+struct Square{T,S}
     arg::T
     scale::S
 end
 
-@inline square(x) = Square(sign(x)^2, norm(x))
+@inline square(x) = Square(sign(x)^2 / one(x), norm(x))
 
 @inline root(x::Square) = sqrt(x.arg) * x.scale
 
-@inline Base.zero(::Type{Square{T, S}}) where {T, S} = Square{T, S}(zero(T), zero(S))
-@inline Base.zero(::Square{T, S}) where {T, S} = Square{T, S}(zero(T), zero(S))
+@inline Base.zero(::Type{Square{T,S}}) where {T,S} = Square{T,S}(zero(T), zero(S))
+@inline Base.zero(::Square{T,S}) where {T,S} = Square{T,S}(zero(T), zero(S))
+@inline Base.isone(x::Square) = isone(root(x))
 
 @inline Base.isinf(x::Finch.Square) = isinf(x.arg) || isinf(x.scale)
 
-function Base.promote_rule(::Type{Square{T1, S1}}, ::Type{Square{T2, S2}}) where {T1, S1, T2, S2}
-    return Square{promote_type(T1, T2), promote_type(S1, S2)}
+function Base.promote_rule(::Type{Square{T1,S1}}, ::Type{Square{T2,S2}}) where {T1,S1,T2,S2}
+    return Square{promote_type(T1, T2),promote_type(S1, S2)}
 end
 
-function Base.convert(::Type{Square{T, S}}, x::Square) where {T, S}
+function Base.convert(::Type{Square{T,S}}, x::Square) where {T,S}
     return Square(convert(T, x.arg), convert(S, x.scale))
 end
 
-function Base.promote_rule(::Type{Square{T1, S1}}, ::Type{T2}) where {T1, S1, T2<:Number}
+function Base.promote_rule(::Type{Square{T1,S1}}, ::Type{T2}) where {T1,S1,T2<:Number}
     return promote_type(T1, T2)
 end
 
@@ -362,18 +423,18 @@ function Base.convert(T::Type{<:Number}, x::Square)
     return convert(T, root(x))
 end
 
-@inline function Base.:+(x::T, y::T) where {T <: Square}
+@inline function Base.:+(x::T, y::T) where {T<:Square}
     if x.scale < y.scale
         (x, y) = (y, x)
     end
     if x.scale > y.scale
         if iszero(y.scale)
-            return Square(x.arg + zero(y.arg) * (one(y.scale)/one(x.scale))^1, x.scale)
+            return Square(x.arg + zero(y.arg) * (one(y.scale) / one(x.scale))^1, x.scale)
         else
-            return Square(x.arg + y.arg * (y.scale/x.scale)^2, x.scale)
+            return Square(x.arg + y.arg * (y.scale / x.scale)^2, x.scale)
         end
     else
-        return Square(x.arg + y.arg * (one(y.scale)/one(x.scale))^1, x.scale)
+        return Square(x.arg + y.arg * (one(y.scale) / one(x.scale))^1, x.scale)
     end
 end
 
@@ -385,7 +446,7 @@ end
     return Square(y.arg * x, y.scale)
 end
 
-struct Power{T, S, E}
+struct Power{T,S,E}
     arg::T
     scale::S
     exponent::E
@@ -393,21 +454,25 @@ end
 
 @inline power(x, p) = Power(sign(x)^p, norm(x), p)
 
-@inline root(x::Power) = x.arg ^ inv(x.exponent) * x.scale
+@inline root(x::Power) = x.arg^inv(x.exponent) * x.scale
 
-@inline Base.zero(::Type{Power{T, S, E}}) where {T, S, E} = Power{T, S, E}(zero(T), zero(S), one(E))
+@inline Base.zero(::Type{Power{T,S,E}}) where {T,S,E} =
+    Power{T,S,E}(zero(T), zero(S), one(E))
 @inline Base.zero(x::Power) = Power(zero(x.arg), zero(x.scale), x.exponent)
 @inline Base.isinf(x::Finch.Power) = isinf(x.arg) || isinf(x.scale) || isinf(x.exponent)
+@inline Base.isone(x::Power) = isone(root(x))
 
-function Base.promote_rule(::Type{Power{T1, S1, E1}}, ::Type{Power{T2, S2, E2}}) where {T1, S1, E1, T2, S2, E2}
-    return Power{promote_type(T1, T2), promote_type(S1, S2), promote_type(E1, E2)}
+function Base.promote_rule(
+    ::Type{Power{T1,S1,E1}}, ::Type{Power{T2,S2,E2}}
+) where {T1,S1,E1,T2,S2,E2}
+    return Power{promote_type(T1, T2),promote_type(S1, S2),promote_type(E1, E2)}
 end
 
-function Base.convert(::Type{Power{T, S, E}}, x::Power) where {T, S, E}
+function Base.convert(::Type{Power{T,S,E}}, x::Power) where {T,S,E}
     return Power(convert(T, x.arg), convert(S, x.scale), convert(E, x.exponent))
 end
 
-function Base.promote_rule(::Type{Power{T1, S1, E1}}, ::Type{T2}) where {T1, S1, E1, T2<:Number}
+function Base.promote_rule(::Type{Power{T1,S1,E1}}, ::Type{T2}) where {T1,S1,E1,T2<:Number}
     return promote_type(T1, T2)
 end
 
@@ -415,7 +480,7 @@ function Base.convert(T::Type{<:Number}, x::Power)
     return convert(T, root(x))
 end
 
-@inline function Base.:+(x::T, y::T) where {T <: Power}
+@inline function Base.:+(x::T, y::T) where {T<:Power}
     if x.exponent != y.exponent
         if iszero(x.arg) && iszero(x.scale)
             (x, y) = (y, x)
@@ -432,12 +497,22 @@ end
     end
     if x.scale > y.scale
         if iszero(y.scale)
-            return Power(x.arg + zero(y.arg) * (one(y.scale)/one(x.scale))^one(y.exponent), x.scale, x.exponent)
+            return Power(
+                x.arg + zero(y.arg) * (one(y.scale) / one(x.scale))^one(y.exponent),
+                x.scale,
+                x.exponent,
+            )
         else
-            return Power(x.arg + y.arg * (y.scale/x.scale)^y.exponent, x.scale, x.exponent)
+            return Power(
+                x.arg + y.arg * (y.scale / x.scale)^y.exponent, x.scale, x.exponent
+            )
         end
     else
-        return Power(x.arg + y.arg * (one(y.scale)/one(x.scale))^one(y.exponent), x.scale, x.exponent)
+        return Power(
+            x.arg + y.arg * (one(y.scale) / one(x.scale))^one(y.exponent),
+            x.scale,
+            x.exponent,
+        )
     end
 end
 
@@ -449,7 +524,7 @@ end
     return Power(y.arg * x, y.scale, y.exponent)
 end
 
-function LinearAlgebra.norm(arr::LazyTensor, p::Real = 2)
+function LinearAlgebra.norm(arr::LazyTensor, p::Real=2)
     if p == 2
         return map(root, sum(map(square, arr)))
     elseif p == 1
@@ -491,7 +566,8 @@ The default scheduler used by `compute` to execute lazy tensor programs.
 Fuses all pointwise expresions into reductions. Only fuses reductions
 into pointwise expressions when they are the only usage of the reduction.
 """
-default_scheduler(;verbose=false) = LogicExecutor(DefaultLogicOptimizer(LogicCompiler()), verbose=verbose)
+default_scheduler(; verbose=false) =
+    LogicExecutor(DefaultLogicOptimizer(LogicCompiler()); verbose=verbose)
 
 """
     fused(f, args...; kwargs...)
@@ -548,9 +624,14 @@ can be passed to control the execution of the program:
     - `verbose=false`: Print the generated code before execution
     - `tag=:global`: A tag to distinguish between different classes of inputs for the same program.
 """
-compute(args...; ctx=get_scheduler(), kwargs...) = compute_parse(set_options(ctx; kwargs...), map(lazy, args))
-compute(arg; ctx=get_scheduler(), kwargs...) = compute_parse(set_options(ctx; kwargs...), (lazy(arg),))[1]
-compute(args::Tuple; ctx=get_scheduler(), kwargs...) = compute_parse(set_options(ctx; kwargs...), map(lazy, args))
+compute(args...; ctx=get_scheduler(), kwargs...) =
+    compute_parse(set_options(ctx; kwargs...), map(lazy, args))
+function compute(arg; ctx=get_scheduler(), kwargs...)
+    compute_parse(set_options(ctx; kwargs...), (lazy(arg),))[1]
+end
+function compute(args::Tuple; ctx=get_scheduler(), kwargs...)
+    compute_parse(set_options(ctx; kwargs...), map(lazy, args))
+end
 function compute_parse(ctx, args::Tuple)
     args = collect(args)
     vars = map(arg -> alias(gensym(:A)), args)

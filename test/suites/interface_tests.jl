@@ -1,4 +1,4 @@
-@testitem "interface_einsum" setup=[CheckOutput] begin
+@testitem "interface_einsum" setup = [CheckOutput] begin
     using Finch: AsArray
     using SparseArrays
     using LinearAlgebra
@@ -6,7 +6,7 @@
     for (key, scheduler) in [
         "default" => Finch.default_scheduler(),
         "interp" => Finch.DefaultLogicOptimizer(Finch.LogicInterpreter()),
-        "galley" => Finch.galley_scheduler()
+        "galley" => Finch.galley_scheduler(),
     ]
         Finch.with_scheduler(scheduler) do
             @testset "$key scheduler" begin
@@ -29,7 +29,7 @@
                 @einsum C[i, j, k] += A[i, j] * B[j, k]
 
                 C_ref = zeros(Int, 3, 5, 3)
-                for i = 1:3, j = 1:5, k = 1:3
+                for i in 1:3, j in 1:5, k in 1:3
                     C_ref[i, j, k] += A[i, j] * B[j, k]
                 end
                 @test C == C_ref
@@ -40,7 +40,7 @@
                 @einsum D[i, k] += X[i, j] * Y[j, k]
 
                 D_ref = zeros(Int, 4, 4)
-                for i = 1:4, j = 1:6, k = 1:4
+                for i in 1:4, j in 1:6, k in 1:4
                     D_ref[i, k] += X[i, j] * Y[j, k]
                 end
                 @test D == D_ref
@@ -51,7 +51,7 @@
                 @einsum J[i, j] = H[i, j] * I[i, j]
 
                 J_ref = zeros(Int, 5, 5)
-                for i = 1:5, j = 1:5
+                for i in 1:5, j in 1:5
                     J_ref[i, j] = H[i, j] * I[i, j]
                 end
                 @test J == J_ref
@@ -63,7 +63,7 @@
                 @einsum N[i, j] += K[i, k] * L[k, j] - M[i, j]
 
                 N_ref = zeros(Int, 4, 4)
-                for i = 1:4, k = 1:4, j = 1:4
+                for i in 1:4, k in 1:4, j in 1:4
                     N_ref[i, j] += K[i, k] * L[k, j] - M[i, j]
                 end
                 @test N == N_ref
@@ -71,11 +71,11 @@
                 # Test 6
                 P = Tensor(Dense(SparseList(Element(-Inf))), fsprand(Int, 3, 3, 0.7)) # Adjacency matrix with probabilities
                 Q = Tensor(Dense(SparseList(Element(-Inf))), fsprand(Int, 3, 3, 0.7))
-                @einsum init=-Inf R[i, j] <<max>>= P[i, k] + Q[k, j]  # Max-plus product
+                @einsum init = -Inf R[i, j] << max >>= P[i, k] + Q[k, j]  # Max-plus product
 
                 R_ref = fill(-Inf, 3, 3)
-                for i = 1:3, j = 1:3
-                    for k = 1:3
+                for i in 1:3, j in 1:3
+                    for k in 1:3
                         R_ref[i, j] = max(R_ref[i, j], P[i, k] + Q[k, j])
                     end
                 end
@@ -91,8 +91,8 @@
 
                 # Reference calculation using explicit loop for validation
                 w_ref = zeros(Int, 10)
-                for i = 1:10
-                    for k = 1:10
+                for i in 1:10
+                    for k in 1:10
                         w_ref[i] += S[i, k] * v[k]
                     end
                 end
@@ -110,8 +110,8 @@
 
                 # Reference calculation using explicit loop for validation
                 x_ref = zeros(Int, 10)
-                for k = 1:10
-                    for j = 1:10
+                for k in 1:10
+                    for j in 1:10
                         x_ref[k] += T[j, k] * u[j]
                     end
                 end
@@ -129,8 +129,8 @@
 
                 # Reference calculation using explicit loop for validation
                 A_ref = zeros(Int, 5, 7)
-                for i = 1:5
-                    for j = 1:7
+                for i in 1:5
+                    for j in 1:7
                         A_ref[i, j] = v1[i] * v2[j]
                     end
                 end
@@ -138,18 +138,17 @@
                 # Test to ensure the results match
                 @test A == A_ref
 
-
                 # Test for multiplying a vector by a Scalar
                 v = Tensor(Dense(Element(0)), rand(Int, 5))
                 n = 7
 
                 #Perform scalar multiplcation
-                @einsum A[i] = n*v[i]
+                @einsum A[i] = n * v[i]
 
                 # Reference Calculation using explicit loop for validation
                 A_ref = Tensor(Dense(Element(0)), rand(Int, 5))
-                for i = 1:5
-                    A_ref[i] = v[i]*n
+                for i in 1:5
+                    A_ref[i] = v[i] * n
                 end
 
                 #Test to ensure the results match
@@ -159,14 +158,16 @@
     end
 end
 
-@testitem "interface_asmd" setup=[CheckOutput] begin
+@testitem "interface_asmd" setup = [CheckOutput] begin
     using Finch: AsArray
     using Finch
     using SparseArrays
     using Statistics
     using LinearAlgebra
 
-    A = Tensor(SparseList(Element(0.0)), fsparse([1, 3, 5, 7, 9], [2.0, 3.0, 4.0, 5.0, 6.0], (10,)))
+    A = Tensor(
+        SparseList(Element(0.0)), fsparse([1, 3, 5, 7, 9], [2.0, 3.0, 4.0, 5.0, 6.0], (10,))
+    )
     B = Tensor(SparseList(Element(0.0)), A)
     @test A == B
 
@@ -255,14 +256,62 @@ end
         io = IOBuffer()
         println(io, "getindex tests")
 
-        A = Tensor(SparseList(Dense(SparseList(Element{0.0}(collect(1:30).* 1.01), 5, [1, 3, 6, 8, 12, 14, 17, 20, 24, 27, 27, 28, 31], [2, 3, 3, 4, 5, 2, 3, 1, 3, 4, 5, 2, 4, 2, 4, 5, 2, 3, 5, 1, 3, 4, 5, 2, 3, 4, 2, 1, 2, 3]), 3), 4, [1, 5], [1, 2, 3, 4]))
+        A = Tensor(
+            SparseList(
+                Dense(
+                    SparseList(
+                        Element{0.0}(collect(1:30) .* 1.01),
+                        5,
+                        [1, 3, 6, 8, 12, 14, 17, 20, 24, 27, 27, 28, 31],
+                        [
+                            2,
+                            3,
+                            3,
+                            4,
+                            5,
+                            2,
+                            3,
+                            1,
+                            3,
+                            4,
+                            5,
+                            2,
+                            4,
+                            2,
+                            4,
+                            5,
+                            2,
+                            3,
+                            5,
+                            1,
+                            3,
+                            4,
+                            5,
+                            2,
+                            3,
+                            4,
+                            2,
+                            1,
+                            2,
+                            3,
+                        ],
+                    ),
+                    3,
+                ),
+                4,
+                [1, 5],
+                [1, 2, 3, 4],
+            ),
+        )
 
         print(io, "A = ")
         show(io, MIME("text/plain"), A)
         println(io)
 
         for inds in [(1, 2, 3), (1, 1, 1), (1, :, 3), (:, 1, 3), (:, :, 3), (:, :, :)]
-            print(io, "A["); join(io, inds, ","); print(io, "] = ")
+            print(io, "A[")
+            join(io, inds, ",")
+            print(io, "] = ")
             show(io, MIME("text/plain"), A[inds...])
             println(io)
         end
@@ -288,7 +337,7 @@ end
     for (key, scheduler) in [
         "default" => Finch.default_scheduler(),
         "interp" => Finch.DefaultLogicOptimizer(Finch.LogicInterpreter()),
-        "galley" => Finch.galley_scheduler()
+        "galley" => Finch.galley_scheduler(),
     ]
         Finch.with_scheduler(scheduler) do
             @testset "$key scheduler" begin
@@ -296,7 +345,10 @@ end
                     io = IOBuffer()
                     println(io, "broadcast tests")
 
-                    @repl io A = Tensor(Dense(SparseList(Element(0.0))), [0.0 0.0 4.4; 1.1 0.0 0.0; 2.2 0.0 5.5; 3.3 0.0 0.0])
+                    @repl io A = Tensor(
+                        Dense(SparseList(Element(0.0))),
+                        [0.0 0.0 4.4; 1.1 0.0 0.0; 2.2 0.0 5.5; 3.3 0.0 0.0],
+                    )
                     @repl io B = [1, 2, 3, 4]
                     @repl io C = A .+ B true
                     @repl io AsArray(C)
@@ -312,12 +364,15 @@ end
                     io = IOBuffer()
                     println(io, "reduce tests")
 
-                    @repl io A = Tensor(Dense(SparseList(Element(0.0))), [0.0 0.0 4.4; 1.1 0.0 0.0; 2.2 0.0 5.5; 3.3 0.0 0.0])
+                    @repl io A = Tensor(
+                        Dense(SparseList(Element(0.0))),
+                        [0.0 0.0 4.4; 1.1 0.0 0.0; 2.2 0.0 5.5; 3.3 0.0 0.0],
+                    )
                     @repl io reduce(+, A, dims=(1,))
                     @repl io reduce(+, A, dims=1)
                     @repl io reduce(+, A, dims=(2,))
                     @repl io reduce(+, A, dims=2)
-                    @repl io reduce(+, A, dims=(1,2))
+                    @repl io reduce(+, A, dims=(1, 2))
                     @repl io reduce(+, A, dims=:)
 
                     @test check_output("interface/reduce_$key.txt", String(take!(io)))
@@ -327,13 +382,25 @@ end
                     io = IOBuffer()
                     println(io, "countstored tests")
 
-                    @repl io A = Tensor(Dense(SparseList(Element(0.0))), [0.0 0.0 4.4; 1.1 0.0 0.0; 2.2 0.0 5.5; 3.3 0.0 0.0])
+                    @repl io A = Tensor(
+                        Dense(SparseList(Element(0.0))),
+                        [0.0 0.0 4.4; 1.1 0.0 0.0; 2.2 0.0 5.5; 3.3 0.0 0.0],
+                    )
                     @repl io countstored(A)
-                    @repl io A = Tensor(SparseCOO{2}(Element(0.0)), [0.0 0.0 4.4; 1.1 0.0 0.0; 2.2 0.0 5.5; 3.3 0.0 0.0])
+                    @repl io A = Tensor(
+                        SparseCOO{2}(Element(0.0)),
+                        [0.0 0.0 4.4; 1.1 0.0 0.0; 2.2 0.0 5.5; 3.3 0.0 0.0],
+                    )
                     @repl io countstored(A)
-                    @repl io A = Tensor(Dense(Dense(Element(0.0))), [0.0 0.0 4.4; 1.1 0.0 0.0; 2.2 0.0 5.5; 3.3 0.0 0.0])
+                    @repl io A = Tensor(
+                        Dense(Dense(Element(0.0))),
+                        [0.0 0.0 4.4; 1.1 0.0 0.0; 2.2 0.0 5.5; 3.3 0.0 0.0],
+                    )
                     @repl io countstored(A)
-                    @repl io A = Tensor(SparseList(Dense(Element(0.0))), [0.0 0.0 4.4; 1.1 0.0 0.0; 2.2 0.0 5.5; 3.3 0.0 0.0])
+                    @repl io A = Tensor(
+                        SparseList(Dense(Element(0.0))),
+                        [0.0 0.0 4.4; 1.1 0.0 0.0; 2.2 0.0 5.5; 3.3 0.0 0.0],
+                    )
                     @repl io countstored(A)
 
                     @test check_output("interface/countstored_$key.txt", String(take!(io)))
@@ -343,7 +410,10 @@ end
                     io = IOBuffer()
                     println(io, "+,-, *, / tests")
 
-                    @repl io A = Tensor(Dense(SparseList(Element(0.0))), [0.0 0.0 4.4; 1.1 0.0 0.0; 2.2 0.0 5.5; 3.3 0.0 0.0])
+                    @repl io A = Tensor(
+                        Dense(SparseList(Element(0.0))),
+                        [0.0 0.0 4.4; 1.1 0.0 0.0; 2.2 0.0 5.5; 3.3 0.0 0.0],
+                    )
                     @repl io A + 1
                     @repl io 1 + A
                     @repl io A + A
@@ -357,9 +427,9 @@ end
 
                 let
                     A_ref = [0.0 0.0 4.4; 1.1 0.0 0.0; 2.2 0.0 5.5; 3.3 0.0 0.0]
-                    A_ref = A_ref * floatmax()/sum(A_ref)
+                    A_ref = A_ref * floatmax() / sum(A_ref)
                     A = Tensor(Dense(SparseList(Element(0.0))), A_ref)
-                    
+
                     @test sum(A) == sum(A_ref)
                     @test minimum(A) == minimum(A_ref)
                     @test maximum(A) == maximum(A_ref)
@@ -373,8 +443,14 @@ end
                 end
 
                 let
-                    A = Tensor(Dense(SparseList(Element(0.0))), [0.0 0.0 4.4; 1.1 0.0 0.0; 2.2 0.0 5.5; 3.3 0.0 0.0])
-                    B = Tensor(Dense(SparseList(Element(0.0))), [0.0 0.0 4.4; 1.1 0.0 0.0; 2.2 0.0 5.5; 3.3 0.0 0.0])
+                    A = Tensor(
+                        Dense(SparseList(Element(0.0))),
+                        [0.0 0.0 4.4; 1.1 0.0 0.0; 2.2 0.0 5.5; 3.3 0.0 0.0],
+                    )
+                    B = Tensor(
+                        Dense(SparseList(Element(0.0))),
+                        [0.0 0.0 4.4; 1.1 0.0 0.0; 2.2 0.0 5.5; 3.3 0.0 0.0],
+                    )
                     C = lazy(A)
                     D = lazy(B)
                     E = (C + D) * 0.5
@@ -383,18 +459,38 @@ end
                 end
 
                 let
-                    A = Tensor(Dense(SparseList(Element(0))), [0 0 44; 11 0 0; 22 00 55; 33 0 0])
-                    B = Tensor(Dense(SparseList(Element(0))), [0 0 44; 11 0 0; 22 00 55; 33 0 0])
-                    c_correct = Tensor(Dense(Dense(Element(0))), [1936 0 2420 0; 0 121 242 363; 2420 242 3509 726; 0 363 726 1089])
-                    c = compute(tensordot(lazy(A), lazy(B), ((2, ), (2,)), init=0))
+                    A = Tensor(
+                        Dense(SparseList(Element(0))), [0 0 44; 11 0 0; 22 00 55; 33 0 0]
+                    )
+                    B = Tensor(
+                        Dense(SparseList(Element(0))), [0 0 44; 11 0 0; 22 00 55; 33 0 0]
+                    )
+                    c_correct = Tensor(
+                        Dense(Dense(Element(0))),
+                        [1936 0 2420 0; 0 121 242 363; 2420 242 3509 726; 0 363 726 1089],
+                    )
+                    c = compute(tensordot(lazy(A), lazy(B), ((2,), (2,)); init=0))
                     @test c == c_correct
                 end
 
                 let
-                    A = lazy(Tensor(Dense(SparseList(Element(0))), [0 0 44; 11 0 0; 22 00 55; 33 0 0]))
-                    B = lazy(Tensor(Dense(SparseList(Element(0))), [0 0 44; 11 0 0; 22 00 55; 33 0 0]'))
-                    c_correct = Tensor(Dense(Dense(Element(0))), [1936 0 2420 0; 0 121 242 363; 2420 242 3509 726; 0 363 726 1089])
-                    c = compute(sum(A[:, :, nothing] .* B[nothing, :, :], dims=[2]))
+                    A = lazy(
+                        Tensor(
+                            Dense(SparseList(Element(0))),
+                            [0 0 44; 11 0 0; 22 00 55; 33 0 0],
+                        ),
+                    )
+                    B = lazy(
+                        Tensor(
+                            Dense(SparseList(Element(0))),
+                            [0 0 44; 11 0 0; 22 00 55; 33 0 0]',
+                        ),
+                    )
+                    c_correct = Tensor(
+                        Dense(Dense(Element(0))),
+                        [1936 0 2420 0; 0 121 242 363; 2420 242 3509 726; 0 363 726 1089],
+                    )
+                    c = compute(sum(A[:, :, nothing] .* B[nothing, :, :]; dims=[2]))
                     @test c == c_correct
                 end
             end
@@ -485,19 +581,19 @@ end
     end
 end
 
-@testitem "interface_issues" setup=[CheckOutput] begin
+@testitem "interface_issues" setup = [CheckOutput] begin
     using Finch: AsArray
     using SparseArrays
     using LinearAlgebra
 
     for (key, scheduler) in [
-            "default" => Finch.default_scheduler(),
-            "interp" => Finch.DefaultLogicOptimizer(Finch.LogicInterpreter()),
-            "galley" => Finch.galley_scheduler()
-        ]
+        "default" => Finch.default_scheduler(),
+        "interp" => Finch.DefaultLogicOptimizer(Finch.LogicInterpreter()),
+        "galley" => Finch.galley_scheduler(),
+    ]
         Finch.with_scheduler(scheduler) do
             @testset "$key scheduler" begin
-    
+
                 #https://github.com/finch-tensor/Finch.jl/issues/383
                 let
                     A = [0.0 0.0 4.4; 1.1 0.0 0.0; 2.2 0.0 5.5; 3.3 0.0 0.0]
@@ -507,24 +603,44 @@ end
                     -A_fbr # used to fail
                 end
 
-
                 #https://github.com/finch-tensor/Finch.jl/issues/592
                 let
-                    @test eltype(broadcast(Finch.fld_nothrow, Tensor(ones(Int16, 1)), Tensor(ones(Int8, 1)))) == Int16
-                    @test eltype(broadcast(Finch.fld_nothrow, Tensor(ones(Int16, 0)), Tensor(ones(Int8, 0)))) == Int16
+                    @test eltype(
+                        broadcast(
+                            Finch.fld_nothrow, Tensor(ones(Int16, 1)), Tensor(ones(Int8, 1))
+                        ),
+                    ) == Int16
+                    @test eltype(
+                        broadcast(
+                            Finch.fld_nothrow, Tensor(ones(Int16, 0)), Tensor(ones(Int8, 0))
+                        ),
+                    ) == Int16
 
-                    @test eltype(broadcast(Finch.fld_nothrow, Tensor(ones(Float64, 1)), Tensor(ones(Float32, 1)))) == Float64
-                    @test eltype(broadcast(Finch.fld_nothrow, Tensor(ones(Float64, 0)), Tensor(ones(Float32, 0)))) == Float64
+                    @test eltype(
+                        broadcast(
+                            Finch.fld_nothrow,
+                            Tensor(ones(Float64, 1)),
+                            Tensor(ones(Float32, 1)),
+                        ),
+                    ) == Float64
+                    @test eltype(
+                        broadcast(
+                            Finch.fld_nothrow,
+                            Tensor(ones(Float64, 0)),
+                            Tensor(ones(Float32, 0)),
+                        ),
+                    ) == Float64
                 end
 
                 #https://github.com/finch-tensor/Finch.jl/issues/578
                 let
-                    @test maximum(Tensor(ones(Int8, 4,4))) === Int8(1)
-                    @test minimum(Tensor(ones(Int8, 4,4))) === Int8(1)
-                    @test extrema(Tensor(ones(Int8, 4,4))) === (Int8(1), Int8(1))
-                    @test compute(maximum(lazy(Tensor(ones(Int8, 4,4)))))[] === Int8(1)
-                    @test compute(minimum(lazy(Tensor(ones(Int8, 4,4)))))[] === Int8(1)
-                    @test compute(extrema(lazy(Tensor(ones(Int8, 4,4)))))[] === (Int8(1), Int8(1))
+                    @test maximum(Tensor(ones(Int8, 4, 4))) === Int8(1)
+                    @test minimum(Tensor(ones(Int8, 4, 4))) === Int8(1)
+                    @test extrema(Tensor(ones(Int8, 4, 4))) === (Int8(1), Int8(1))
+                    @test compute(maximum(lazy(Tensor(ones(Int8, 4, 4)))))[] === Int8(1)
+                    @test compute(minimum(lazy(Tensor(ones(Int8, 4, 4)))))[] === Int8(1)
+                    @test compute(extrema(lazy(Tensor(ones(Int8, 4, 4)))))[] ===
+                        (Int8(1), Int8(1))
                 end
 
                 #https://github.com/finch-tensor/Finch.jl/issues/576
@@ -550,7 +666,6 @@ end
                     @test eltype(Finch.tensordot(a, b, 0)) == UInt8
                 end
 
-
                 #https://github.com/finch-tensor/Finch.jl/issues/474
                 let
                     arr = [1 2 1 2; 2 1 2 1]
@@ -558,7 +673,6 @@ end
 
                     tns = Tensor(Dense(Dense(Element(0))), arr)
                     tns2 = Tensor(Dense(Dense(Element(0))), arr2)
-
 
                     broadcast(/, tns, tns2)  # passes
                     broadcast(Finch.fld_nothrow, tns, tns2)  # fails with RewriteTools.RuleRewriteError
@@ -589,24 +703,30 @@ end
 
                 #https://github.com/finch-tensor/Finch.jl/issues/535
                 let
-                    LEN = 10;
-                    a_raw = rand(LEN, LEN - 5) * 10;
-                    b_raw = rand(LEN, LEN - 5) * 10;
-                    c_raw = rand(LEN, LEN) * 10;
+                    LEN = 10
+                    a_raw = rand(LEN, LEN - 5) * 10
+                    b_raw = rand(LEN, LEN - 5) * 10
+                    c_raw = rand(LEN, LEN) * 10
 
-                    a = lazy(swizzle(Tensor(a_raw), 1, 2));
-                    b = lazy(swizzle(Tensor(b_raw), 1, 2));
-                    c = lazy(swizzle(Tensor(c_raw), 1, 2));
+                    a = lazy(swizzle(Tensor(a_raw), 1, 2))
+                    b = lazy(swizzle(Tensor(b_raw), 1, 2))
+                    c = lazy(swizzle(Tensor(c_raw), 1, 2))
 
-                    ref = reshape(c_raw, 10, 10, 1) .* reshape(a_raw, 10, 1, 5) .* reshape(b_raw, 1, 10, 5);
+                    ref =
+                        reshape(c_raw, 10, 10, 1) .* reshape(a_raw, 10, 1, 5) .*
+                        reshape(b_raw, 1, 10, 5)
 
-                    plan = c[:, :, nothing] .* a[:, nothing, :] .* b[nothing, :, :];
+                    plan = c[:, :, nothing] .* a[:, nothing, :] .* b[nothing, :, :]
                     res = compute(plan)
-                    @test norm(res - ref)/norm(ref) < 0.01
+                    @test norm(res - ref) / norm(ref) < 0.01
 
-                    plan = broadcast(*, broadcast(*, c[:, :, nothing], a[:, nothing, :]), b[nothing, :, :]);
+                    plan = broadcast(
+                        *,
+                        broadcast(*, c[:, :, nothing], a[:, nothing, :]),
+                        b[nothing, :, :],
+                    )
                     res = compute(plan)
-                    @test norm(res - ref)/norm(ref) < 0.01
+                    @test norm(res - ref) / norm(ref) < 0.01
                 end
 
                 #https://github.com/finch-tensor/Finch.jl/issues/536
@@ -628,7 +748,7 @@ end
                     tns = Tensor(Dense(Dense(Dense(Element(0)))), arr3d)
 
                     tns_l = lazy(tns)
-                    reduced = sum(tns_l, dims=(1, 2))
+                    reduced = sum(tns_l; dims=(1, 2))
 
                     plan = broadcast(+, tns_l, reduced)
                     result = compute(plan)
@@ -660,8 +780,13 @@ end
                         a_l = lazy(a)
                         b_l = lazy(b)
 
-                        c = permutedims(broadcast(.+, permutedims(a_l, (2, 1)), permutedims(b_l, (2, 1))), (2, 1))
-                        compute(c, verbose=true)
+                        c = permutedims(
+                            broadcast(
+                                .+, permutedims(a_l, (2, 1)), permutedims(b_l, (2, 1))
+                            ),
+                            (2, 1),
+                        )
+                        compute(c; verbose=true)
                     end
                 end
 
@@ -704,21 +829,42 @@ end
                     a = fsprand(10, 1, 0.8)
                     b = fsprand(10, 1, 0.8)
 
-                    permutedims(broadcast(+, permutedims(a, (2, 1)), permutedims(b, (2, 1))), (2, 1))  # passes
+                    permutedims(
+                        broadcast(+, permutedims(a, (2, 1)), permutedims(b, (2, 1))), (2, 1)
+                    )  # passes
 
                     a_l = lazy(a)
                     b_l = lazy(b)
 
-                    plan = permutedims(broadcast(+, permutedims(a_l, (2, 1)), permutedims(b_l, (2, 1))), (2, 1))
+                    plan = permutedims(
+                        broadcast(+, permutedims(a_l, (2, 1)), permutedims(b_l, (2, 1))),
+                        (2, 1),
+                    )
                     compute(plan)  # fails
                 end
 
                 begin
                     A = Tensor(Dense(SparseList(Element(0.0))))
-                    B = dropfills!(swizzle(A, 2, 1), [0.0 0.0 4.4; 1.1 0.0 0.0; 2.2 0.0 5.5; 3.3 0.0 0.0])
-                    @test B == swizzle(Tensor(Dense{Int64}(SparseList{Int64}(Element{0.0, Float64, Int64}([4.4, 1.1, 2.2, 5.5, 3.3]), 3, [1, 2, 3, 5, 6], [3, 1, 1, 3, 1]), 4)), 2, 1)
+                    B = dropfills!(
+                        swizzle(A, 2, 1),
+                        [0.0 0.0 4.4; 1.1 0.0 0.0; 2.2 0.0 5.5; 3.3 0.0 0.0],
+                    )
+                    @test B == swizzle(
+                        Tensor(
+                            Dense{Int64}(
+                                SparseList{Int64}(
+                                    Element{0.0,Float64,Int64}([4.4, 1.1, 2.2, 5.5, 3.3]),
+                                    3,
+                                    [1, 2, 3, 5, 6],
+                                    [3, 1, 1, 3, 1],
+                                ),
+                                4,
+                            ),
+                        ),
+                        2,
+                        1,
+                    )
                 end
-
 
                 #https://github.com/finch-tensor/Finch.jl/issues/615
 
@@ -744,6 +890,37 @@ end
                     @test A * B == compute(C * lazy(D))
                     @test A * x == C * x
                     @test A * x == compute(lazy(C) * x)
+                end
+
+                # https://github.com/finch-tensor/Finch.jl/issues/708
+                let
+                    for p in [-Inf, -3, -2, -1, 0, 1, 2, 3, Inf]
+                        @testset "$p-norm" begin
+                            A_ref = rand(4, 3)
+                            A = Tensor(A_ref)
+                            @test norm(A_ref, p) ≈ norm(A, p)
+
+                            A_ref = sprand(4, 3, 1.0)
+                            A = Tensor(A_ref)
+                            @test norm(A_ref, p) ≈ norm(A, p)
+                        end
+                    end
+                end
+
+                # https://github.com/finch-tensor/Finch.jl/pull/709
+                let
+                    A_ref = [1 2 0 4 0; 0 -2 1 0 1]
+                    A = swizzle(Tensor(Dense(SparseList(Element(0))), A_ref), 1, 2)
+
+                    @test norm(A, 1) == norm(A_ref, 1)
+                    @test norm(A, 2) == norm(A_ref, 2)
+                    @test norm(A, 3) == norm(A_ref, 3)
+                end
+
+                # https://github.com/finch-tensor/Finch.jl/issues/686
+                let
+                    A = fsprand(5, 5, 3)
+                    @test countstored(A - A) == 3 skip = (key != "default")
                 end
             end
         end

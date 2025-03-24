@@ -4,13 +4,17 @@ using Base: broadcasted
 using LinearAlgebra
 const AbstractArrayOrBroadcasted = Union{AbstractArray,Broadcasted}
 
-mutable struct LazyTensor{T, N} # TODO: Add shape parameterization
+mutable struct LazyTensor{T,N} # TODO: Add shape parameterization
     data
-    extrude::NTuple{N, Bool}
-    shape::NTuple{N, Int}
+    extrude::NTuple{N,Bool}
+    shape::NTuple{N,Int}
     fill_value::T
 end
-LazyTensor{T}(data, extrude::NTuple{N, Bool}, shape::NTuple{N, Int}, fill_value) where {T, N} = LazyTensor{T, N}(data, extrude, shape, fill_value)
+function LazyTensor{T}(
+    data, extrude::NTuple{N,Bool}, shape::NTuple{N,Int}, fill_value
+) where {T,N}
+    LazyTensor{T,N}(data, extrude, shape, fill_value)
+end
 
 function Base.show(io::IO, tns::LazyTensor)
     join(io, tns.shape, "×")
@@ -54,9 +58,11 @@ function expanddims(arr::LazyTensor{T}, dims) where {T}
     data_2 = reorder(relabel(arr.data, idxs_1...), idxs_2...)
     extrude_2 = [false for _ in 1:(ndims(arr) + length(dims))]
     extrude_2[antidims] .= arr.extrude
-    shape_2 = [1 for _ in 1:ndims(arr) + length(dims)]
+    shape_2 = [1 for _ in 1:(ndims(arr) + length(dims))]
     shape_2[antidims] .= arr.shape
-    return LazyTensor{T, ndims(arr) + length(dims)}(data_2, tuple(extrude_2...), tuple(shape_2...), fill_value(arr))
+    return LazyTensor{T,ndims(arr) + length(dims)}(
+        data_2, tuple(extrude_2...), tuple(shape_2...), fill_value(arr)
+    )
 end
 
 function identify(data)
@@ -64,8 +70,8 @@ function identify(data)
     subquery(lhs, data)
 end
 
-LazyTensor(data::Number) = LazyTensor{typeof(data), 0}(immediate(data), (), (), data)
-LazyTensor{T}(data::Number) where {T} = LazyTensor{T, 0}(immediate(data), (), (), data)
+LazyTensor(data::Number) = LazyTensor{typeof(data),0}(immediate(data), (), (), data)
+LazyTensor{T}(data::Number) where {T} = LazyTensor{T,0}(immediate(data), (), (), data)
 LazyTensor(arr::Base.AbstractArrayOrBroadcasted) = LazyTensor{eltype(arr)}(arr)
 function LazyTensor{T}(arr::Base.AbstractArrayOrBroadcasted) where {T}
     name = alias(gensym(:A))
@@ -73,7 +79,7 @@ function LazyTensor{T}(arr::Base.AbstractArrayOrBroadcasted) where {T}
     extrude = ntuple(n -> size(arr, n) == 1, ndims(arr))
     shape = ntuple(n -> size(arr, n), ndims(arr))
     tns = subquery(name, table(immediate(arr), idxs...))
-    LazyTensor{eltype(arr), ndims(arr)}(tns, extrude, shape, fill_value(arr))
+    LazyTensor{eltype(arr),ndims(arr)}(tns, extrude, shape, fill_value(arr))
 end
 LazyTensor(arr::AbstractTensor) = LazyTensor{eltype(arr)}(arr)
 function LazyTensor(swizzle_arr::SwizzleArray{dims,<:Tensor}) where {dims}
@@ -85,7 +91,7 @@ function LazyTensor{T}(arr::AbstractTensor) where {T}
     extrude = ntuple(n -> size(arr)[n] == 1, ndims(arr))
     shape = ntuple(n -> size(arr)[n], ndims(arr))
     tns = subquery(name, table(immediate(arr), idxs...))
-    LazyTensor{eltype(arr), ndims(arr)}(tns, extrude, shape, fill_value(arr))
+    LazyTensor{eltype(arr),ndims(arr)}(tns, extrude, shape, fill_value(arr))
 end
 LazyTensor(data::LazyTensor) = data
 
@@ -127,7 +133,9 @@ end
 
 function Base.map!(dst, f, src::LazyTensor, args...)
     res = map(f, src, args...)
-    return LazyTensor(identify(reformat(dst, res.data)), res.extrude, res.shape, res.fill_value)
+    return LazyTensor(
+        identify(reformat(dst, res.data)), res.extrude, res.shape, res.fill_value
+    )
 end
 
 function initial_value(op, T)
@@ -159,7 +167,9 @@ function Base.reduce(
     shape = ((arg.shape[n] for n in 1:N if !(n in dims))...,)
     fields = [field(gensym(:i)) for _ in 1:N]
     S = fixpoint_type(op, init, eltype(arg))
-    data = aggregate(immediate(op), immediate(init), relabel(arg.data, fields), fields[dims]...)
+    data = aggregate(
+        immediate(op), immediate(init), relabel(arg.data, fields), fields[dims]...
+    )
     LazyTensor{S}(identify(data), extrude, shape, init)
 end
 
@@ -200,10 +210,10 @@ function tensordot(
     end
 
     extrude = ((A.extrude[n] for n in 1:N1 if !(n in A_idxs))...,
-                (B.extrude[n] for n in 1:N2 if !(n in B_idxs))...,)
+        (B.extrude[n] for n in 1:N2 if !(n in B_idxs))...)
 
     shape = ((A.shape[n] for n in 1:N1 if !(n in A_idxs))...,
-                (B.shape[n] for n in 1:N2 if !(n in B_idxs))...,)
+        (B.shape[n] for n in 1:N2 if !(n in B_idxs))...)
     A_fields = [field(gensym(:i)) for _ in 1:N1]
     B_fields = [field(gensym(:i)) for _ in 1:N2]
     reduce_fields = []
@@ -302,8 +312,10 @@ function Base.copyto!(::LazyTensor, ::Any)
     throw(ArgumentError("cannot materialize into a LazyTensor"))
 end
 
-function Base.copyto!(dst::AbstractArray, src::LazyTensor{T, N}) where {T, N}
-    return LazyTensor{T, N}(reformat(immediate(dst), src.data), src.extrude, src.shape, src.fill_value)
+function Base.copyto!(dst::AbstractArray, src::LazyTensor{T,N}) where {T,N}
+    return LazyTensor{T,N}(
+        reformat(immediate(dst), src.data), src.extrude, src.shape, src.fill_value
+    )
 end
 
 Base.permutedims(arg::LazyTensor{T,2}) where {T} = permutedims(arg, [2, 1])
@@ -313,7 +325,12 @@ function Base.permutedims(arg::LazyTensor{T,N}, perm) where {T,N}
     isperm(perm) || throw(ArgumentError("permutedims given invalid permutation"))
     perm = collect(perm)
     idxs = [field(gensym(:i)) for _ in 1:N]
-    return LazyTensor{T, N}(reorder(relabel(arg.data, idxs...), idxs[perm]...), arg.extrude[perm], arg.shape[perm], arg.fill_value)
+    return LazyTensor{T,N}(
+        reorder(relabel(arg.data, idxs...), idxs[perm]...),
+        arg.extrude[perm],
+        arg.shape[perm],
+        arg.fill_value,
+    )
 end
 Base.permutedims(arr::SwizzleArray, perm) = swizzle(arr, perm...)
 
@@ -539,6 +556,100 @@ function LinearAlgebra.norm(arr::LazyTensor, p::Real=2)
         return map(root, sum(map(power, map(norm, arr, p), p)))
     end
 end
+
+"""
+"""
+Statistics.mean(tns::LazyTensor; dims=:) = _mean(identity, tns, dims)
+
+"""
+"""
+Statistics.mean(f, tns::LazyTensor; dims=:) = _mean(f, tns, dims)
+
+"""
+"""
+Statistics.mean(tns::AbstractTensorOrBroadcast; dims=:) =
+    compute(_mean(identity, lazy(tns), dims))
+
+"""
+"""
+Statistics.mean(f, tns::AbstractTensorOrBroadcast; dims=:) =
+    compute(_mean(f, lazy(tns), dims))
+
+function _premean(logic, tns::LazyTensor{T,N}, dims=:) where {T,N}
+    # keepdims = !(dims == Colon())
+    dims = dims == Colon() ? (1:N) : collect(dims)
+    # extrude = keepdims ? 
+    # (((n in dims) ? true : tns.extrude[n] for n in 1:N)...,) :
+    extrude = ((tns.extrude[n] for n in 1:N if !(n in dims))...,)
+    # shape = keepdims ? 
+    #     (((n in dims) ? 1 : tns.shape[n] for n in 1:N)...,) :
+    shape = ((tns.shape[n] for n in 1:N if !(n in dims))...,)
+    init = 0
+    fields = [field(gensym(:i)) for _ in 1:N]
+    S = fixpoint_type(+, init, eltype(tns))
+    data = aggregate(
+        immediate(+), immediate(init), logic(tns.data, fields), fields[dims]...
+    )
+    n = mapreduce(i -> tns.shape[i], *, unique(dims); init=1)
+    # new_N = keepdims ? ndims(tns) : ndims(tns) - length(dims)
+    result = LazyTensor{S}(identify(data), extrude, shape, init)
+    return (result, n)
+end
+
+function _mean(f, tns::LazyTensor{T,N}, dims=:) where {T,N}
+    logic = (arr, fields) -> mapjoin(immediate(f), relabel(arr, fields...))
+    result, count = _premean(logic, tns, dims)
+    return result ./ count
+end
+
+"""
+"""
+Statistics.varm(tns::LazyTensor, m; corrected=true, dims=:) = _varm(tns, m, corrected, dims)
+
+"""
+"""
+Statistics.varm(tns::AbstractTensorOrBroadcast, m; corrected=true, dims=:) =
+    compute(_varm(lazy(tns), m, corrected, dims))
+
+function _varm(
+    tns::LazyTensor{T,N}, m::LazyTensor{T2,N2}, corrected=true, dims=:
+) where {T,N,T2,N2}
+    logic =
+        (arr, fields) -> mapjoin(
+            immediate(abs2),
+            mapjoin(immediate(-), relabel(arr, fields), relabel(m.data, fields)),
+        )
+    result, count = _premean(logic, tns, dims)
+    return result ./ (count - corrected)
+end
+
+"""
+"""
+Statistics.var(tns::LazyTensor; corrected=true, mean=nothing, dims=:) =
+    _var(tns, corrected, mean, dims)
+"""
+"""
+Statistics.var(tns::AbstractTensorOrBroadcast; corrected=true, mean=nothing, dims=:) =
+    compute(_var(lazy(tns), corrected, mean, dims))
+
+function _var(tns::LazyTensor, corrected, m, dims)
+    if m === nothing
+        m = Statistics.mean(tns; dims=dims)
+        m = expanddims(m, (ndims(m) + 1):ndims(tns))
+        #   mean = dims === Colon() ? mean[] : mean
+    end
+    return varm(tns, m; corrected=corrected, dims=dims)
+end
+
+"""
+"""
+#TODO: Use stable LinearAlgebra.norm
+function Statistics.std(
+    tns::Union{LazyTensor,AbstractTensorOrBroadcast}; corrected=true, mean=nothing, dims=:
+)
+    sqrt.(var(tns; corrected=corrected, mean=mean, dims=dims))
+end
+
 
 """
     lazy(arg)

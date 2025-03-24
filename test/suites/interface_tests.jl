@@ -160,9 +160,7 @@ end
 
 @testitem "interface_asmd" setup = [CheckOutput] begin
     using Finch: AsArray
-    using Finch
     using SparseArrays
-    using Statistics
     using LinearAlgebra
 
     A = Tensor(
@@ -493,37 +491,30 @@ end
                     c = compute(sum(A[:, :, nothing] .* B[nothing, :, :]; dims=[2]))
                     @test c == c_correct
                 end
-            end
-        end
 
-        Finch.with_scheduler(scheduler) do
-            @testset "stats functions with $key scheduler" begin
-
-                let 
+                let
                     A_ref = [0 0 44; 11 0 0; 22 00 55; 33 0 0]
                     A = lazy(A_ref)
-                    
+
                     expected = mean(A_ref)
                     result = compute(mean(A))[]
                     @test result == expected
 
-
-                    expected = mean(A_ref, dims=1:1)[1,:]
-                    result = compute(mean(A, dims=1:1))
+                    expected = mean(A_ref; dims=1:1)[1, :]
+                    result = compute(mean(A; dims=1:1))
                     @test all(isapprox.(result, expected))
 
-
-                    expected = mean(A_ref, dims=2:2)[:,1]
-                    result = compute(mean(A, dims=2:2))
+                    expected = mean(A_ref; dims=2:2)[:, 1]
+                    result = compute(mean(A; dims=2:2))
                     @test all(isapprox.(result, expected))
                 end
 
-                let 
+                let
                     A_ref = [0 0 44; 11 0 0; 22 00 55; 33 0 0]
                     A = lazy(A_ref)
-                    
-                    expected = var(A_ref, corrected=false)
-                    result = compute(var(A, corrected=false))[]
+
+                    expected = var(A_ref; corrected=false)
+                    result = compute(var(A; corrected=false))[]
                     @test result == expected
 
                     expected = var(A_ref)
@@ -547,12 +538,12 @@ end
                     # @test all(isapprox.(result, expected))                
                 end
 
-                let 
+                let
                     A_ref = [0 0 44; 11 0 0; 22 00 55; 33 0 0]
                     A = lazy(A_ref)
-                    
-                    expected = std(A_ref, corrected=false)
-                    result = compute(std(A, corrected=false))[]
+
+                    expected = std(A_ref; corrected=false)
+                    result = compute(std(A; corrected=false))[]
                     @test result == expected
 
                     expected = std(A_ref)
@@ -577,7 +568,6 @@ end
                 end
             end
         end
-
     end
 end
 

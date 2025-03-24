@@ -33,7 +33,6 @@ TensorMarket = "8b7d4fe7-0b45-4d0d-9dd8-5cc9b23b4b77"
 HDF5Ext = "HDF5"
 NPZExt = "NPZ"
 SparseArraysExt = "SparseArrays"
-StatisticsExt = "Statistics"
 TensorMarketExt = "TensorMarket"
 
 [compat]

@@ -14,6 +14,7 @@ using Random: AbstractRNG, default_rng, randexp, randperm
 using PrecompileTools
 using Compat
 using DataStructures
+using Statistics
 using JSON
 using Distributions: Binomial, Normal, Poisson
 using TOML

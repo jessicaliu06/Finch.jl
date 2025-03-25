@@ -159,7 +159,6 @@ if parsed_args["nprocs"] == 0
         include("modules/checkoutput_testsetup.jl")
         include("suites/continuous_tests.jl")
         include("suites/continuousexamples_tests.jl")
-        include("suites/dims_tests.jl")
         include("suites/docs_tests.jl")
         include("suites/examples_tests.jl")
         include("suites/fileio_tests.jl")

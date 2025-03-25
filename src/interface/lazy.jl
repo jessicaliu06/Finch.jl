@@ -73,7 +73,7 @@ function expanddims(arr::LazyTensor{Vf,Tv}, dims) where {Vf,Tv}
     return LazyTensor{Vf,Tv}(data_2, shape_2)
 end
 
-function dropdims(arr::LazyTensor{Vf, Tv}, dims) where {Vf, Tv}
+function dropdims(arr::LazyTensor{Vf,Tv}, dims) where {Vf,Tv}
     @assert allunique(dims)
     @assert issubset(dims, 1:ndims(arr))
     @assert all(isone, arr.shape[dims])
@@ -82,7 +82,7 @@ function dropdims(arr::LazyTensor{Vf, Tv}, dims) where {Vf, Tv}
     idxs_2 = idxs_1[newdims]
     data_2 = reorder(relabel(arr.data, idxs_1...), idxs_2...)
     shape_2 = arr.shape[newdims]
-    return LazyTensor{Vf, Tv}(
+    return LazyTensor{Vf,Tv}(
         data_2, tuple(shape_2...)
     )
 end

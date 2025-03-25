@@ -185,7 +185,7 @@ expanddims(arr::AbstractTensor, dims) = compute(expanddims(lazy(arr), dims))
 Reduces the dimensions of an array by removing the singleton axis or axes that
 appear at the `dims` position in the array shape.
 """
-dropdims(arr::AbstractTensor, dims) = compute(dropdims(lazy(arr), dims))
+Base.dropdims(arr::AbstractTensor, dims) = compute(dropdims(lazy(arr), dims))
 
 function Statistics.mean(tns::AbstractTensorOrBroadcast; dims=:)
     res = compute(mean(lazy(tns); dims=dims))

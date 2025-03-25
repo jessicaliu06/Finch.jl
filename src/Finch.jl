@@ -55,7 +55,7 @@ export lazy, compute, fused, tensordot, @einsum
 
 export choose, minby, maxby, overwrite, initwrite, filterop, d
 
-export fill_value, AsArray, expanddims, dropdims, tensor_tree
+export fill_value, AsArray, expanddims, tensor_tree
 
 export parallelAnalysis, ParallelAnalysisResults
 export parallel, extent, auto

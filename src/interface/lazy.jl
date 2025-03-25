@@ -73,7 +73,7 @@ function expanddims(arr::LazyTensor{Vf,Tv}, dims) where {Vf,Tv}
     return LazyTensor{Vf,Tv}(data_2, shape_2)
 end
 
-function dropdims(arr::LazyTensor{Vf,Tv}, dims) where {Vf,Tv}
+function Base.dropdims(arr::LazyTensor{Vf,Tv}, dims) where {Vf,Tv}
     @assert allunique(dims)
     @assert issubset(dims, 1:ndims(arr))
     @assert all(isone, arr.shape[dims])

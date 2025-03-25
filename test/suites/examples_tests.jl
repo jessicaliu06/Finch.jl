@@ -127,10 +127,12 @@
 
         @test topological_sort(A) == [5, 6, 1, 3, 4, 2]
     end
-    
+
     @testset "floyd_warshall" begin
         # https://cses.fi/problemset/task/1672
-        matrix = Tensor(CSCFormat(Inf), [ 0 5 9 Inf; Inf 0 3 Inf; Inf Inf 0 Inf; Inf Inf 5 0; ])
+        matrix = Tensor(
+            CSCFormat(Inf), [0 5 9 Inf; Inf 0 3 Inf; Inf Inf 0 Inf; Inf Inf 5 0]
+        )
 
         n, m = size(matrix)
         res = floyd_warshall(matrix)

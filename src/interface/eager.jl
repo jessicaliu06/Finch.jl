@@ -180,31 +180,61 @@ will appear at the `dims` position in the expanded array shape.
 expanddims(arr::AbstractTensor, dims) = compute(expanddims(lazy(arr), dims))
 
 function Statistics.mean(tns::AbstractTensorOrBroadcast; dims=:)
-    compute(mean(lazy(tns); dims=dims))
+    res = compute(mean(lazy(tns); dims=dims))
+    if dims === Colon()
+        return res[]
+    else
+        return res
+    end
 end
 
 function Statistics.mean(f, tns::AbstractTensorOrBroadcast; dims=:)
-    compute(mean(f, lazy(tns); dims=dims))
+    res = compute(mean(f, lazy(tns); dims=dims))
+    if dims === Colon()
+        return res[]
+    else
+        return res
+    end
 end
 
 function Statistics.varm(tns::AbstractTensorOrBroadcast, m; corrected=true, dims=:)
-    compute(varm(lazy(tns), m; corrected=corrected, dims=dims))
+    res = compute(varm(lazy(tns), m; corrected=corrected, dims=dims))
+    if dims === Colon()
+        return res[]
+    else
+        return res
+    end
 end
 
 function Statistics.var(
     tns::AbstractTensorOrBroadcast; corrected=true, mean=nothing, dims=:
 )
-    compute(var(lazy(tns); corrected=corrected, mean=mean, dims=dims))
+    res = compute(var(lazy(tns); corrected=corrected, mean=mean, dims=dims))
+    if dims === Colon()
+        return res[]
+    else
+        return res
+    end
 end
 
 function Statistics.stdm(
     tns::AbstractTensorOrBroadcast, m; corrected=true, dims=:
 )
-    compute(stdm(lazy(tns), lazy(m); corrected=corrected, dims=dims))
+    res = compute(stdm(lazy(tns), lazy(m); corrected=corrected, dims=dims))
+    if dims === Colon()
+        return res[]
+    else
+        return res
+    end
 end
 
 function Statistics.std(
     tns::AbstractTensorOrBroadcast; corrected=true, mean=nothing, dims=:
 )
-    compute(stdm(lazy(tns); corrected=corrected, mean=mean, dims=dims))
+    res = compute(std(lazy(tns); corrected=corrected, mean=mean, dims=dims))
+    if dims === Colon()
+        return res[]
+    else
+        return res
+    end
 end

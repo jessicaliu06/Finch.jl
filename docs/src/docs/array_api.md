@@ -164,32 +164,7 @@ julia> fused((A, B, C) -> C .* (A * B), A, B, C; tag=:very_sparse_sddmm);
 julia> C = fsprand(1000, 1000, 0.9);
 
 julia> fused((A, B, C) -> C .* (A * B), A, B, C; tag=:very_dense_sddmm);
-ERROR: BoundsError: attempt to access 2-element Vector{Finch.FinchLogic.LogicNode} at index [1, 2]
-Stacktrace:
-  [1] throw_boundserror(A::Vector{Finch.FinchLogic.LogicNode}, I::Tuple{Int64, Int64})
-    @ Base ./essentials.jl:14
-  [2] checkbounds
-    @ ./abstractarray.jl:699 [inlined]
-  [3] getindex(::Vector{Finch.FinchLogic.LogicNode}, ::Int64, ::Int64)
-    @ Base ./array.jl:929
-  [4] broadcast_to_query(tns::Finch.LazyTensor{0.0, Float64, 2, Tuple{Int64, Int64}}, idxs::Vector{Finch.FinchLogic.LogicNode})
-    @ Finch ~/Projects/Finch.jl/src/interface/lazy.jl:258
-  [5] #1930
-    @ ~/Projects/Finch.jl/src/interface/lazy.jl:252 [inlined]
-  [6] map
-    @ ./tuple.jl:356 [inlined]
-  [7] broadcast_to_query(bc::Base.Broadcast.Broadcasted{Finch.LazyStyle{2}, Nothing, typeof(*), Tuple{Finch.LazyTensor{0.0, Float64, 2, Tuple{Int64, Int64}}, Finch.LazyTensor{0.0, Float64, 2, Tuple{Int64, Int64}}}}, idxs::Vector{Finch.FinchLogic.LogicNode})
-    @ Finch ~/Projects/Finch.jl/src/interface/lazy.jl:252
-  [8] copy(bc::Base.Broadcast.Broadcasted{Finch.LazyStyle{2}, Nothing, typeof(*), Tuple{Finch.LazyTensor{0.0, Float64, 2, Tuple{Int64, Int64}}, Finch.LazyTensor{0.0, Float64, 2, Tuple{Int64, Int64}}}})
-    @ Finch ~/Projects/Finch.jl/src/interface/lazy.jl:292
-  [9] materialize
-    @ ./broadcast.jl:872 [inlined]
- [10] (::var"#3#4")(A::Finch.LazyTensor{0.0, Float64, 2, Tuple{Int64, Int64}}, B::Finch.LazyTensor{0.0, Float64, 2, Tuple{Int64, Int64}}, C::Finch.LazyTensor{0.0, Float64, 2, Tuple{Int64, Int64}})
-    @ Main ./none:1
- [11] fused(::Function, ::Matrix{Float64}, ::Vararg{Any}; kwargs::@Kwargs{tag::Symbol})
-    @ Finch ~/Projects/Finch.jl/src/interface/lazy.jl:649
- [12] top-level scope
-    @ none:1
+
 ```
 
 By distinguishing between the two uses of the same function, Galley can make

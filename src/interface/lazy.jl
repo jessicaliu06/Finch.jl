@@ -550,70 +550,39 @@ function LinearAlgebra.norm(arr::LazyTensor, p::Real=2)
     end
 end
 
-Statistics.mean(tns::LazyTensor; dims=:) = _mean(identity, tns, dims)
-Statistics.mean(f, tns::LazyTensor; dims=:) = _mean(f, tns, dims)
-
-function _premean(logic, tns::LazyTensor{Vf,Tv,N}, dims=:) where {Vf,Tv,N}
-    # keepdims = !(dims == Colon())
-    dims = dims == Colon() ? (1:N) : collect(dims)
-    # shape = keepdims ? 
-    #     (((n in dims) ? 1 : tns.shape[n] for n in 1:N)...,) :
-    shape = ((tns.shape[n] for n in 1:N if !(n in dims))...,)
-    init = 0
-    fields = [field(gensym(:i)) for _ in 1:N]
-    S = fixpoint_type(+, init, eltype(tns))
-    data = aggregate(
-        immediate(+), immediate(init), logic(tns.data, fields), fields[dims]...
-    )
-    n = mapreduce(i -> tns.shape[i], *, unique(dims); init=1)
-    # new_N = keepdims ? ndims(tns) : ndims(tns) - length(dims)
-    result = LazyTensor{init,Tv}(identify(data), shape)
-    return (result, n)
+function Statistics.mean(tns::LazyTensor; dims=:)
+    dims = dims == Colon() ? (1:ndims(tns)) : collect(dims)
+    n = prod(collect(size(tns))[dims])
+    return sum(tns; dims=dims) ./ n
 end
 
-function _mean(f, tns::LazyTensor{T,N}, dims=:) where {T,N}
-    logic = (arr, fields) -> mapjoin(immediate(f), relabel(arr, fields...))
-    result, count = _premean(logic, tns, dims)
-    return result ./ count
+function Statistics.mean(f, tns::LazyTensor; dims=:)
+    dims = dims == Colon() ? (1:ndims(tns)) : collect(dims)
+    n = prod(collect(size(tns))[dims])
+    return sum(map(f, tns); dims=dims) ./ n
 end
 
-Statistics.varm(tns::LazyTensor, m; corrected=true, dims=:) = _varm(tns, m, corrected, dims)
-
-function _varm(
-    tns::LazyTensor, m::LazyTensor, corrected=true, dims=:
-)
-    logic =
-        (arr, fields) -> mapjoin(
-            immediate(abs2),
-            mapjoin(immediate(-), relabel(arr, fields), relabel(m.data, fields)),
-        )
-    result, count = _premean(logic, tns, dims)
-    return result ./ (count - corrected)
-end
-
-function Statistics.var(tns::LazyTensor; corrected=true, mean=nothing, dims=:)
-    _var(tns, corrected, mean, dims)
-end
-
-function _var(tns::LazyTensor, corrected, m, dims)
-    if m === nothing
-        m = Statistics.mean(tns; dims=dims)
-        m = expanddims(m, (ndims(m) + 1):ndims(tns))
-        #   mean = dims === Colon() ? mean[] : mean
+function Statistics.var(tns::LazyTensor; mean=nothing, corrected=true, dims=:)
+    dims = dims == Colon() ? (1:ndims(tns)) : collect(dims)
+    if mean === nothing
+        mean = expanddims(Statistics.mean(tns; dims=dims), dims)
     end
-    return varm(tns, m; corrected=corrected, dims=dims)
+    n = prod(collect(size(tns))[dims])
+    return sum(abs2.(tns .- mean); dims=dims) ./ (n - corrected)
 end
 
-function Statistics.stdm(
-    tns::LazyTensor, m; corrected=true, dims=:
-)
-    sqrt.(varm(tns, m; corrected=corrected, dims=dims))
+function Statistics.varm(tns::LazyTensor, mean; corrected=true, dims=:)
+    var(tns; mean=mean, corrected=corrected, dims=dims)
 end
 
 function Statistics.std(
     tns::LazyTensor; corrected=true, mean=nothing, dims=:
 )
     sqrt.(var(tns; corrected=corrected, mean=mean, dims=dims))
+end
+
+function Statistics.stdm(tns::LazyTensor, m; corrected=true, dims=:)
+    std(tns; corrected=corrected, mean=m, dims=dims)
 end
 
 """
@@ -714,5 +683,13 @@ function compute_parse(ctx, args::Tuple)
     bodies = map((arg, var) -> query(var, arg.data), args, vars)
     prgm = plan(bodies, produces(vars))
 
-    return ctx(prgm)
+    ress = ctx(prgm)
+
+    @debug begin
+        for (arg, res) in zip(args, ress)
+            @assert size(arg) == size(res)
+        end
+    end
+
+    return ress
 end

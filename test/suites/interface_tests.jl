@@ -837,6 +837,21 @@ end
                     A = fsprand(5, 5, 3)
                     @test countstored(A - A) == 3 skip = (key != "default")
                 end
+
+                #https://github.com/finch-tensor/Finch.jl/issues/702
+                let
+                    u = fsprand(3, 1, 2, 1, 1, 0.2)
+                    v = dropdims(u, [2, 4, 5])
+                
+                    @test size(v) == (3, 2)
+                    @test expanddims(v, [2, 4, 5]) == u
+                
+                    u = fsprand(3, 1, 2, 1, 1, 0.2)
+                    v = dropdims(u, 2)
+                
+                    @test size(v) == (3, 2, 1, 1)
+                    @test expanddims(v, 2) == u
+                end
             end
         end
     end

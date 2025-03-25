@@ -69,6 +69,7 @@ function expanddims(arr::LazyTensor{Vf,Tv}, dims) where {Vf,Tv}
     shape_2 = ntuple(
         n -> n in dims ? 1 : arr.shape[n - offset[n]], ndims(arr) + length(dims)
     )
+
     return LazyTensor{Vf,Tv}(data_2, shape_2)
 end
 
@@ -123,7 +124,7 @@ end
 function Base.map(f, src::LazyTensor, args...)
     largs = map(LazyTensor, (src, args...))
     shape = largs[something(findfirst(arg -> length(arg.shape) > 0, largs), 1)].shape
-    idxs = [field(gensym(:i)) for _ in src.shape]
+    idxs = [field(gensym(:i)) for _ in shape]
     ldatas = map(largs) do larg
         if larg.shape == shape
             return relabel(larg.data, idxs...)
@@ -267,7 +268,7 @@ function broadcast_to_query(tns::LazyTensor{Vf,Tv,N}, idxs) where {Vf,Tv,N}
 end
 
 function broadcast_to_shape(bc::Broadcast.Broadcasted, n)
-    max(map(arg -> broadcast_to_shape(arg, n), bc.args)...)
+    maximum(map(arg -> broadcast_to_shape(arg, n), bc.args))
 end
 
 function broadcast_to_shape(tns::LazyTensor, n)

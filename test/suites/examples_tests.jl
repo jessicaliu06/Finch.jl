@@ -10,6 +10,7 @@
     include(joinpath(@__DIR__, "../../docs/examples/spgemm.jl"))
     include(joinpath(@__DIR__, "../../docs/examples/triangle_counting.jl"))
     include(joinpath(@__DIR__, "../../docs/examples/degree_centrality.jl"))
+    include(joinpath(@__DIR__, "../../docs/examples/topological_sort.jl"))
 
     @testset "pagerank" begin
         size, sparsity = 30, 0.5
@@ -116,4 +117,12 @@
             @test C == C_ref
         end
     end
+
+    @testset "topological_sort"
+    A = Tensor(
+        CSCFormat(0),
+        [0 0 0 0 1 1; 0 0 0 1 1 0; 0 0 0 0 0 1; 0 0 1 0 0 0; 0 0 0 0 0 0; 0 0 0 0 0 0],
+    )
+
+    @test topological_sort(A) == [5, 6, 1, 3, 4, 2]
 end

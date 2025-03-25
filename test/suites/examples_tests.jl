@@ -8,6 +8,7 @@
     include(joinpath(@__DIR__, "../../docs/examples/shortest_paths.jl"))
     include(joinpath(@__DIR__, "../../docs/examples/spgemm.jl"))
     include(joinpath(@__DIR__, "../../docs/examples/triangle_counting.jl"))
+    include(joinpath(@__DIR__, "../../docs/examples/floyd_warshall.jl"))
 
     @testset "pagerank" begin
         size, sparsity = 30, 0.5
@@ -85,5 +86,15 @@
             C = fn(A, B)
             @test C == C_ref
         end
+    end
+    
+    @testset "floydwarshall" begin
+        # https://cses.fi/problemset/task/1672
+        matrix = Tensor(CSCFormat(Inf), [ 0 5 9 Inf; Inf 0 3 Inf; Inf Inf 0 Inf; Inf Inf 5 0; ])
+
+        n, m = size(matrix)
+        res = floydwarshall(matrix)
+        ref = [0.0 5.0 8.0 Inf; Inf 0.0 3.0 Inf; Inf Inf 0.0 Inf; Inf Inf 5.0 0.0]
+        @test res == ref
     end
 end

@@ -76,6 +76,7 @@ end
 function dropdims(arr::LazyTensor{Vf, Tv}, dims) where {Vf, Tv}
     @assert allunique(dims)
     @assert issubset(dims, 1:ndims(arr))
+    @assert all(isone, arr.shape[dims])
     newdims = setdiff(1:ndims(arr), dims)
     idxs_1 = [field(gensym(:i)) for _ in 1:ndims(arr)]
     idxs_2 = idxs_1[newdims]

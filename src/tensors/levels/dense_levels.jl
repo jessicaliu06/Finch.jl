@@ -44,8 +44,8 @@ function postype(::Type{DenseLevel{Ti,Lvl}}) where {Ti,Lvl}
     return postype(Lvl)
 end
 
-function moveto(lvl::DenseLevel{Ti}, device) where {Ti}
-    return DenseLevel{Ti}(moveto(lvl.lvl, device), lvl.shape)
+function transfer(device, lvl::DenseLevel{Ti}) where {Ti}
+    return DenseLevel{Ti}(transfer(device, lvl.lvl), lvl.shape)
 end
 
 function pattern!(lvl::DenseLevel{Ti,Lvl}) where {Ti,Lvl}
@@ -115,8 +115,8 @@ function labelled_children(fbr::SubFiber{<:DenseLevel})
 end
 
 mutable struct VirtualDenseLevel <: AbstractVirtualLevel
+    tag
     lvl
-    ex
     Ti
     shape
 end
@@ -134,16 +134,18 @@ function is_level_concurrent(ctx, lvl::VirtualDenseLevel)
 end
 
 function virtualize(ctx, ex, ::Type{DenseLevel{Ti,Lvl}}, tag=:lvl) where {Ti,Lvl}
-    sym = freshen(ctx, tag)
-    shape = value(:($sym.shape), Ti)
+    tag = freshen(ctx, tag)
+    stop = freshen(ctx, tag, :_stop)
     push_preamble!(
         ctx,
         quote
-            $sym = $ex
+            $tag = $ex
+            $stop = $tag.shape
         end,
     )
-    lvl_2 = virtualize(ctx, :($sym.lvl), Lvl, sym)
-    VirtualDenseLevel(lvl_2, sym, Ti, shape)
+    shape = value(stop, Ti)
+    lvl_2 = virtualize(ctx, :($tag.lvl), Lvl, tag)
+    VirtualDenseLevel(tag, lvl_2, Ti, shape)
 end
 function lower(ctx::AbstractCompiler, lvl::VirtualDenseLevel, ::DefaultStyle)
     quote
@@ -154,10 +156,23 @@ function lower(ctx::AbstractCompiler, lvl::VirtualDenseLevel, ::DefaultStyle)
     end
 end
 
+function distribute_level(ctx::AbstractCompiler, lvl::VirtualDenseLevel, arch, diff, style)
+    lvl_2 = distribute_level(ctx, lvl.lvl, arch, diff, style)
+    diff[lvl.tag] = VirtualDenseLevel(lvl.tag, lvl_2, lvl.Ti, lvl.shape)
+end
+
+function redistribute(ctx::AbstractCompiler, lvl::VirtualDenseLevel, diff)
+    get(
+        diff,
+        lvl.tag,
+        VirtualDenseLevel(lvl.tag, redistribute(ctx, lvl.lvl, diff), lvl.Ti, lvl.shape),
+    )
+end
+
 Base.summary(lvl::VirtualDenseLevel) = "Dense($(summary(lvl.lvl)))"
 
 function virtual_level_size(ctx, lvl::VirtualDenseLevel)
-    ext = Extent(literal(lvl.Ti(1)), lvl.shape)
+    ext = VirtualExtent(literal(lvl.Ti(1)), lvl.shape)
     (virtual_level_size(ctx, lvl.lvl)..., ext)
 end
 
@@ -201,10 +216,6 @@ function freeze_level!(ctx::AbstractCompiler, lvl::VirtualDenseLevel, pos)
     return lvl
 end
 
-function virtual_moveto_level(ctx::AbstractCompiler, lvl::VirtualDenseLevel, arch)
-    virtual_moveto_level(ctx, lvl.lvl, arch)
-end
-
 struct DenseTraversal
     fbr
     subfiber_ctr
@@ -237,7 +248,7 @@ function unfurl(
     },
 )
     (lvl, pos) = (trv.fbr.lvl, trv.fbr.pos)
-    tag = lvl.ex
+    tag = lvl.tag
     Ti = lvl.Ti
 
     q = freshen(ctx, tag, :_q)

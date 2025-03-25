@@ -21,6 +21,19 @@ struct VirtualProtocolizedArray <: AbstractVirtualCombinator
     protos
 end
 
+function distribute(
+    ctx::AbstractCompiler, tns::VirtualProtocolizedArray, arch, diff, style
+)
+    VirtualProtocolizedArray(distribute(ctx, tns.body, arch, diff, style), tns.protos)
+end
+
+function redistribute(ctx::AbstractCompiler, tns::VirtualProtocolizedArray, diff)
+    VirtualProtocolizedArray(
+        redistribute(ctx, tns.body, diff),
+        tns.protos,
+    )
+end
+
 is_injective(ctx, lvl::VirtualProtocolizedArray) = is_injective(ctx, lvl.body)
 is_atomic(ctx, lvl::VirtualProtocolizedArray) = is_atomic(ctx, lvl.body)
 is_concurrent(ctx, lvl::VirtualProtocolizedArray) = is_concurrent(ctx, lvl.body)
@@ -57,7 +70,7 @@ dimension of a matrix `A`, we write `A[gallop(i), j]`, which becomes
 `protocolize(A, gallop, nothing)[i, j]`.
 """
 protocolize(body, protos...) = ProtocolizedArray(body, protos)
-function virtual_call(ctx, ::typeof(protocolize), body, protos...)
+function virtual_call_def(ctx, alg, ::typeof(protocolize), ::Any, body, protos...)
     @assert All(isliteral)(protos)
     VirtualProtocolizedArray(body, map(proto -> proto.val, protos))
 end

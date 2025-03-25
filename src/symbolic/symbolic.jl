@@ -93,8 +93,12 @@ isidentity(::AbstractAlgebra, ::typeof(|), x) = !ismissing(x) && iszero(x)
 isidentity(::AbstractAlgebra, ::typeof(&), x) = !ismissing(x) && x == ~(zero(x))
 isidentity(::AbstractAlgebra, ::typeof(min), x) = !ismissing(x) && isinf(x) && x > 0
 isidentity(::AbstractAlgebra, ::typeof(max), x) = !ismissing(x) && isinf(x) && x < 0
-isidentity(::Finch.AbstractAlgebra, ::InitMax{D}, x) where {D} = isequal(x, D)
-isidentity(::Finch.AbstractAlgebra, ::InitMin{D}, x) where {D} = isequal(x, D)
+function isidentity(::Finch.AbstractAlgebra, ::InitMax{D}, x) where {D}
+    isequal(x, D) || isequal(x == D, true)
+end
+function isidentity(::Finch.AbstractAlgebra, ::InitMin{D}, x) where {D}
+    isequal(x, D) || isequal(x == D, true)
+end
 
 function isidentity_by_fn(alg::AbstractAlgebra, ::typeof(minby), x::FinchNode)
     if @capture x call(tuple, ~a::isliteral, ~b)
@@ -112,8 +116,12 @@ function isidentity_by_fn(alg::AbstractAlgebra, ::typeof(maxby), x::FinchNode)
     end
     return false
 end
-isidentity(::AbstractAlgebra, ::Chooser{Vf}, x) where {Vf} = isequal(x, Vf)
-isidentity(::AbstractAlgebra, ::InitWriter{Vf}, x) where {Vf} = isequal(x, Vf)
+function isidentity(::AbstractAlgebra, ::Chooser{Vf}, x) where {Vf}
+    isequal(x, Vf) || isequal(x == Vf, true)
+end
+function isidentity(::AbstractAlgebra, ::InitWriter{Vf}, x) where {Vf}
+    isequal(x, Vf) || isequal(x == Vf, true)
+end
 
 isannihilator(alg) = (f, x) -> isannihilator(alg, f, x)
 function isannihilator(alg, f::FinchNode, x::FinchNode)
@@ -150,8 +158,10 @@ function isannihilator_by_fn(alg::AbstractAlgebra, ::typeof(maxby), x::FinchNode
     end
     return false
 end
-isannihilator(::AbstractAlgebra, ::Chooser{Vf}, x) where {Vf} = !isequal(x, Vf)
-#isannihilator(::AbstractAlgebra, ::InitWriter{Vf}, x) where {Vf} = !isequal(x, Vf)
+function isannihilator(::AbstractAlgebra, ::Chooser{Vf}, x) where {Vf}
+    !(isequal(x, Vf) || isequal(x == Vf, true))
+end
+#isannihilator(::AbstractAlgebra, ::InitWriter{Vf}, x) where {Vf} = !(isequal(x, Vf) || isequal(x == Vf, true))
 
 isinverse(alg) = (f, g) -> isinverse(alg, f, g)
 function isinverse(alg, f::FinchNode, g::FinchNode)
@@ -206,10 +216,10 @@ end
 function collapsed(alg, idx, ext, lhs, f::typeof(*), rhs)
     assign(lhs, f, call(^, rhs, measure(ext)))
 end
-function collapsed(alg, idx, ext::Extent, lhs, f::typeof(+), rhs)
+function collapsed(alg, idx, ext::VirtualExtent, lhs, f::typeof(+), rhs)
     assign(lhs, f, call(*, measure(ext), rhs))
 end
-function collapsed(alg, idx, ext::ContinuousExtent, lhs, f::typeof(+), rhs)
+function collapsed(alg, idx, ext::VirtualContinuousExtent, lhs, f::typeof(+), rhs)
     if (@capture rhs call(*, ~a1..., call(d, ~i1..., idx, ~i2...), ~a2...)) # Lebesgue
         if prove(FinchCompiler(), call(==, measure(ext), 0))
             assign(lhs, f, literal(0))

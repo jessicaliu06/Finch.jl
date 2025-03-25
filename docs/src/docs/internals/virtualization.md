@@ -48,7 +48,7 @@ macro allows us to see the result of applying a macro. Let's examine what
 happens when we use the `@finch` macro (we've stripped line numbers from the
 result to clean it up):
 
-```jldoctest example1; filter=r"Finch.FinchNotation."
+```jldoctest example1; filter=r"Finch.(FinchNotation.)?"
 julia> Finch.regensym(Finch.striplines((@macroexpand @finch (C .= 0;
        for i in _
            C[i] = A[i] * B[i]
@@ -56,7 +56,7 @@ julia> Finch.regensym(Finch.striplines((@macroexpand @finch (C .= 0;
 quote
     _res_1 = (Finch.execute)((Finch.FinchNotation.block_instance)((Finch.FinchNotation.block_instance)((Finch.FinchNotation.declare_instance)((Finch.FinchNotation.tag_instance)(variable_instance(:C), (Finch.FinchNotation.finch_leaf_instance)(C)), literal_instance(0), (Finch.FinchNotation.literal_instance)(Finch.auto)), begin
                         let i = index_instance(i)
-                            (Finch.FinchNotation.loop_instance)(i, Finch.FinchNotation.Auto(), (Finch.FinchNotation.assign_instance)((Finch.FinchNotation.access_instance)((Finch.FinchNotation.tag_instance)(variable_instance(:C), (Finch.FinchNotation.finch_leaf_instance)(C)), (Finch.FinchNotation.updater_instance)((Finch.FinchNotation.literal_instance)(initwrite)), (Finch.FinchNotation.tag_instance)(variable_instance(:i), (Finch.FinchNotation.finch_leaf_instance)(i))), (Finch.FinchNotation.literal_instance)(initwrite), (Finch.FinchNotation.call_instance)((Finch.FinchNotation.tag_instance)(variable_instance(:*), (Finch.FinchNotation.finch_leaf_instance)(*)), (Finch.FinchNotation.access_instance)((Finch.FinchNotation.tag_instance)(variable_instance(:A), (Finch.FinchNotation.finch_leaf_instance)(A)), (Finch.FinchNotation.reader_instance)(), (Finch.FinchNotation.tag_instance)(variable_instance(:i), (Finch.FinchNotation.finch_leaf_instance)(i))), (Finch.FinchNotation.access_instance)((Finch.FinchNotation.tag_instance)(variable_instance(:B), (Finch.FinchNotation.finch_leaf_instance)(B)), (Finch.FinchNotation.reader_instance)(), (Finch.FinchNotation.tag_instance)(variable_instance(:i), (Finch.FinchNotation.finch_leaf_instance)(i))))))
+                            (Finch.FinchNotation.loop_instance)(i, Finch.FinchNotation.Auto(), (Finch.FinchNotation.assign_instance)((Finch.FinchNotation.access_instance)((Finch.FinchNotation.tag_instance)(variable_instance(:C), (Finch.FinchNotation.finch_leaf_instance)(C)), (Finch.FinchNotation.updater_instance)((Finch.FinchNotation.literal_instance)((Finch.FinchNotation.initwrite)((Finch.fill_value)(C)))), (Finch.FinchNotation.tag_instance)(variable_instance(:i), (Finch.FinchNotation.finch_leaf_instance)(i))), (Finch.FinchNotation.literal_instance)((Finch.FinchNotation.initwrite)((Finch.fill_value)(C))), (Finch.FinchNotation.call_instance)((Finch.FinchNotation.tag_instance)(variable_instance(:*), (Finch.FinchNotation.finch_leaf_instance)(*)), (Finch.FinchNotation.access_instance)((Finch.FinchNotation.tag_instance)(variable_instance(:A), (Finch.FinchNotation.finch_leaf_instance)(A)), (Finch.FinchNotation.reader_instance)(), (Finch.FinchNotation.tag_instance)(variable_instance(:i), (Finch.FinchNotation.finch_leaf_instance)(i))), (Finch.FinchNotation.access_instance)((Finch.FinchNotation.tag_instance)(variable_instance(:B), (Finch.FinchNotation.finch_leaf_instance)(B)), (Finch.FinchNotation.reader_instance)(), (Finch.FinchNotation.tag_instance)(variable_instance(:i), (Finch.FinchNotation.finch_leaf_instance)(i))))))
                         end
                     end), (Finch.FinchNotation.yieldbind_instance)(variable_instance(:C))); )
     begin
@@ -85,7 +85,7 @@ julia> prgm = Finch.@finch_program_instance (C .= 0;
 Finch program instance: begin
   tag(C, Tensor(SparseList(Element(0)))) .= 0
   for i = Auto()
-    tag(C, Tensor(SparseList(Element(0))))[tag(i, i)] <<initwrite>>= tag(*, *)(tag(A, Tensor(SparseList(Element(0))))[tag(i, i)], tag(B, Tensor(Dense(Element(0))))[tag(i, i)])
+    tag(C, Tensor(SparseList(Element(0))))[tag(i, i)] <<Finch.FinchNotation.InitWriter{0}()>>= tag(*, *)(tag(A, Tensor(SparseList(Element(0))))[tag(i, i)], tag(B, Tensor(Dense(Element(0))))[tag(i, i)])
   end
   return (tag(C, Tensor(SparseList(Element(0)))))
 end
@@ -99,7 +99,7 @@ different inputs, but the same program type. We can run our program using
 
 ```jldoctest example1; filter=r"Finch.FinchNotation."
 julia> typeof(prgm)
-Finch.FinchNotation.BlockInstance{Tuple{Finch.FinchNotation.DeclareInstance{Finch.FinchNotation.TagInstance{Finch.FinchNotation.VariableInstance{:C}, Tensor{SparseListLevel{Int64, Vector{Int64}, Vector{Int64}, ElementLevel{0, Int64, Int64, Vector{Int64}}}}}, Finch.FinchNotation.LiteralInstance{0}, Finch.FinchNotation.LiteralInstance{Finch.FinchNotation.Auto()}}, Finch.FinchNotation.LoopInstance{Finch.FinchNotation.IndexInstance{:i}, Finch.FinchNotation.Auto, Finch.FinchNotation.AssignInstance{Finch.FinchNotation.AccessInstance{Finch.FinchNotation.TagInstance{Finch.FinchNotation.VariableInstance{:C}, Tensor{SparseListLevel{Int64, Vector{Int64}, Vector{Int64}, ElementLevel{0, Int64, Int64, Vector{Int64}}}}}, Finch.FinchNotation.UpdaterInstance{Finch.FinchNotation.LiteralInstance{initwrite}}, Tuple{Finch.FinchNotation.TagInstance{Finch.FinchNotation.VariableInstance{:i}, Finch.FinchNotation.IndexInstance{:i}}}}, Finch.FinchNotation.LiteralInstance{initwrite}, Finch.FinchNotation.CallInstance{Finch.FinchNotation.TagInstance{Finch.FinchNotation.VariableInstance{:*}, Finch.FinchNotation.LiteralInstance{*}}, Tuple{Finch.FinchNotation.AccessInstance{Finch.FinchNotation.TagInstance{Finch.FinchNotation.VariableInstance{:A}, Tensor{SparseListLevel{Int64, Vector{Int64}, Vector{Int64}, ElementLevel{0, Int64, Int64, Vector{Int64}}}}}, Finch.FinchNotation.ReaderInstance, Tuple{Finch.FinchNotation.TagInstance{Finch.FinchNotation.VariableInstance{:i}, Finch.FinchNotation.IndexInstance{:i}}}}, Finch.FinchNotation.AccessInstance{Finch.FinchNotation.TagInstance{Finch.FinchNotation.VariableInstance{:B}, Tensor{DenseLevel{Int64, ElementLevel{0, Int64, Int64, Vector{Int64}}}}}, Finch.FinchNotation.ReaderInstance, Tuple{Finch.FinchNotation.TagInstance{Finch.FinchNotation.VariableInstance{:i}, Finch.FinchNotation.IndexInstance{:i}}}}}}}}, Finch.FinchNotation.YieldBindInstance{Tuple{Finch.FinchNotation.TagInstance{Finch.FinchNotation.VariableInstance{:C}, Tensor{SparseListLevel{Int64, Vector{Int64}, Vector{Int64}, ElementLevel{0, Int64, Int64, Vector{Int64}}}}}}}}}
+Finch.FinchNotation.BlockInstance{Tuple{Finch.FinchNotation.DeclareInstance{Finch.FinchNotation.TagInstance{Finch.FinchNotation.VariableInstance{:C}, Tensor{SparseListLevel{Int64, Vector{Int64}, Vector{Int64}, ElementLevel{0, Int64, Int64, Vector{Int64}}}}}, Finch.FinchNotation.LiteralInstance{0}, Finch.FinchNotation.LiteralInstance{Finch.FinchNotation.Auto()}}, Finch.FinchNotation.LoopInstance{Finch.FinchNotation.IndexInstance{:i}, Finch.FinchNotation.Auto, Finch.FinchNotation.AssignInstance{Finch.FinchNotation.AccessInstance{Finch.FinchNotation.TagInstance{Finch.FinchNotation.VariableInstance{:C}, Tensor{SparseListLevel{Int64, Vector{Int64}, Vector{Int64}, ElementLevel{0, Int64, Int64, Vector{Int64}}}}}, Finch.FinchNotation.UpdaterInstance{Finch.FinchNotation.LiteralInstance{Finch.FinchNotation.InitWriter{0}()}}, Tuple{Finch.FinchNotation.TagInstance{Finch.FinchNotation.VariableInstance{:i}, Finch.FinchNotation.IndexInstance{:i}}}}, Finch.FinchNotation.LiteralInstance{Finch.FinchNotation.InitWriter{0}()}, Finch.FinchNotation.CallInstance{Finch.FinchNotation.TagInstance{Finch.FinchNotation.VariableInstance{:*}, Finch.FinchNotation.LiteralInstance{*}}, Tuple{Finch.FinchNotation.AccessInstance{Finch.FinchNotation.TagInstance{Finch.FinchNotation.VariableInstance{:A}, Tensor{SparseListLevel{Int64, Vector{Int64}, Vector{Int64}, ElementLevel{0, Int64, Int64, Vector{Int64}}}}}, Finch.FinchNotation.ReaderInstance, Tuple{Finch.FinchNotation.TagInstance{Finch.FinchNotation.VariableInstance{:i}, Finch.FinchNotation.IndexInstance{:i}}}}, Finch.FinchNotation.AccessInstance{Finch.FinchNotation.TagInstance{Finch.FinchNotation.VariableInstance{:B}, Tensor{DenseLevel{Int64, ElementLevel{0, Int64, Int64, Vector{Int64}}}}}, Finch.FinchNotation.ReaderInstance, Tuple{Finch.FinchNotation.TagInstance{Finch.FinchNotation.VariableInstance{:i}, Finch.FinchNotation.IndexInstance{:i}}}}}}}}, Finch.FinchNotation.YieldBindInstance{Tuple{Finch.FinchNotation.TagInstance{Finch.FinchNotation.VariableInstance{:C}, Tensor{SparseListLevel{Int64, Vector{Int64}, Vector{Int64}, ElementLevel{0, Int64, Int64, Vector{Int64}}}}}}}}}
 
 julia> C = Finch.execute(prgm).C
 5 Tensor{SparseListLevel{Int64, Vector{Int64}, Vector{Int64}, ElementLevel{0, Int64, Int64, Vector{Int64}}}}:
@@ -198,12 +198,14 @@ julia> @finch_code begin
            end
        end
 quote
-    s = (ex.bodies[1]).body.lhs.tns.bind
-    s_val = s.val
+    s_data = (ex.bodies[1]).body.lhs.tns.bind
+    s_val = s_data.val
     A_lvl = (ex.bodies[1]).body.rhs.tns.bind.lvl
     A_lvl_ptr = A_lvl.ptr
     A_lvl_idx = A_lvl.idx
-    A_lvl_val = A_lvl.lvl.val
+    A_lvl_stop = A_lvl.shape
+    A_lvl_2 = A_lvl.lvl
+    A_lvl_2_val = A_lvl_2.val
     A_lvl_q = A_lvl_ptr[1]
     A_lvl_q_stop = A_lvl_ptr[1 + 1]
     if A_lvl_q < A_lvl_q_stop
@@ -211,7 +213,7 @@ quote
     else
         A_lvl_i1 = 0
     end
-    phase_stop = min(A_lvl_i1, A_lvl.shape)
+    phase_stop = min(A_lvl_i1, A_lvl_stop)
     if phase_stop >= 1
         if A_lvl_idx[A_lvl_q] < 1
             A_lvl_q = Finch.scansearch(A_lvl_idx, 1, A_lvl_q, A_lvl_q_stop - 1)
@@ -219,14 +221,14 @@ quote
         while true
             A_lvl_i = A_lvl_idx[A_lvl_q]
             if A_lvl_i < phase_stop
-                A_lvl_2_val = A_lvl_val[A_lvl_q]
-                s_val = A_lvl_2_val + s_val
+                A_lvl_2_val_2 = A_lvl_2_val[A_lvl_q]
+                s_val = A_lvl_2_val_2 + s_val
                 A_lvl_q += 1
             else
                 phase_stop_3 = min(phase_stop, A_lvl_i)
                 if A_lvl_i == phase_stop_3
-                    A_lvl_2_val = A_lvl_val[A_lvl_q]
-                    s_val += A_lvl_2_val
+                    A_lvl_2_val_2 = A_lvl_2_val[A_lvl_q]
+                    s_val += A_lvl_2_val_2
                     A_lvl_q += 1
                 end
                 break
@@ -234,7 +236,7 @@ quote
         end
     end
     result = ()
-    s.val = s_val
+    s_data.val = s_val
     result
 end
 
@@ -244,17 +246,19 @@ julia> @finch_code begin
            end
        end
 quote
-    s = (ex.bodies[1]).body.lhs.tns.bind
-    s_val = s.val
+    s_data = (ex.bodies[1]).body.lhs.tns.bind
+    s_val = s_data.val
     B_lvl = (ex.bodies[1]).body.rhs.tns.bind.lvl
-    B_lvl_val = B_lvl.lvl.val
-    for i_3 = 1:B_lvl.shape
-        B_lvl_q = (1 - 1) * B_lvl.shape + i_3
-        B_lvl_2_val = B_lvl_val[B_lvl_q]
-        s_val = B_lvl_2_val + s_val
+    B_lvl_stop = B_lvl.shape
+    B_lvl_2 = B_lvl.lvl
+    B_lvl_2_val = B_lvl_2.val
+    for i_3 = 1:B_lvl_stop
+        B_lvl_q = (1 - 1) * B_lvl_stop + i_3
+        B_lvl_2_val_2 = B_lvl_2_val[B_lvl_q]
+        s_val = B_lvl_2_val_2 + s_val
     end
     result = ()
-    s.val = s_val
+    s_data.val = s_val
     result
 end
 ```

@@ -29,6 +29,19 @@ struct VirtualToeplitzArray <: AbstractVirtualCombinator
     end
 end
 
+function distribute(
+    ctx::AbstractCompiler, tns::VirtualToeplitzArray, arch, diff, style
+)
+    VirtualToeplitzArray(distribute(ctx, tns.body, arch, diff, style), tns.dim)
+end
+
+function redistribute(ctx::AbstractCompiler, tns::VirtualToeplitzArray, diff)
+    VirtualToeplitzArray(
+        redistribute(ctx, tns.body, diff),
+        tns.dim,
+    )
+end
+
 function is_injective(ctx, lvl::VirtualToeplitzArray)
     sub = is_injective(ctx, lvl.body)
     return [sub[1:(lvl.dim)]..., false, sub[(lvl.dim + 1):end]...]
@@ -68,7 +81,7 @@ Create a `ToeplitzArray` such that
 The ToplitzArray can be thought of as adding a dimension that shifts another dimension of the original tensor.
 """
 toeplitz(body, dim) = ToeplitzArray(body, dim)
-function virtual_call(ctx, ::typeof(toeplitz), body, dim)
+function virtual_call_def(ctx, alg, ::typeof(toeplitz), ::Any, body, dim)
     @assert isliteral(dim)
     VirtualToeplitzArray(body, dim.val)
 end

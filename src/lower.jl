@@ -313,14 +313,11 @@ function lower_loop(ctx, root, ext)
     end
 end
 
-function lower_loop(ctx, root, ext::ParallelDimension)
+function lower_loop(ctx, root, ext::VirtualParallelDimension)
     lower_parallel_loop(ctx, root, ext, ext.device)
 end
-function lower_parallel_loop(ctx, root, ext::ParallelDimension, device::VirtualCPU)
+function lower_parallel_loop(ctx, root, ext::VirtualParallelDimension, device::VirtualCPU)
     root = ensure_concurrent(root, ctx)
-
-    tid = index(freshen(ctx, :tid))
-    i = freshen(ctx, :i)
 
     decl_in_scope = unique(
         filter(
@@ -344,39 +341,65 @@ function lower_parallel_loop(ctx, root, ext::ParallelDimension, device::VirtualC
         ),
     )
 
-    root_2 = loop(tid, Extent(value(i, Int), value(i, Int)),
-        loop(root.idx, ext.ext,
-            sieve(access(VirtualSplitMask(device.n), reader(), root.idx, tid),
-                root.body,
-            ),
-        ),
-    )
+    contain(ctx) do ctx_2
+        diff = Dict()
+        for tns in intersect(used_in_scope, decl_in_scope)
+            set_binding!(
+                ctx, tns, distribute(ctx, resolve(ctx, tns), device, diff, host_local)
+            )
+        end
+        for tns in setdiff(used_in_scope, decl_in_scope)
+            style = get_tensor_mode(ctx, tns).kind === reader ? host_global : host_shared
+            set_binding!(
+                ctx, tns, distribute(ctx, resolve(ctx, tns), device, diff, style)
+            )
+        end
+        body = redistribute(ctx, root.body, diff)
 
-    for tns in setdiff(used_in_scope, decl_in_scope)
-        virtual_moveto(ctx, resolve(ctx, tns), device)
-    end
-
-    code = contain(ctx) do ctx_2
-        subtask = VirtualCPUThread(value(i, Int), device, ctx_2.code.task)
-        contain(ctx_2; task=subtask) do ctx_3
-            for tns in intersect(used_in_scope, decl_in_scope)
-                virtual_moveto(ctx_3, resolve(ctx_3, tns), subtask)
-            end
-            contain(ctx_3) do ctx_4
-                open_scope(ctx_4) do ctx_5
+        virtual_parallel_region(ctx_2, device) do ctx_3
+            subtask = get_task(ctx_3)
+            tid = get_task_num(subtask)
+            open_scope(ctx_3) do ctx_4
+                contain(ctx_4) do ctx_5
+                    diff = Dict()
+                    for tns in intersect(used_in_scope, decl_in_scope)
+                        set_binding!(
+                            ctx_5,
+                            tns,
+                            distribute(
+                                ctx_5, resolve(ctx_5, tns), subtask, diff, device_local
+                            ),
+                        )
+                    end
+                    for tns in setdiff(used_in_scope, decl_in_scope)
+                        style = if get_tensor_mode(ctx, tns).kind === reader
+                            device_global
+                        else
+                            device_shared
+                        end
+                        set_binding!(
+                            ctx_5,
+                            tns,
+                            distribute(ctx_5, resolve(ctx_5, tns), subtask, diff, style),
+                        )
+                    end
+                    body = redistribute(ctx_5, body, diff)
+                    i = index(freshen(ctx, :i))
+                    root_2 = loop(i, VirtualExtent(tid, tid),
+                        loop(root.idx, ext.ext,
+                            sieve(
+                                access(
+                                    VirtualSplitMask(getstop(ext.ext), device.n),
+                                    reader(),
+                                    root.idx,
+                                    i,
+                                ), #=TODO correct only for 1:n ranges =#
+                                body,
+                            ),
+                        ),
+                    )
                     ctx_5(instantiate!(ctx_5, root_2))
                 end
-            end
-        end
-    end
-
-    return quote
-        Threads.@threads for $i in 1:($(ctx(device.n)))
-            Finch.@barrier begin
-                @inbounds @fastmath begin
-                    $code
-                end
-                nothing
             end
         end
     end

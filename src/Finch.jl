@@ -46,7 +46,7 @@ export Pattern, PatternLevel
 export Scalar, SparseScalar, ShortCircuitScalar, SparseShortCircuitScalar
 export walk, gallop, follow, extrude, laminate
 export Tensor, pattern!, dropfills, dropfills!, set_fill_value!
-export diagmask, lotrimask, uptrimask, bandmask, chunkmask
+export diagmask, lotrimask, uptrimask, bandmask, splitmask, chunkmask
 export scale, products, offset, permissive, protocolize, swizzle, toeplitz, window
 export PlusOneVector
 
@@ -57,8 +57,8 @@ export choose, minby, maxby, overwrite, initwrite, filterop, d
 export fill_value, AsArray, expanddims, tensor_tree
 
 export parallelAnalysis, ParallelAnalysisResults
-export parallel, realextent, extent, auto
-export CPU, CPULocalVector, CPULocalMemory
+export parallel, extent, auto
+export CPU, CPULocalArray, CPULocalMemory
 
 export Limit, Eps
 
@@ -126,7 +126,7 @@ include("looplets/fills.jl")
 
 include("tensors/scalars.jl")
 include("tensors/abstract_level.jl")
-include("tensors/fibers.jl")
+include("tensors/tensors.jl")
 include("tensors/levels/sparse_rle_levels.jl")
 include("tensors/levels/sparse_interval_levels.jl")
 include("tensors/levels/sparse_list_levels.jl")
@@ -258,7 +258,7 @@ export fsparse, fsparse!, fsprand, fspzeros, ffindnz, fread, fwrite, countstored
 export bspread, bspwrite
 export ftnsread, ftnswrite, fttread, fttwrite
 
-export moveto, postype
+export transfer, postype
 
 include("FinchLogic/FinchLogic.jl")
 using .FinchLogic

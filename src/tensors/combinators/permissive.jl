@@ -20,6 +20,19 @@ struct VirtualPermissiveArray <: AbstractVirtualCombinator
     dims
 end
 
+function distribute(
+    ctx::AbstractCompiler, tns::VirtualPermissiveArray, arch, diff, style
+)
+    VirtualPermissiveArray(distribute(ctx, tns.body, arch, diff, style), tns.dims)
+end
+
+function redistribute(ctx::AbstractCompiler, tns::VirtualPermissiveArray, diff)
+    VirtualPermissiveArray(
+        redistribute(ctx, tns.body, diff),
+        tns.dims,
+    )
+end
+
 is_injective(ctx, lvl::VirtualPermissiveArray) = is_injective(ctx, lvl.body)
 is_atomic(ctx, lvl::VirtualPermissiveArray) = is_atomic(ctx, lvl.body)
 is_concurrent(ctx, lvl::VirtualPermissiveArray) = is_concurrent(ctx, lvl.body)
@@ -57,7 +70,7 @@ More formally,
 ```
 """
 permissive(body, dims...) = PermissiveArray(body, dims)
-function virtual_call(ctx, ::typeof(permissive), body, dims...)
+function virtual_call_def(ctx, alg, ::typeof(permissive), ::Any, body, dims...)
     @assert All(isliteral)(dims)
     VirtualPermissiveArray(body, map(dim -> dim.val, dims))
 end

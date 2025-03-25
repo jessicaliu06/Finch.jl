@@ -17,6 +17,19 @@ struct VirtualScaleArray <: AbstractVirtualCombinator
     scale
 end
 
+function distribute(
+    ctx::AbstractCompiler, tns::VirtualScaleArray, arch, diff, style
+)
+    VirtualScaleArray(distribute(ctx, tns.body, arch, diff, style), tns.scale)
+end
+
+function redistribute(ctx::AbstractCompiler, tns::VirtualScaleArray, diff)
+    VirtualScaleArray(
+        redistribute(ctx, tns.body, diff),
+        tns.scale,
+    )
+end
+
 is_injective(ctx, lvl::VirtualScaleArray) = is_injective(ctx, lvl.body)
 is_atomic(ctx, lvl::VirtualScaleArray) = is_atomic(ctx, lvl.body)
 is_concurrent(ctx, lvl::VirtualScaleArray) = is_concurrent(ctx, lvl.body)
@@ -48,7 +61,9 @@ delta...]`.  The dimensions declared by an OffsetArray are shifted, so that
 tensors with real-valued dimensions.
 """
 scale(body, delta...) = ScaleArray(body, delta)
-virtual_call(ctx, ::typeof(scale), body, scale...) = VirtualScaleArray(body, scale)
+function virtual_call_def(ctx, alg, ::typeof(scale), ::Any, body, scale...)
+    VirtualScaleArray(body, scale)
+end
 unwrap(arr::VirtualScaleArray) = call(scale, unwrap(ctx, arr.body, var), arr.scale...)
 
 function lower(ctx::AbstractCompiler, tns::VirtualScaleArray, ::DefaultStyle)

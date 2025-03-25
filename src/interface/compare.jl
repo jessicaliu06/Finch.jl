@@ -57,8 +57,8 @@ function Base.isequal(A::AbstractArray, B::AbstractTensor)
 end
 
 function helper_argmin(A, dims)
-    @assert 1 <= dims <= length(size(A))
-    if (length(size(A)) >= 2)
+    # @assert 1 <= max(dims) <= ndims(A) && 1 <= min(dims) <= ndims(A)
+    if (ndims(A) >= 2)
         return map(x -> x[2], reduce(minby, map(Pair, A, CartesianIndices(size(A))), dims=dims, init=Inf=>CartesianIndex(fill(0, length(size(A)))...)))
     else
         return map(x -> x[2], reduce(minby, map(Pair, A, 1:size(A)[1]), dims=dims, init=Inf=>0))
@@ -66,18 +66,14 @@ function helper_argmin(A, dims)
 end
 
 function helper_argmin(A)
-    if (length(size(A)) >= 2)
-        return reduce(minby, map(Pair, A, CartesianIndices(size(A))), init=Inf=>CartesianIndex(fill(0, length(size(A)))...))[2]
-    else
-        return reduce(minby, map(Pair, A, 1:size(A)[1]), init=Inf=>0)[2]
-    end
+    return helper_argmin(A, (1:ndims(A)...,))
 end
 
-function Base.argmin(A::AbstractTensor; dims::Int64)
+function Base.argmin(A::AbstractTensor; dims)
     return helper_argmin(A, dims)
 end
 
-function Base.argmin(A::AbstractArray; dims::Int64)
+function Base.argmin(A::AbstractArray; dims)
     return helper_argmin(A, dims)
 end
 
@@ -90,8 +86,7 @@ function Base.argmin(A::AbstractArray)
 end
 
 function helper_argmax(A, dims)
-    @assert 1 <= dims <= length(size(A))
-    if (length(size(A)) >= 2)
+    if (ndims(A) >= 2)
         return map(x -> x[2], reduce(maxby, map(Pair, A, CartesianIndices(size(A))), dims=dims, init=-Inf=>CartesianIndex(fill(0, length(size(A)))...)))
     else
         return map(x -> x[2], reduce(maxby, map(Pair, A, 1:size(A)[1]), dims=dims, init=-Inf=>0))
@@ -99,18 +94,14 @@ function helper_argmax(A, dims)
 end
 
 function helper_argmax(A)
-    if (length(size(A)) >= 2)
-        return reduce(maxby, map(Pair, A, CartesianIndices(size(A))), init=-Inf=>CartesianIndex(fill(0, length(size(A)))...))[2]
-    else
-        return reduce(maxby, map(Pair, A, 1:size(A)[1]), init=-Inf=>0)[2]
-    end
+    return helper_argmax(A, (1:ndims(A)...,))
 end
 
-function Base.argmax(A::AbstractTensor; dims::Int64)
+function Base.argmax(A::AbstractTensor; dims)
     return helper_argmax(A, dims)
 end
 
-function Base.argmax(A::AbstractArray; dims::Int64)
+function Base.argmax(A::AbstractArray; dims)
     return helper_argmax(A, dims)
 end
 

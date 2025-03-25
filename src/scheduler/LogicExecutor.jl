@@ -6,13 +6,20 @@ is given as input to the program.
 """
 function defer_tables(ex, node::LogicNode)
     if @capture node table(~tns::isimmediate, ~idxs...)
-        table(deferred(:($ex.tns.val), typeof(tns.val)), map(enumerate(node.idxs)) do (i, idx)
-            defer_tables(:($ex.idxs[$i]), idx)
-        end)
+        table(
+            deferred(:($ex.tns.val), typeof(tns.val), tns.val),
+            map(enumerate(node.idxs)) do (i, idx)
+                defer_tables(:($ex.idxs[$i]), idx)
+            end,
+        )
     elseif istree(node)
-        similarterm(node, operation(node), map(enumerate(node.children)) do (i, child)
-            defer_tables(:($ex.children[$i]), child)
-        end)
+        similarterm(
+            node,
+            operation(node),
+            map(enumerate(node.children)) do (i, child)
+                defer_tables(:($ex.children[$i]), child)
+            end,
+        )
     else
         node
     end
@@ -24,14 +31,18 @@ end
 Replace deferred expressions with simpler expressions, and cache their evaluation in the preamble.
 """
 function cache_deferred!(ctx, root::LogicNode)
-    seen::Dict{Any, LogicNode} = Dict{Any, LogicNode}()
-    return Rewrite(Postwalk(node -> if isdeferred(node)
-        get!(seen, node.val) do
-            var = freshen(ctx, :V)
-            push_preamble!(ctx, :($var = $(node.ex)::$(node.type)))
-            deferred(var, node.type)
-        end
-    end))(root)
+    seen::Dict{Any,LogicNode} = Dict{Any,LogicNode}()
+    return Rewrite(
+        Postwalk(node -> if isdeferred(node)
+            get!(seen, node.val) do
+                var = freshen(ctx, :V)
+                push_preamble!(ctx, :($var = $(node.ex)::$(node.type)))
+                deferred(var, node.type, node.imm)
+            end
+        end),
+    )(
+        root
+    )
 end
 
 function logic_executor_code(ctx, prgm)
@@ -43,32 +54,37 @@ function logic_executor_code(ctx, prgm)
         ctx(prgm)
     end
     code = pretty(code)
-    fname = gensym(:compute)
-    return :(function $fname(prgm)
-            $code
-        end) |> striplines
+    fname = gensym(Symbol(:compute, hash(get_structure(prgm)))) #The fact that we need this hash is worrisome (it indicates that our gensyms are not always unique)
+    return striplines(:(function $fname(prgm)
+        $code
+    end))
 end
 
 """
-    LogicExecutor(ctx, verbose=false)
+    LogicExecutor(ctx, tag=:global, verbose=false)
 
 Executes a logic program by compiling it with the given compiler `ctx`. Compiled
 codes are cached, and are only compiled once for each program with the same
-structure.
+structure. The `tag` argument is used to distinguish between different
+use cases for the same program structure.
 """
-struct LogicExecutor
+@kwdef struct LogicExecutor
     ctx
+    tag
     verbose
 end
 
-LogicExecutor(ctx; verbose = false) = LogicExecutor(ctx, verbose)
-function set_options(ctx::LogicExecutor; verbose = ctx.verbose, kwargs...)
-    LogicExecutor(set_options(ctx.ctx; kwargs...), verbose)
+Base.:(==)(a::LogicExecutor, b::LogicExecutor) = a.ctx == b.ctx && a.verbose == b.verbose
+Base.hash(a::LogicExecutor, h::UInt) = hash(LogicExecutor, hash(a.ctx, hash(a.verbose, h)))
+
+LogicExecutor(ctx; tag=:global, verbose=false) = LogicExecutor(ctx, tag, verbose)
+function set_options(ctx::LogicExecutor; tag=ctx.tag, verbose=ctx.verbose, kwargs...)
+    LogicExecutor(set_options(ctx.ctx; kwargs...), tag, verbose)
 end
 
 codes = Dict()
 function (ctx::LogicExecutor)(prgm)
-    (f, code) = get!(codes, get_structure(prgm)) do
+    (f, code) = get!(codes, (ctx.ctx, ctx.tag, get_structure(prgm))) do
         thunk = logic_executor_code(ctx.ctx, prgm)
         (eval(thunk), thunk)
     end

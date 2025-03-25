@@ -6,7 +6,7 @@ false. PatternLevels are used to create tensors that represent which values
 are stored by other fibers. See [`pattern!`](@ref) for usage examples.
 
 ```jldoctest
-julia> Tensor(Dense(Pattern()), 3)
+julia> tensor_tree(Tensor(Dense(Pattern()), 3))
 3-Tensor
 └─ Dense [1:3]
    ├─ [1]: true
@@ -43,12 +43,13 @@ end
 (fbr::AbstractFiber{<:PatternLevel})() = true
 data_rep_level(::Type{<:PatternLevel}) = ElementData(false, Bool)
 
+isstructequal(a::T, b::T) where {T<:Pattern} = true
+
 postype(::Type{<:PatternLevel{Tp}}) where {Tp} = Tp
 
-function moveto(lvl::PatternLevel{Tp}, device) where {Tp}
+function transfer(device, lvl::PatternLevel{Tp}) where {Tp}
     return PatternLevel{Tp}()
 end
-
 
 """
     pattern!(fbr)
@@ -59,22 +60,30 @@ original tensor unusable when modified.
 
 ```jldoctest
 julia> A = Tensor(SparseList(Element(0.0), 10), [2.0, 0.0, 3.0, 0.0, 4.0, 0.0, 5.0, 0.0, 6.0, 0.0])
-10-Tensor
-└─ SparseList (0.0) [1:10]
-   ├─ [1]: 2.0
-   ├─ [3]: 3.0
-   ├─ ⋮
-   ├─ [7]: 5.0
-   └─ [9]: 6.0
+10 Tensor{SparseListLevel{Int64, Vector{Int64}, Vector{Int64}, ElementLevel{0.0, Float64, Int64, Vector{Float64}}}}:
+ 2.0
+ 0.0
+ 3.0
+ 0.0
+ 4.0
+ 0.0
+ 5.0
+ 0.0
+ 6.0
+ 0.0
 
 julia> pattern!(A)
-10-Tensor
-└─ SparseList (false) [1:10]
-   ├─ [1]: true
-   ├─ [3]: true
-   ├─ ⋮
-   ├─ [7]: true
-   └─ [9]: true
+10 Tensor{SparseListLevel{Int64, Vector{Int64}, Vector{Int64}, PatternLevel{Int64}}}:
+ 1
+ 0
+ 1
+ 0
+ 1
+ 0
+ 1
+ 0
+ 1
+ 0
 ```
 """
 pattern!(fbr::Tensor) = Tensor(pattern!(fbr.lvl))
@@ -84,15 +93,19 @@ struct VirtualPatternLevel <: AbstractVirtualLevel
     Tp
 end
 
-function virtual_moveto_level(ctx::AbstractCompiler, lvl::VirtualPatternLevel, arch)
-end
-
 is_level_injective(ctx, ::VirtualPatternLevel) = []
 is_level_atomic(ctx, lvl::VirtualPatternLevel) = ([], false)
 is_level_concurrent(ctx, lvl::VirtualPatternLevel) = ([], true)
 
 lower(ctx::AbstractCompiler, lvl::VirtualPatternLevel, ::DefaultStyle) = :(PatternLevel())
 virtualize(ctx, ex, ::Type{PatternLevel{Tp}}) where {Tp} = VirtualPatternLevel(Tp)
+
+function distribute_level(
+    ctx::AbstractCompiler, lvl::VirtualPatternLevel, arch, diff, style
+)
+end
+
+redistribute(ctx::AbstractCompiler, lvl::VirtualPatternLevel, diff) = lvl
 
 virtual_level_resize!(ctx, lvl::VirtualPatternLevel) = lvl
 virtual_level_size(ctx, ::VirtualPatternLevel) = ()
@@ -102,7 +115,8 @@ virtual_level_eltype(::VirtualPatternLevel) = Bool
 postype(lvl::VirtualPatternLevel) = lvl.Tp
 
 function declare_level!(ctx, lvl::VirtualPatternLevel, pos, init)
-    init == literal(false) || throw(FinchProtocolError("Must initialize Pattern Levels to false"))
+    init == literal(false) ||
+        throw(FinchProtocolError("Must initialize Pattern Levels to false"))
     lvl
 end
 
@@ -113,14 +127,17 @@ thaw_level!(ctx, lvl::VirtualPatternLevel, pos) = lvl
 assemble_level!(ctx, lvl::VirtualPatternLevel, pos_start, pos_stop) = quote end
 reassemble_level!(ctx, lvl::VirtualPatternLevel, pos_start, pos_stop) = quote end
 
-instantiate(ctx, ::VirtualSubFiber{VirtualPatternLevel}, mode::Reader) = FillLeaf(true)
-
-function instantiate(ctx, fbr::VirtualSubFiber{VirtualPatternLevel}, mode::Updater)
-    val = freshen(ctx, :null)
-    push_preamble!(ctx, :($val = false))
-    VirtualScalar(nothing, Bool, false, gensym(), val)
+function instantiate(ctx, ::VirtualSubFiber{VirtualPatternLevel}, mode)
+    if mode.kind === reader
+        FillLeaf(true)
+    else
+        val = freshen(ctx, :null)
+        push_preamble!(ctx, :($val = false))
+        VirtualScalar(nothing, nothing, Bool, false, gensym(), val)
+    end
 end
 
-function instantiate(ctx, fbr::VirtualHollowSubFiber{VirtualPatternLevel}, mode::Updater)
-    VirtualScalar(nothing, Bool, false, gensym(), fbr.dirty)
+function instantiate(ctx, fbr::VirtualHollowSubFiber{VirtualPatternLevel}, mode)
+    @assert mode.kind === updater
+    VirtualScalar(nothing, nothing, Bool, false, gensym(), fbr.dirty)
 end

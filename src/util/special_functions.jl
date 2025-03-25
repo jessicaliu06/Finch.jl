@@ -18,15 +18,17 @@ neither are `z`, then return `a`. Useful for getting the first nonfill value in
 a sparse array.
 ```jldoctest setup=:(using Finch)
 julia> a = Tensor(SparseList(Element(0.0)), [0, 1.1, 0, 4.4, 0])
-5-Tensor
-└─ SparseList (0.0) [1:5]
-   ├─ [2]: 1.1
-   └─ [4]: 4.4
+5 Tensor{SparseListLevel{Int64, Vector{Int64}, Vector{Int64}, ElementLevel{0.0, Float64, Int64, Vector{Float64}}}}:
+ 0.0
+ 1.1
+ 0.0
+ 4.4
+ 0.0
 
-julia> x = Scalar(0.0); @finch for i=_; x[] <<choose(1.1)>>= a[i] end;
+julia> x = Scalar(0.0); @finch for i=_; x[] <<choose(0.0)>>= a[i] end;
 
 julia> x[]
-0.0
+1.1
 ```
 """
 choose(d) = Chooser{d}()
@@ -44,10 +46,12 @@ is handy for filtering out values based on a mask or a predicate.
 
 ```jldoctest setup=:(using Finch)
 julia> a = Tensor(SparseList(Element(0.0)), [0, 1.1, 0, 4.4, 0])
-5-Tensor
-└─ SparseList (0.0) [1:5]
-   ├─ [2]: 1.1
-   └─ [4]: 4.4
+5 Tensor{SparseListLevel{Int64, Vector{Int64}, Vector{Int64}, ElementLevel{0.0, Float64, Int64, Vector{Float64}}}}:
+ 0.0
+ 1.1
+ 0.0
+ 4.4
+ 0.0
 
 julia> x = Tensor(SparseList(Element(0.0)));
 
@@ -57,9 +61,12 @@ julia> @finch (x .= 0; for i=_; x[i] = filterop(0)(c[i], a[i]) end)
 (x = Tensor(SparseList{Int64}(Element{0.0, Float64, Int64}([4.4]), 5, [1, 2], [4])),)
 
 julia> x
-5-Tensor
-└─ SparseList (0.0) [1:5]
-   └─ [4]: 4.4
+5 Tensor{SparseListLevel{Int64, Vector{Int64}, Vector{Int64}, ElementLevel{0.0, Float64, Int64, Vector{Float64}}}}:
+ 0.0
+ 0.0
+ 0.0
+ 4.4
+ 0.0
 ```
 """
 filterop(d) = FilterOp{d}()
@@ -101,39 +108,94 @@ maxby(a, b) = a[1] < b[1] ? b : a
 
 Returns `rem(x, y)` normally, returns zero and issues a warning if `y` is zero.
 """
-rem_nothrow(x, y) = iszero(y) ? (@warn("Division by zero in rem"); zero(promote_type(typeof(x), typeof(y)))) : rem(x, y)
+rem_nothrow(x, y) =
+    if iszero(y)
+        (@warn("Division by zero in rem"); zero(promote_type(typeof(x), typeof(y))))
+    else
+        rem(x, y)
+    end
 
 """
     mod_nothrow(x, y)
 
 Returns `mod(x, y)` normally, returns zero and issues a warning if `y` is zero.
 """
-mod_nothrow(x, y) = iszero(y) ? (@warn("Division by zero in mod"); zero(promote_type(typeof(x), typeof(y)))) : mod(x, y)
+mod_nothrow(x, y) =
+    if iszero(y)
+        (@warn("Division by zero in mod"); zero(promote_type(typeof(x), typeof(y))))
+    else
+        mod(x, y)
+    end
 
 """
     mod1_nothrow(x, y)
 
 Returns `mod1(x, y)` normally, returns one and issues a warning if `y` is zero.
 """
-mod1_nothrow(x, y) = iszero(y) ? (@warn("Division by zero in mod1"); one(promote_type(typeof(x), typeof(y)))) : mod1(x, y)
+mod1_nothrow(x, y) =
+    if iszero(y)
+        (@warn("Division by zero in mod1"); one(promote_type(typeof(x), typeof(y))))
+    else
+        mod1(x, y)
+    end
 
 """
     fld_nothrow(x, y)
 
 Returns `fld(x, y)` normally, returns zero and issues a warning if `y` is zero.
 """
-fld_nothrow(x, y) = iszero(y) ? (@warn("Division by zero in fld"); zero(promote_type(typeof(x), typeof(y)))) : fld(x, y)
+fld_nothrow(x, y) =
+    if iszero(y)
+        (@warn("Division by zero in fld"); zero(promote_type(typeof(x), typeof(y))))
+    else
+        fld(x, y)
+    end
 
 """
     fld1_nothrow(x, y)
 
 Returns `fld1(x, y)` normally, returns one and issues a warning if `y` is zero.
 """
-fld1_nothrow(x, y) = iszero(y) ? (@warn("Division by zero in fld1"); one(promote_type(typeof(x), typeof(y)))) : fld1(x, y)
+fld1_nothrow(x, y) =
+    if iszero(y)
+        (@warn("Division by zero in fld1"); one(promote_type(typeof(x), typeof(y))))
+    else
+        fld1(x, y)
+    end
 
 """
     cld_nothrow(x, y)
 
 Returns `cld(x, y)` normally, returns zero and issues a warning if `y` is zero.
 """
-cld_nothrow(x, y) = iszero(y) ? (@warn("Division by zero in cld"); zero(promote_type(typeof(x), typeof(y)))) : cld(x, y)
+cld_nothrow(x, y) =
+    if iszero(y)
+        (@warn("Division by zero in cld"); zero(promote_type(typeof(x), typeof(y))))
+    else
+        cld(x, y)
+    end
+
+struct InitMin{D} end
+(f::InitMin{D})(x) where {D} = x
+
+"""
+    InitMin{D}(x, y)
+
+Returns min(x, y, D). Used to add an init parameter to a minimum operation.
+"""
+@inline function (f::InitMin{D})(x, y) where {D}
+    min(x, y, D)
+end
+initmin(z) = InitMin{z}()
+
+struct InitMax{D} end
+(f::InitMax{D})(x) where {D} = x
+"""
+    InitMax{D}(x, y)
+
+Returns max(x, y, D). Used to add an init parameter to a maximum operation.
+"""
+@inline function (f::InitMax{D})(x, y) where {D}
+    max(x, y, D)
+end
+initmax(z) = InitMax{z}()

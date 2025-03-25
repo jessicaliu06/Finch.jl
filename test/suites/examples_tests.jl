@@ -119,20 +119,21 @@
         end
     end
 
-    @testset "topological_sort"
-    A = Tensor(
-        CSCFormat(0),
-        [0 0 0 0 1 1; 0 0 0 1 1 0; 0 0 0 0 0 1; 0 0 1 0 0 0; 0 0 0 0 0 0; 0 0 0 0 0 0],
-    )
+    @testset "topological_sort" begin
+        A = Tensor(
+            CSCFormat(0),
+            [0 0 0 0 1 1; 0 0 0 1 1 0; 0 0 0 0 0 1; 0 0 1 0 0 0; 0 0 0 0 0 0; 0 0 0 0 0 0],
+        )
 
-    @test topological_sort(A) == [5, 6, 1, 3, 4, 2]
+        @test topological_sort(A) == [5, 6, 1, 3, 4, 2]
+    end
     
-    @testset "floydwarshall" begin
+    @testset "floyd_warshall" begin
         # https://cses.fi/problemset/task/1672
         matrix = Tensor(CSCFormat(Inf), [ 0 5 9 Inf; Inf 0 3 Inf; Inf Inf 0 Inf; Inf Inf 5 0; ])
 
         n, m = size(matrix)
-        res = floydwarshall(matrix)
+        res = floyd_warshall(matrix)
         ref = [0.0 5.0 8.0 Inf; Inf 0.0 3.0 Inf; Inf Inf 0.0 Inf; Inf Inf 5.0 0.0]
         @test res == ref
     end

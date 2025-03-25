@@ -161,6 +161,7 @@ end
 @testitem "interface_asmd" setup = [CheckOutput] begin
     using Finch: AsArray
     using SparseArrays
+    using Statistics
     using LinearAlgebra
 
     A = Tensor(
@@ -490,6 +491,81 @@ end
                     )
                     c = compute(sum(A[:, :, nothing] .* B[nothing, :, :]; dims=[2]))
                     @test c == c_correct
+                end
+
+                let
+                    A_ref = [0 0 44; 11 0 0; 22 00 55; 33 0 0]
+                    A = Tensor(A_ref)
+
+                    expected = mean(A_ref)
+                    result = mean(A)
+                    @test result == expected
+
+                    expected = mean(A_ref; dims=1:1)[1, :]
+                    result = mean(A; dims=1:1)
+                    @test all(isapprox.(result, expected))
+
+                    expected = mean(A_ref; dims=2:2)[:, 1]
+                    result = mean(A; dims=2:2)
+                    @test all(isapprox.(result, expected))
+                end
+
+                let
+                    A_ref = [0 0 44; 11 0 0; 22 00 55; 33 0 0]
+                    A = Tensor(A_ref)
+
+                    expected = var(A_ref; corrected=false)
+                    result = var(A; corrected=false)
+                    @test result == expected
+
+                    expected = var(A_ref)
+                    result = var(A)
+                    @test result == expected
+
+                    expected = var(A_ref; dims=1, corrected=false)[1, :]
+                    result = var(A; dims=1, corrected=false)
+                    @test all(isapprox.(result, expected))
+
+                    expected = var(A_ref; dims=1)[1, :]
+                    result = var(A; dims=1)
+                    @test all(isapprox.(result, expected))
+
+                    expected = var(A_ref; dims=2, corrected=false)[:, 1]
+                    result = var(A; dims=2, corrected=false)
+                    @test all(isapprox.(result, expected))
+
+                    expected = var(A_ref; dims=2)[:, 1]
+                    result = var(A; dims=2)
+                    @test all(isapprox.(result, expected))
+                end
+
+                let
+                    A_ref = [0 0 44; 11 0 0; 22 00 55; 33 0 0]
+                    A = Tensor(A_ref)
+
+                    expected = std(A_ref; corrected=false)
+                    result = std(A; corrected=false)
+                    @test result == expected
+
+                    expected = std(A_ref)
+                    result = std(A)
+                    @test result == expected
+
+                    expected = std(A_ref; dims=1, corrected=false)[1, :]
+                    result = std(A; dims=1, corrected=false)
+                    @test all(isapprox.(result, expected))
+
+                    expected = std(A_ref; dims=1)[1, :]
+                    result = std(A; dims=1)
+                    @test all(isapprox.(result, expected))
+
+                    expected = std(A_ref; dims=2, corrected=false)[:, 1]
+                    result = std(A; dims=2, corrected=false)
+                    @test all(isapprox.(result, expected))
+
+                    expected = std(A_ref; dims=2)[:, 1]
+                    result = std(A; dims=2)
+                    @test all(isapprox.(result, expected))
                 end
             end
         end

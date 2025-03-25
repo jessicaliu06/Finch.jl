@@ -55,6 +55,7 @@ function Base.getindex(arr::LazyTensor, idxs::Vararg{Union{Nothing,Colon}})
 end
 
 function expanddims(arr::LazyTensor{Vf,Tv}, dims) where {Vf,Tv}
+    dims = collect(dims)
     @assert allunique(dims)
     @assert issubset(dims, 1:(ndims(arr) + length(dims)))
     offset = zeros(Int, ndims(arr) + length(dims))

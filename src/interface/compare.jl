@@ -65,6 +65,15 @@ function helper_argmin(A, dims)
     end
 end
 
+function argmin_python(A; dims, keepdims)
+    a = helper_argmin(A, dims)
+    if (keepdims)
+        return expanddims(a, dims)
+    else
+        return a
+    end
+end
+
 function helper_argmin(A)
     return helper_argmin(A, (1:ndims(A)...,))
 end
@@ -90,6 +99,15 @@ function helper_argmax(A, dims)
         return map(x -> x[2], reduce(maxby, map(Pair, A, CartesianIndices(size(A))), dims=dims, init=-Inf=>CartesianIndex(fill(0, length(size(A)))...)))
     else
         return map(x -> x[2], reduce(maxby, map(Pair, A, 1:size(A)[1]), dims=dims, init=-Inf=>0))
+    end
+end
+
+function argmax_python(A; dims, keepdims)
+    a = helper_argmax(A, dims)
+    if (keepdims)
+        return expanddims(a, dims)
+    else
+        return a
     end
 end
 

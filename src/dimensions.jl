@@ -210,12 +210,12 @@ end
 
 abstract type AbstractSchedule end
 
-abstract type VirtualAbstractSchedule end
+abstract type AbstractVirtualSchedule end
 
 
 struct StaticSchedule <: AbstractSchedule end
 
-struct VirtualStaticSchedule <: AbstractVirtualExtent end
+struct VirtualStaticSchedule <: AbstractVirtualSchedule end
 
 FinchNotation.finch_leaf(x::VirtualStaticSchedule) = virtual(x)
 
@@ -227,9 +227,7 @@ function lower(ctx, ex::VirtualStaticSchedule)
     :($StaticSchedule())
 end
 
-function static()
-    StaticSchedule()
-end
+static() = StaticSchedule()
 
 function virtual_call_def(ctx, alg, ::typeof(static), ::Any)
     VirtualStaticSchedule()
@@ -239,7 +237,7 @@ struct DynamicSchedule{Chunk} <: AbstractSchedule
     chunk::Chunk
 end
 
-struct VirtualDynamicSchedule <: AbstractVirtualExtent
+@kwdef struct VirtualDynamicSchedule <: AbstractVirtualSchedule
     chunk
 end
 
@@ -254,12 +252,9 @@ function lower(ctx, ex::VirtualDynamicSchedule)
     :($DynamicSchedule($(ctx(ex.chunk))))
 end
 
-function dynamic(chunk = 1)
-    DynamicSchedule(chunk)
-end
+dynamic(chunk = 1) = DynamicSchedule(chunk)
 
 function virtual_call_def(ctx, alg, ::typeof(dynamic), ::Any, chunk = literal(1))
-    chunk = resolve(ctx, chunk)
     VirtualDynamicSchedule(chunk)
 end
 

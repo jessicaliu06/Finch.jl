@@ -208,7 +208,60 @@ function checklim(ctx::AbstractCompiler, a::FinchNode, b::FinchNode)
     end
 end
 
-@enum Schedule static = 1 dynamic = 2
+abstract type AbstractSchedule end
+
+abstract type VirtualAbstractSchedule end
+
+
+struct StaticSchedule <: AbstractSchedule end
+
+struct VirtualStaticSchedule <: AbstractVirtualExtent end
+
+FinchNotation.finch_leaf(x::VirtualStaticSchedule) = virtual(x)
+
+function virtualize(ctx, ex, ::Type{StaticSchedule})
+    VirtualStaticSchedule()
+end
+
+function lower(ctx, ex::VirtualStaticSchedule)
+    :($StaticSchedule())
+end
+
+function static()
+    StaticSchedule()
+end
+
+function virtual_call_def(ctx, alg, ::typeof(static), ::Any)
+    VirtualStaticSchedule()
+end
+
+struct DynamicSchedule{Chunk} <: AbstractSchedule
+    chunk::Chunk
+end
+
+struct VirtualDynamicSchedule <: AbstractVirtualExtent
+    chunk
+end
+
+FinchNotation.finch_leaf(x::VirtualDynamicSchedule) = virtual(x)
+
+function virtualize(ctx, ex, ::Type{DynamicSchedule{Chunk}}) where {Chunk}
+    chunk = virtualize(ctx, :($ex.chunk), Chunk)
+    VirtualDynamicSchedule(chunk)
+end
+
+function lower(ctx, ex::VirtualDynamicSchedule)
+    :($DynamicSchedule($(ctx(ex.chunk))))
+end
+
+function dynamic(chunk = 1)
+    DynamicSchedule(chunk)
+end
+
+function virtual_call_def(ctx, alg, ::typeof(dynamic), ::Any, chunk = literal(1))
+    chunk = resolve(ctx, chunk)
+    VirtualDynamicSchedule(chunk)
+end
 
 @kwdef struct ParallelDimension{Ext,Device,Schedule} <: AbstractExtent
     ext::Ext
@@ -223,7 +276,7 @@ end
 end
 
 FinchNotation.finch_leaf(x::VirtualParallelDimension) = virtual(x)
-function virtualize(ctx, ex, ::Type{ParallelDimension{Ext,Device,Schedule}}) where {Ext,Device}
+function virtualize(ctx, ex, ::Type{ParallelDimension{Ext,Device,Schedule}}) where {Ext, Device, Schedule}
     VirtualParallelDimension(
         virtualize(ctx, :($ex.ext), Ext),
         virtualize(ctx, :($ex.device), Device),
@@ -240,21 +293,9 @@ end
 A dimension `ext` that is parallelized over `device` using the `schedule`. The `ext` field is usually
 `_`, or dimensionless, but can be any standard dimension argument.
 """
-parallel(dim, device=CPU(Threads.nthreads()), schedule=static) = ParallelDimension(dim, device, schedule)
+parallel(dim, device=CPU(Threads.nthreads()), schedule=static()) = ParallelDimension(dim, device, schedule)
 
-function virtual_call_def(ctx, alg, ::typeof(parallel), ::Any, ext)
-    ext = resolve(ctx, ext)
-    n = cache!(ctx, :n, value(:(Threads.nthreads()), Int))
-    virtual_call(ctx, parallel, ext, finch_leaf(VirtualCPU(nothing, n)))
-end
-
-function virtual_call_def(ctx, alg, ::typeof(parallel), ::Any, ext, device)
-    ext = resolve(ctx, ext)
-    device = resolve(ctx, device)
-    VirtualParallelDimension(ext, device)
-end
-
-function virtual_call_def(ctx, alg, ::typeof(parallel), ::Any, ext, device, schedule)
+function virtual_call_def(ctx, alg, ::typeof(parallel), ::Any, ext, device = finch_leaf(virtual_call(ctx, cpu)), schedule = finch_leaf(VirtualStaticSchedule()))
     ext = resolve(ctx, ext)
     device = resolve(ctx, device)
     schedule = resolve(ctx, schedule)

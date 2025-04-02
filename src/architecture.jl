@@ -95,13 +95,14 @@ function make_lock end
 A device that represents a serial CPU execution.
 """
 struct Serial <: AbstractTask end
-const serial = Serial()
+serial() = Serial()
 get_device(::Serial) = CPU(1)
 get_parent_task(::Serial) = nothing
 get_task_num(::Serial) = 1
 struct VirtualSerial <: AbstractVirtualTask end
 virtualize(ctx, ex, ::Type{Serial}) = VirtualSerial()
 lower(ctx::AbstractCompiler, task::VirtualSerial, ::DefaultStyle) = :(Serial())
+virtual_call_def(ctx, alg, ::typeof(serial), Any) = VirtualSerial()
 FinchNotation.finch_leaf(device::VirtualSerial) = virtual(device)
 get_device(::VirtualSerial) = VirtualCPU(nothing, 1)
 get_parent_task(::VirtualSerial) = nothing
@@ -128,26 +129,35 @@ A device that represents a CPU with n threads.
 struct CPU <: AbstractDevice
     n::Int
 end
-CPU() = CPU(Threads.nthreads())
+cpu(n = Threads.nthreads()) = CPU(n)
 get_num_tasks(dev::CPU) = dev.n
 @kwdef struct VirtualCPU <: AbstractVirtualDevice
-    ex
     n
 end
 function virtualize(ctx, ex, ::Type{CPU})
-    sym = freshen(ctx, :cpu)
+    n = freshen(ctx, :n)
     push_preamble!(
         ctx,
         quote
-            $sym = $ex
+            $n = ($ex.n)
         end,
     )
-    VirtualCPU(sym, virtualize(ctx, :($sym.n), Int))
+    VirtualCPU(value(n, Int))
+end
+function virtual_call_def(ctx, alg, ::typeof(cpu), Any, n = value(:($(Threads.nthreads)()), Int))
+    n_2 = freshen(ctx, :n)
+    push_preamble!(
+        ctx,
+        quote
+            $n_2 = $(ctx(n))
+        end,
+    )
+    VirtualCPU(value(n_2, Int))
 end
 function lower(ctx::AbstractCompiler, device::VirtualCPU, ::DefaultStyle)
-    something(device.ex, :(CPU($(ctx(device.n)))))
+    :(CPU($(ctx(device.n))))
 end
-get_num_tasks(::VirtualCPU) = literal(1)
+get_num_tasks(device::VirtualCPU) = device.n
 
 FinchNotation.finch_leaf(device::VirtualCPU) = virtual(device)
 

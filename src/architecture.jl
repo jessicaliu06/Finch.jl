@@ -104,7 +104,7 @@ virtualize(ctx, ex, ::Type{Serial}) = VirtualSerial()
 lower(ctx::AbstractCompiler, task::VirtualSerial, ::DefaultStyle) = :(Serial())
 virtual_call_def(ctx, alg, ::typeof(serial), Any) = VirtualSerial()
 FinchNotation.finch_leaf(device::VirtualSerial) = virtual(device)
-get_device(::VirtualSerial) = VirtualCPU(nothing, 1)
+get_device(::VirtualSerial) = VirtualCPU(literal(1))
 get_parent_task(::VirtualSerial) = nothing
 get_task_num(::VirtualSerial) = literal(1)
 

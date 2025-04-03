@@ -283,12 +283,12 @@ function lower(ctx, ex::VirtualParallelDimension)
 end
 
 """
-    parallel(ext, device=CPU(nthreads()), schedule=static)
+parallel(ext, device=CPU(nthreads()), schedule=StaticSchedule())
 
 A dimension `ext` that is parallelized over `device` using the `schedule`. The `ext` field is usually
 `_`, or dimensionless, but can be any standard dimension argument.
 """
-parallel(dim, device=CPU(Threads.nthreads()), schedule=static()) = ParallelDimension(dim, device, schedule)
+parallel(dim, device=CPU(Threads.nthreads()), schedule=StaticSchedule()) = ParallelDimension(dim, device, schedule)
 
 function virtual_call_def(ctx, alg, ::typeof(parallel), ::Any, ext, device = finch_leaf(virtual_call(ctx, cpu)), schedule = finch_leaf(VirtualStaticSchedule()))
     ext = resolve(ctx, ext)

@@ -708,5 +708,27 @@
             @test y == swizzle(A, 2, 1) * x
         end
 
+        # Check that passing dynamic as argument to parallel is working
+        let
+            A = Tensor(Dense(SparseList(Element(0.0))), fsprand(UInt, 42, 42, 0.1))
+            x = Tensor(Dense(Element(0.0)), rand(UInt, 42))
+            y = Tensor(Dense(Element(0.0)))
+
+            Cpu = cpu(Threads.nthreads())
+            schedule = dynamic(4)
+
+            @finch begin
+                y .= 0
+                for j in parallel(_, Cpu, schedule)
+                    for i in _
+                        y[j] += A[i, j] * x[i]
+                    end
+                end
+            end
+
+            @test y == swizzle(A, 2, 1) * x
+        end
+
+
     end
 end

@@ -728,7 +728,5 @@
 
             @test y == swizzle(A, 2, 1) * x
         end
-
-
     end
 end

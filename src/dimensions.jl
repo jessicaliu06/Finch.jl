@@ -212,7 +212,6 @@ abstract type AbstractSchedule end
 
 abstract type AbstractVirtualSchedule end
 
-
 struct StaticSchedule <: AbstractSchedule end
 
 struct VirtualStaticSchedule <: AbstractVirtualSchedule end
@@ -252,9 +251,9 @@ function lower(ctx, ex::VirtualDynamicSchedule)
     :($DynamicSchedule($(ctx(ex.chunk))))
 end
 
-dynamic(chunk = 1) = DynamicSchedule(chunk)
+dynamic(chunk=1) = DynamicSchedule(chunk)
 
-function virtual_call_def(ctx, alg, ::typeof(dynamic), ::Any, chunk = literal(1))
+function virtual_call_def(ctx, alg, ::typeof(dynamic), ::Any, chunk=literal(1))
     # TODO: might need to resolve chunk?
     VirtualDynamicSchedule(chunk)
 end
@@ -272,7 +271,9 @@ end
 end
 
 FinchNotation.finch_leaf(x::VirtualParallelDimension) = virtual(x)
-function virtualize(ctx, ex, ::Type{ParallelDimension{Ext,Device,Schedule}}) where {Ext, Device, Schedule}
+function virtualize(
+    ctx, ex, ::Type{ParallelDimension{Ext,Device,Schedule}}
+) where {Ext,Device,Schedule}
     VirtualParallelDimension(
         virtualize(ctx, :($ex.ext), Ext),
         virtualize(ctx, :($ex.device), Device),
@@ -289,9 +290,18 @@ parallel(ext, device=CPU(nthreads()), schedule=StaticSchedule())
 A dimension `ext` that is parallelized over `device` using the `schedule`. The `ext` field is usually
 `_`, or dimensionless, but can be any standard dimension argument.
 """
-parallel(dim, device=cpu(Threads.nthreads()), schedule=static()) = ParallelDimension(dim, device, schedule)
+parallel(dim, device=cpu(Threads.nthreads()), schedule=static()) =
+    ParallelDimension(dim, device, schedule)
 
-function virtual_call_def(ctx, alg, ::typeof(parallel), ::Any, ext, device = finch_leaf(virtual_call(ctx, cpu)), schedule = finch_leaf(VirtualStaticSchedule()))
+function virtual_call_def(
+    ctx,
+    alg,
+    ::typeof(parallel),
+    ::Any,
+    ext,
+    device=finch_leaf(virtual_call(ctx, cpu)),
+    schedule=finch_leaf(VirtualStaticSchedule()),
+)
     ext = resolve(ctx, ext)
     device = resolve(ctx, device)
     schedule = resolve(ctx, schedule)

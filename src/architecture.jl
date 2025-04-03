@@ -129,7 +129,7 @@ A device that represents a CPU with n threads.
 struct CPU <: AbstractDevice
     n::Int
 end
-cpu(n = Threads.nthreads()) = CPU(n)
+cpu(n=Threads.nthreads()) = CPU(n)
 get_num_tasks(dev::CPU) = dev.n
 @kwdef struct VirtualCPU <: AbstractVirtualDevice
     n
@@ -144,7 +144,9 @@ function virtualize(ctx, ex, ::Type{CPU})
     )
     VirtualCPU(value(n, Int))
 end
-function virtual_call_def(ctx, alg, ::typeof(cpu), Any, n = value(:($(Threads.nthreads)()), Int))
+function virtual_call_def(
+    ctx, alg, ::typeof(cpu), Any, n=value(:($(Threads.nthreads)()), Int)
+)
     n_2 = freshen(ctx, :n)
     push_preamble!(
         ctx,

@@ -155,7 +155,7 @@ function virtual_call_def(ctx, alg, ::typeof(cpu), Any, n = value(:($(Threads.nt
     VirtualCPU(value(n_2, Int))
 end
 function lower(ctx::AbstractCompiler, device::VirtualCPU, ::DefaultStyle)
-    :(CPU($(ctx(device.n))))
+    :(Finch.CPU($(ctx(device.n))))
 end
 get_num_tasks(device::VirtualCPU) = device.n
 
@@ -172,7 +172,7 @@ function virtualize(ctx, ex, ::Type{CPULocalMemory})
     VirtualCPULocalMemory(virtualize(ctx, :($ex.device), CPU))
 end
 function lower(ctx::AbstractCompiler, mem::VirtualCPULocalMemory, ::DefaultStyle)
-    :(CPULocalMemory($(ctx(mem.device))))
+    :(Finch.CPULocalMemory($(ctx(mem.device))))
 end
 
 struct CPUSharedMemory

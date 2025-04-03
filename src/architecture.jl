@@ -186,7 +186,7 @@ function virtualize(ctx, ex, ::Type{CPUSharedMemory})
     VirtualCPULocalMemory(virtualize(ctx, :($ex.device), CPU))
 end
 function lower(ctx::AbstractCompiler, mem::VirtualCPUSharedMemory, ::DefaultStyle)
-    :(CPUSharedMemory($(ctx(mem.device))))
+    :(Finch.CPUSharedMemory($(ctx(mem.device))))
 end
 
 local_memory(device::CPU) = CPULocalMemory(device)
@@ -421,7 +421,7 @@ function virtualize(ctx, ex, ::Type{CPUThread{Parent}}) where {Parent}
     )
 end
 function lower(ctx::AbstractCompiler, task::VirtualCPUThread, ::DefaultStyle)
-    :(CPUThread($(ctx(task.tid)), $(ctx(task.dev)), $(ctx(task.parent))))
+    :(Finch.CPUThread($(ctx(task.tid)), $(ctx(task.dev)), $(ctx(task.parent))))
 end
 FinchNotation.finch_leaf(device::VirtualCPUThread) = virtual(device)
 get_device(task::VirtualCPUThread) = task.dev

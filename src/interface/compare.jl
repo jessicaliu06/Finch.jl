@@ -103,12 +103,27 @@ function helper_argmax(A, dims)
 end
 
 function argmax_python(A; dims, keepdims)
-    a = helper_argmax(A, dims)
-    if (keepdims)
-        return expanddims(a, dims)
+    if (!dims) 
+        return map(x -> x[2], reduce(maxby, map(Pair, A, 1:size(A)[1]), dims=dims, init=-Inf=>0))
     else
-        return a
+        return map(
+            x -> x[2], 
+            reduce(
+                maxby, 
+                map(Pair, A, 1:size(A)[1]), 
+                dims=dims, 
+                init=-Inf=>0
+            )
+        )
     end
+
+
+    # a = helper_argmax(A, dims)
+    # if (keepdims)
+    #     return expanddims(a, dims)
+    # else
+    #     return a
+    # end
 end
 
 function helper_argmax(A)

@@ -142,7 +142,7 @@ function virtualize(ctx, ex, ::Type{CPU})
             $n = ($ex.n)
         end,
     )
-    VirtualCPU(virtualize(ctx, :($n), Int))
+    VirtualCPU(value(n, Int))
 end
 function virtual_call_def(
     ctx, alg, ::typeof(cpu), ::Any, n=value(:($(Threads.nthreads)()), Int)
@@ -154,7 +154,7 @@ function virtual_call_def(
             $n_2 = $(ctx(n))
         end,
     )
-    VirtualCPU(virtualize(ctx, :($n_2), Int))
+    VirtualCPU(value(n_2, Int))
 end
 function lower(ctx::AbstractCompiler, device::VirtualCPU, ::DefaultStyle)
     :(Finch.CPU($(ctx(device.n))))
@@ -418,7 +418,7 @@ end
 
 function virtualize(ctx, ex, ::Type{CPUThread{Parent}}) where {Parent}
     VirtualCPUThread(
-        virtualize(ctx, :($sym.tid), Int),
+        value(sym.tid, Int),
         virtualize(ctx, :($sym.dev), CPU),
         virtualize(ctx, :($sym.parent), Parent),
     )
@@ -501,7 +501,9 @@ function virtual_parallel_region(f, ctx, ::Serial)
     contain(f, ctx)
 end
 
-function virtual_parallel_region(f, ctx, device::VirtualCPU)
+function virtual_parallel_region(
+    f, ctx, device::VirtualCPU, schedule::VirtualStaticSchedule
+)
     tid = freshen(ctx, :tid)
 
     code = contain(ctx) do ctx_2
@@ -511,6 +513,32 @@ function virtual_parallel_region(f, ctx, device::VirtualCPU)
 
     return quote
         Threads.@threads for $tid in 1:($(ctx(device.n)))
+            Finch.@barrier begin
+                @inbounds @fastmath begin
+                    $code
+                end
+                nothing
+            end
+        end
+    end
+end
+
+function virtual_parallel_region(
+    f,
+    ctx,
+    device::VirtualCPU,
+    schedule::VirtualDynamicSchedule,
+    ext::VirtualParallelDimension,
+)
+    tid = freshen(ctx, :tid)
+
+    code = contain(ctx) do ctx_2
+        subtask = VirtualCPUThread(value(tid, Int), device, ctx_2.code.task)
+        contain(f, ctx_2; task=subtask)
+    end
+
+    return quote
+        Threads.@threads for $tid in 1:cld($(ctx(getstop(ext.ext))), $(ctx(schedule.chk)))
             Finch.@barrier begin
                 @inbounds @fastmath begin
                     $code

@@ -363,7 +363,7 @@ function lower_parallel_loop(
         end
         body = redistribute(ctx, root.body, diff)
 
-        virtual_parallel_region(ctx_2, device) do ctx_3
+        virtual_parallel_region(ctx_2, device, schedule) do ctx_3
             subtask = get_task(ctx_3)
             tid = get_task_num(subtask)
             open_scope(ctx_3) do ctx_4
@@ -458,7 +458,7 @@ function lower_parallel_loop(
         end
         body = redistribute(ctx, root.body, diff)
 
-        virtual_parallel_region(ctx_2, device) do ctx_3
+        virtual_parallel_region(ctx_2, device, schedule, ext) do ctx_3
             subtask = get_task(ctx_3)
             tid = get_task_num(subtask)
             open_scope(ctx_3) do ctx_4
@@ -491,7 +491,7 @@ function lower_parallel_loop(
                         loop(root.idx, ext.ext,
                             sieve(
                                 access(
-                                    VirtualSplitMask(getstop(ext.ext), device.n),
+                                    VirtualChunkMask(getstop(ext.ext), schedule.chk),
                                     reader(),
                                     root.idx,
                                     i,

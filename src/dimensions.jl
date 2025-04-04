@@ -250,7 +250,7 @@ function virtualize(ctx, ex, ::Type{DynamicSchedule})
             $chk = ($ex.chk)
         end,
     )
-    VirtualDynamicSchedule(virtualize(ctx, :($chk), Int))
+    VirtualDynamicSchedule(value(chk, Int))
 end
 
 function lower(ctx, ex::VirtualDynamicSchedule)
@@ -267,7 +267,7 @@ function virtual_call_def(ctx, alg, ::typeof(dynamic), ::Any, chk=value(:(1), In
             $chk_2 = $(ctx(chk))
         end,
     )
-    VirtualDynamicSchedule(virtualize(ctx, :($chk_2), Int))
+    VirtualDynamicSchedule(value(chk_2, Int))
 end
 
 @kwdef struct ParallelDimension{Ext,Device,Schedule} <: AbstractExtent

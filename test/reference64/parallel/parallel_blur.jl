@@ -29,9 +29,9 @@ begin
     Threads.@threads for tid = 1:n
             Finch.@barrier begin
                     @inbounds @fastmath(begin
-                                tmp_lvl_2_val_3 = (Finch).transfer(Finch.CPUThread(tid, Finch.CPU(n), Serial()), tmp_lvl_2_val_2)
-                                input_lvl_3_val_3 = (Finch).transfer(Finch.CPUThread(tid, Finch.CPU(n), Serial()), input_lvl_3_val_2)
-                                output_lvl_3_val_3 = (Finch).transfer(Finch.CPUThread(tid, Finch.CPU(n), Serial()), output_lvl_3_val_2)
+                                tmp_lvl_2_val_3 = (Finch).transfer(Finch.CPUThread(tid, Finch.CPU(n), Finch.Serial()), tmp_lvl_2_val_2)
+                                input_lvl_3_val_3 = (Finch).transfer(Finch.CPUThread(tid, Finch.CPU(n), Finch.Serial()), input_lvl_3_val_2)
+                                output_lvl_3_val_3 = (Finch).transfer(Finch.CPUThread(tid, Finch.CPU(n), Finch.Serial()), output_lvl_3_val_2)
                                 phase_start_2 = max(1, 1 + fld(input_lvl_stop * (-1 + tid), n))
                                 phase_stop_2 = min(input_lvl_stop, fld(input_lvl_stop * tid, n))
                                 if phase_stop_2 >= phase_start_2

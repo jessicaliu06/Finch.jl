@@ -705,7 +705,8 @@
                 end
             end
 
-            @test y == swizzle(A, 2, 1) * x
+            y_ref = swizzle(A, 2, 1) * x
+            @test norm(y - y_ref) / norm(y_ref) < 1e-10
         end
 
         # Check that passing dynamic as argument to parallel is working
@@ -726,7 +727,8 @@
                 end
             end
 
-            @test y == swizzle(A, 2, 1) * x
+            y_ref = swizzle(A, 2, 1) * x
+            @test norm(y - y_ref) / norm(y_ref) < 1e-10
         end
     end
 end

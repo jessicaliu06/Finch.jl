@@ -317,7 +317,13 @@ function lower_loop(ctx, root, ext::VirtualParallelDimension)
     lower_parallel_loop(ctx, root, ext, ext.device, ext.schedule)
 end
 
-function lower_parallel_loop(ctx, root, ext::VirtualParallelDimension, device::VirtualCPU, schedule::VirtualStaticSchedule)
+function lower_parallel_loop(
+    ctx,
+    root,
+    ext::VirtualParallelDimension,
+    device::VirtualCPU,
+    schedule::VirtualStaticSchedule,
+)
     root = ensure_concurrent(root, ctx)
 
     decl_in_scope = unique(
@@ -406,7 +412,13 @@ function lower_parallel_loop(ctx, root, ext::VirtualParallelDimension, device::V
     end
 end
 
-function lower_parallel_loop(ctx, root, ext::VirtualParallelDimension, device::VirtualCPU, schedule::VirtualDynamicSchedule)
+function lower_parallel_loop(
+    ctx,
+    root,
+    ext::VirtualParallelDimension,
+    device::VirtualCPU,
+    schedule::VirtualDynamicSchedule,
+)
     root = ensure_concurrent(root, ctx)
 
     decl_in_scope = unique(

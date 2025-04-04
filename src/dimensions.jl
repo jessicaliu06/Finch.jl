@@ -232,7 +232,7 @@ function virtual_call_def(ctx, alg, ::typeof(static), ::Any)
     VirtualStaticSchedule()
 end
 
-struct DynamicSchedule{chk} <: AbstractSchedule
+struct DynamicSchedule <: AbstractSchedule
     chk::Int
 end
 
@@ -245,7 +245,7 @@ FinchNotation.finch_leaf(x::VirtualDynamicSchedule) = virtual(x)
 function virtualize(ctx, ex, ::Type{DynamicSchedule})
     chk = freshen(ctx, :chk)
     push_preamble!(
-        ctx, 
+        ctx,
         quote
             $chk = ($ex.chk)
         end,

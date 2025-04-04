@@ -101,10 +101,10 @@ get_parent_task(::Serial) = nothing
 get_task_num(::Serial) = 1
 struct VirtualSerial <: AbstractVirtualTask end
 virtualize(ctx, ex, ::Type{Serial}) = VirtualSerial()
-lower(ctx::AbstractCompiler, task::VirtualSerial, ::DefaultStyle) = :(Serial())
+lower(ctx::AbstractCompiler, task::VirtualSerial, ::DefaultStyle) = :(Finch.Serial())
 virtual_call_def(ctx, alg, ::typeof(serial), Any) = VirtualSerial()
 FinchNotation.finch_leaf(device::VirtualSerial) = virtual(device)
-get_device(::VirtualSerial) = VirtualCPU(nothing, 1)
+get_device(::VirtualSerial) = VirtualCPU(literal(1))
 get_parent_task(::VirtualSerial) = nothing
 get_task_num(::VirtualSerial) = literal(1)
 
@@ -129,7 +129,7 @@ A device that represents a CPU with n threads.
 struct CPU <: AbstractDevice
     n::Int
 end
-cpu(n = Threads.nthreads()) = CPU(n)
+cpu(n=Threads.nthreads()) = CPU(n)
 get_num_tasks(dev::CPU) = dev.n
 @kwdef struct VirtualCPU <: AbstractVirtualDevice
     n
@@ -144,7 +144,9 @@ function virtualize(ctx, ex, ::Type{CPU})
     )
     VirtualCPU(value(n, Int))
 end
-function virtual_call_def(ctx, alg, ::typeof(cpu), Any, n = value(:($(Threads.nthreads)()), Int))
+function virtual_call_def(
+    ctx, alg, ::typeof(cpu), ::Any, n=value(:($(Threads.nthreads)()), Int)
+)
     n_2 = freshen(ctx, :n)
     push_preamble!(
         ctx,
@@ -155,7 +157,7 @@ function virtual_call_def(ctx, alg, ::typeof(cpu), Any, n = value(:($(Threads.nt
     VirtualCPU(value(n_2, Int))
 end
 function lower(ctx::AbstractCompiler, device::VirtualCPU, ::DefaultStyle)
-    :(CPU($(ctx(device.n))))
+    :(Finch.CPU($(ctx(device.n))))
 end
 get_num_tasks(device::VirtualCPU) = device.n
 
@@ -172,7 +174,7 @@ function virtualize(ctx, ex, ::Type{CPULocalMemory})
     VirtualCPULocalMemory(virtualize(ctx, :($ex.device), CPU))
 end
 function lower(ctx::AbstractCompiler, mem::VirtualCPULocalMemory, ::DefaultStyle)
-    :(CPULocalMemory($(ctx(mem.device))))
+    :(Finch.CPULocalMemory($(ctx(mem.device))))
 end
 
 struct CPUSharedMemory
@@ -186,7 +188,7 @@ function virtualize(ctx, ex, ::Type{CPUSharedMemory})
     VirtualCPULocalMemory(virtualize(ctx, :($ex.device), CPU))
 end
 function lower(ctx::AbstractCompiler, mem::VirtualCPUSharedMemory, ::DefaultStyle)
-    :(CPUSharedMemory($(ctx(mem.device))))
+    :(Finch.CPUSharedMemory($(ctx(mem.device))))
 end
 
 local_memory(device::CPU) = CPULocalMemory(device)
@@ -413,15 +415,16 @@ struct VirtualCPUThread <: AbstractVirtualTask
     dev::VirtualCPU
     parent
 end
+
 function virtualize(ctx, ex, ::Type{CPUThread{Parent}}) where {Parent}
     VirtualCPUThread(
-        virtualize(ctx, :($sym.tid), Int),
+        value(sym.tid, Int),
         virtualize(ctx, :($sym.dev), CPU),
         virtualize(ctx, :($sym.parent), Parent),
     )
 end
 function lower(ctx::AbstractCompiler, task::VirtualCPUThread, ::DefaultStyle)
-    :(CPUThread($(ctx(task.tid)), $(ctx(task.dev)), $(ctx(task.parent))))
+    :(Finch.CPUThread($(ctx(task.tid)), $(ctx(task.dev)), $(ctx(task.parent))))
 end
 FinchNotation.finch_leaf(device::VirtualCPUThread) = virtual(device)
 get_device(task::VirtualCPUThread) = task.dev
@@ -498,7 +501,9 @@ function virtual_parallel_region(f, ctx, ::Serial)
     contain(f, ctx)
 end
 
-function virtual_parallel_region(f, ctx, device::VirtualCPU)
+function virtual_parallel_region(
+    f, ctx, device::VirtualCPU, schedule::VirtualStaticSchedule
+)
     tid = freshen(ctx, :tid)
 
     code = contain(ctx) do ctx_2
@@ -508,6 +513,32 @@ function virtual_parallel_region(f, ctx, device::VirtualCPU)
 
     return quote
         Threads.@threads for $tid in 1:($(ctx(device.n)))
+            Finch.@barrier begin
+                @inbounds @fastmath begin
+                    $code
+                end
+                nothing
+            end
+        end
+    end
+end
+
+function virtual_parallel_region(
+    f,
+    ctx,
+    device::VirtualCPU,
+    schedule::VirtualDynamicSchedule,
+    ext::VirtualParallelDimension,
+)
+    tid = freshen(ctx, :tid)
+
+    code = contain(ctx) do ctx_2
+        subtask = VirtualCPUThread(value(tid, Int), device, ctx_2.code.task)
+        contain(f, ctx_2; task=subtask)
+    end
+
+    return quote
+        Threads.@threads for $tid in 1:cld($(ctx(getstop(ext.ext))), $(ctx(schedule.chk)))
             Finch.@barrier begin
                 @inbounds @fastmath begin
                     $code

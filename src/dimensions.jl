@@ -210,12 +210,11 @@ end
 
 abstract type AbstractSchedule end
 
-abstract type VirtualAbstractSchedule end
-
+abstract type AbstractVirtualSchedule end
 
 struct StaticSchedule <: AbstractSchedule end
 
-struct VirtualStaticSchedule <: AbstractVirtualExtent end
+struct VirtualStaticSchedule <: AbstractVirtualSchedule end
 
 FinchNotation.finch_leaf(x::VirtualStaticSchedule) = virtual(x)
 
@@ -227,40 +226,48 @@ function lower(ctx, ex::VirtualStaticSchedule)
     :($StaticSchedule())
 end
 
-function static()
-    StaticSchedule()
-end
+static() = StaticSchedule()
 
 function virtual_call_def(ctx, alg, ::typeof(static), ::Any)
     VirtualStaticSchedule()
 end
 
-struct DynamicSchedule{Chunk} <: AbstractSchedule
-    chunk::Chunk
+struct DynamicSchedule <: AbstractSchedule
+    chk::Int
 end
 
-struct VirtualDynamicSchedule <: AbstractVirtualExtent
-    chunk
+@kwdef struct VirtualDynamicSchedule <: AbstractVirtualSchedule
+    chk
 end
 
 FinchNotation.finch_leaf(x::VirtualDynamicSchedule) = virtual(x)
 
-function virtualize(ctx, ex, ::Type{DynamicSchedule{Chunk}}) where {Chunk}
-    chunk = virtualize(ctx, :($ex.chunk), Chunk)
-    VirtualDynamicSchedule(chunk)
+function virtualize(ctx, ex, ::Type{DynamicSchedule})
+    chk = freshen(ctx, :chk)
+    push_preamble!(
+        ctx,
+        quote
+            $chk = ($ex.chk)
+        end,
+    )
+    VirtualDynamicSchedule(value(chk, Int))
 end
 
 function lower(ctx, ex::VirtualDynamicSchedule)
-    :($DynamicSchedule($(ctx(ex.chunk))))
+    :($DynamicSchedule($(ctx(ex.chk))))
 end
 
-function dynamic(chunk = 1)
-    DynamicSchedule(chunk)
-end
+dynamic(chk=1) = DynamicSchedule(chk)
 
-function virtual_call_def(ctx, alg, ::typeof(dynamic), ::Any, chunk = literal(1))
-    chunk = resolve(ctx, chunk)
-    VirtualDynamicSchedule(chunk)
+function virtual_call_def(ctx, alg, ::typeof(dynamic), ::Any, chk=value(:(1), Int))
+    chk_2 = freshen(ctx, :chk)
+    push_preamble!(
+        ctx,
+        quote
+            $chk_2 = $(ctx(chk))
+        end,
+    )
+    VirtualDynamicSchedule(value(chk_2, Int))
 end
 
 @kwdef struct ParallelDimension{Ext,Device,Schedule} <: AbstractExtent
@@ -276,7 +283,9 @@ end
 end
 
 FinchNotation.finch_leaf(x::VirtualParallelDimension) = virtual(x)
-function virtualize(ctx, ex, ::Type{ParallelDimension{Ext,Device,Schedule}}) where {Ext, Device, Schedule}
+function virtualize(
+    ctx, ex, ::Type{ParallelDimension{Ext,Device,Schedule}}
+) where {Ext,Device,Schedule}
     VirtualParallelDimension(
         virtualize(ctx, :($ex.ext), Ext),
         virtualize(ctx, :($ex.device), Device),
@@ -288,14 +297,23 @@ function lower(ctx, ex::VirtualParallelDimension)
 end
 
 """
-    parallel(ext, device=CPU(nthreads()), schedule=static)
+parallel(ext, device=CPU(nthreads()), schedule=StaticSchedule())
 
 A dimension `ext` that is parallelized over `device` using the `schedule`. The `ext` field is usually
 `_`, or dimensionless, but can be any standard dimension argument.
 """
-parallel(dim, device=CPU(Threads.nthreads()), schedule=static()) = ParallelDimension(dim, device, schedule)
+parallel(dim, device=cpu(Threads.nthreads()), schedule=static()) =
+    ParallelDimension(dim, device, schedule)
 
-function virtual_call_def(ctx, alg, ::typeof(parallel), ::Any, ext, device = finch_leaf(virtual_call(ctx, cpu)), schedule = finch_leaf(VirtualStaticSchedule()))
+function virtual_call_def(
+    ctx,
+    alg,
+    ::typeof(parallel),
+    ::Any,
+    ext,
+    device=finch_leaf(virtual_call(ctx, cpu)),
+    schedule=finch_leaf(VirtualStaticSchedule()),
+)
     ext = resolve(ctx, ext)
     device = resolve(ctx, device)
     schedule = resolve(ctx, schedule)

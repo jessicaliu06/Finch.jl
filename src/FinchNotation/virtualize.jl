@@ -1,6 +1,10 @@
 #TODO delete this line and figure this out with finch_leaf_instance
 Finch.virtualize(ctx, ex, (@nospecialize T)) = value(ex, T)
 
+function Finch.virtualize(ctx, ex, ::Type{Int})
+    value(ex, Int)
+end
+
 function Finch.virtualize(ctx, ex, ::Type{FinchNotation.LiteralInstance{val}}) where {val}
     literal(val)
 end

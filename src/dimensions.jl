@@ -212,37 +212,37 @@ abstract type AbstractSchedule end
 
 abstract type AbstractVirtualSchedule end
 
-struct StaticSchedule <: AbstractSchedule end
+struct ZeroSchedule <: AbstractSchedule end
 
-struct VirtualStaticSchedule <: AbstractVirtualSchedule end
+struct VirtualZeroSchedule <: AbstractVirtualSchedule end
 
-FinchNotation.finch_leaf(x::VirtualStaticSchedule) = virtual(x)
+FinchNotation.finch_leaf(x::VirtualZeroSchedule) = virtual(x)
 
-function virtualize(ctx, ex, ::Type{StaticSchedule})
-    VirtualStaticSchedule()
+function virtualize(ctx, ex, ::Type{ZeroSchedule})
+    VirtualZeroSchedule()
 end
 
-function lower(ctx, ex::VirtualStaticSchedule)
-    :($StaticSchedule())
+function lower(ctx, ex::VirtualZeroSchedule)
+    :($ZeroSchedule())
 end
 
-static() = StaticSchedule()
+zero_schedule() = ZeroSchedule()
 
-function virtual_call_def(ctx, alg, ::typeof(static), ::Any)
-    VirtualStaticSchedule()
+function virtual_call_def(ctx, alg, ::typeof(zero_schedule), ::Any)
+    VirtualZeroSchedule()
 end
 
-struct DynamicSchedule <: AbstractSchedule
+struct OneSchedule <: AbstractSchedule
     chk::Int
 end
 
-@kwdef struct VirtualDynamicSchedule <: AbstractVirtualSchedule
+@kwdef struct VirtualOneSchedule <: AbstractVirtualSchedule
     chk
 end
 
-FinchNotation.finch_leaf(x::VirtualDynamicSchedule) = virtual(x)
+FinchNotation.finch_leaf(x::VirtualOneSchedule) = virtual(x)
 
-function virtualize(ctx, ex, ::Type{DynamicSchedule})
+function virtualize(ctx, ex, ::Type{OneSchedule})
     chk = freshen(ctx, :chk)
     push_preamble!(
         ctx,
@@ -250,16 +250,16 @@ function virtualize(ctx, ex, ::Type{DynamicSchedule})
             $chk = ($ex.chk)
         end,
     )
-    VirtualDynamicSchedule(value(chk, Int))
+    VirtualOneSchedule(value(chk, Int))
 end
 
-function lower(ctx, ex::VirtualDynamicSchedule)
-    :($DynamicSchedule($(ctx(ex.chk))))
+function lower(ctx, ex::VirtualOneSchedule)
+    :($OneSchedule($(ctx(ex.chk))))
 end
 
-dynamic(chk=1) = DynamicSchedule(chk)
+one_schedule(chk=1) = OneSchedule(chk)
 
-function virtual_call_def(ctx, alg, ::typeof(dynamic), ::Any, chk=value(:(1), Int))
+function virtual_call_def(ctx, alg, ::typeof(one_schedule), ::Any, chk=value(:(1), Int))
     chk_2 = freshen(ctx, :chk)
     push_preamble!(
         ctx,
@@ -267,7 +267,83 @@ function virtual_call_def(ctx, alg, ::typeof(dynamic), ::Any, chk=value(:(1), In
             $chk_2 = $(ctx(chk))
         end,
     )
-    VirtualDynamicSchedule(value(chk_2, Int))
+    VirtualOneSchedule(value(chk_2, Int))
+end
+
+struct TwoSchedule <: AbstractSchedule
+    chk::Int
+end
+
+@kwdef struct VirtualTwoSchedule <: AbstractVirtualSchedule
+    chk
+end
+
+FinchNotation.finch_leaf(x::VirtualTwoSchedule) = virtual(x)
+
+function virtualize(ctx, ex, ::Type{TwoSchedule})
+    chk = freshen(ctx, :chk)
+    push_preamble!(
+        ctx,
+        quote
+            $chk = ($ex.chk)
+        end,
+    )
+    VirtualTwoSchedule(value(chk, Int))
+end
+
+function lower(ctx, ex::VirtualTwoSchedule)
+    :($TwoSchedule($(ctx(ex.chk))))
+end
+
+two_schedule(chk=1) = TwoSchedule(chk)
+
+function virtual_call_def(ctx, alg, ::typeof(two_schedule), ::Any, chk=value(:(1), Int))
+    chk_2 = freshen(ctx, :chk)
+    push_preamble!(
+        ctx,
+        quote
+            $chk_2 = $(ctx(chk))
+        end,
+    )
+    VirtualTwoSchedule(value(chk_2, Int))
+end
+
+struct ThreeSchedule <: AbstractSchedule
+    chk::Int
+end
+
+@kwdef struct VirtualThreeSchedule <: AbstractVirtualSchedule
+    chk
+end
+
+FinchNotation.finch_leaf(x::VirtualThreeSchedule) = virtual(x)
+
+function virtualize(ctx, ex, ::Type{ThreeSchedule})
+    chk = freshen(ctx, :chk)
+    push_preamble!(
+        ctx,
+        quote
+            $chk = ($ex.chk)
+        end,
+    )
+    VirtualThreeSchedule(value(chk, Int))
+end
+
+function lower(ctx, ex::VirtualThreeSchedule)
+    :($ThreeSchedule($(ctx(ex.chk))))
+end
+
+three_schedule(chk=1) = ThreeSchedule(chk)
+
+function virtual_call_def(ctx, alg, ::typeof(three_schedule), ::Any, chk=value(:(1), Int))
+    chk_2 = freshen(ctx, :chk)
+    push_preamble!(
+        ctx,
+        quote
+            $chk_2 = $(ctx(chk))
+        end,
+    )
+    VirtualThreeSchedule(value(chk_2, Int))
 end
 
 @kwdef struct ParallelDimension{Ext,Device,Schedule} <: AbstractExtent
@@ -297,12 +373,12 @@ function lower(ctx, ex::VirtualParallelDimension)
 end
 
 """
-parallel(ext, device=CPU(nthreads()), schedule=StaticSchedule())
+parallel(ext, device=CPU(nthreads()), schedule=ZeroSchedule())
 
 A dimension `ext` that is parallelized over `device` using the `schedule`. The `ext` field is usually
 `_`, or dimensionless, but can be any standard dimension argument.
 """
-parallel(dim, device=cpu(Threads.nthreads()), schedule=static()) =
+parallel(dim, device=cpu(Threads.nthreads()), schedule=zero_schedule()) =
     ParallelDimension(dim, device, schedule)
 
 function virtual_call_def(
@@ -312,7 +388,7 @@ function virtual_call_def(
     ::Any,
     ext,
     device=finch_leaf(virtual_call(ctx, cpu)),
-    schedule=finch_leaf(VirtualStaticSchedule()),
+    schedule=finch_leaf(VirtualZeroSchedule()),
 )
     ext = resolve(ctx, ext)
     device = resolve(ctx, device)
@@ -493,7 +569,7 @@ end
 
 combinedim(ctx, a::VirtualSuggestedExtent, b::VirtualContinuousExtent) = b
 
-is_continuous_extent(x::VirtualParallelDimension) = is_continuous_extent(x.dim)
+is_continuous_extent(x::VirtualParallelDimension) = is_continuous_extent(x.ext)
 
 function virtual_intersect(ctx, a::VirtualContinuousExtent, b::VirtualContinuousExtent)
     VirtualContinuousExtent(;

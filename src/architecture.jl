@@ -502,7 +502,7 @@ function virtual_parallel_region(f, ctx, ::Serial)
 end
 
 function virtual_parallel_region(
-    f, ctx, device::VirtualCPU, schedule::VirtualStaticSchedule
+    f, ctx, ext::VirtualParallelDimension, device::VirtualCPU, schedule::VirtualZeroSchedule
 )
     tid = freshen(ctx, :tid)
 
@@ -524,21 +524,123 @@ function virtual_parallel_region(
 end
 
 function virtual_parallel_region(
-    f,
-    ctx,
-    device::VirtualCPU,
-    schedule::VirtualDynamicSchedule,
-    ext::VirtualParallelDimension,
+    f, ctx, ext::VirtualParallelDimension, device::VirtualCPU, schedule::VirtualOneSchedule
 )
     tid = freshen(ctx, :tid)
+    num_chks = freshen(ctx, :num_chks)
+
+    push_preamble!(
+        ctx,
+        quote
+            $num_chks = cld($(ctx(getstop(ext.ext))), $(ctx(schedule.chk)))
+        end,
+    )
 
     code = contain(ctx) do ctx_2
+        chk_id = freshen(ctx, :chk_id)
+        push_preamble!(
+            ctx_2,
+            quote
+                $chk_id = $tid
+            end,
+        )
+
         subtask = VirtualCPUThread(value(tid, Int), device, ctx_2.code.task)
-        contain(f, ctx_2; task=subtask)
+        contain(f(value(tid, Int), value(chk_id, Int)), ctx_2; task=subtask)
     end
 
     return quote
-        Threads.@threads for $tid in 1:cld($(ctx(getstop(ext.ext))), $(ctx(schedule.chk)))
+        Threads.@threads for $tid in 1:($num_chks)
+            Finch.@barrier begin
+                @inbounds @fastmath begin
+                    $code
+                end
+                nothing
+            end
+        end
+    end
+end
+
+function virtual_parallel_region(
+    f, ctx, ext::VirtualParallelDimension, device::VirtualCPU, schedule::VirtualTwoSchedule
+)
+    tid = freshen(ctx, :tid)
+    chk_id = freshen(ctx, :chk_id)
+    chk_ctr = freshen(ctx, :chk_ctr)
+    num_chks = freshen(ctx, :num_chks)
+
+    push_preamble!(
+        ctx,
+        quote
+            $chk_ctr = Threads.Atomic{Int}(0)
+            $num_chks = cld($(ctx(getstop(ext.ext))), $(ctx(schedule.chk)))
+        end,
+    )
+
+    code = contain(ctx) do ctx_2
+        subtask = VirtualCPUThread(value(tid, Int), device, ctx_2.code.task)
+        contain(f(value(tid, Int), value(chk_id, Int)), ctx_2; task=subtask)
+    end
+
+    return quote
+        Threads.@threads for $tid in 1:($(ctx(device.n)))
+            Finch.@barrier begin
+                @inbounds @fastmath begin
+                    while true
+                        $chk_id = Threads.atomic_add!($chk_ctr, 1)
+                        if $chk_id > $num_chks
+                            break
+                        end
+                        $code
+                    end
+                end
+                nothing
+            end
+        end
+    end
+end
+
+function virtual_parallel_region(
+    f, ctx, ext::VirtualParallelDimension, device::VirtualCPU,
+    schedule::VirtualThreeSchedule,
+)
+    tid_tmp = freshen(ctx, :tid)
+    tid_ch = freshen(ctx, :tid_ch)
+    chk_id = freshen(ctx, :chk_id)
+    num_chks = freshen(ctx, :num_chks)
+
+    push_preamble!(
+        ctx,
+        quote
+            $num_chks = cld($(ctx(getstop(ext.ext))), $(ctx(schedule.chk)))
+        end,
+    )
+
+    code = contain(ctx) do ctx_2
+        tid = freshen(ctx, :tid)
+        push_preamble!(
+            ctx_2,
+            quote
+                $tid = take!($tid_ch)
+            end,
+        )
+        push_epilogue!(
+            ctx_2,
+            quote
+                put!($tid_ch, $tid)
+            end,
+        )
+        subtask = VirtualCPUThread(value(tid, Int), device, ctx_2.code.task)
+        contain(f(value(tid, Int), value(chk_id, Int)), ctx_2; task=subtask)
+    end
+
+    return quote
+        $tid_ch = Channel{Int}($(ctx(device.n)))
+        for $tid_tmp in 1:($(ctx(device.n)))
+            put!($tid_ch, $tid_tmp)
+        end
+
+        Threads.@threads for $chk_id in 1:($num_chks)
             Finch.@barrier begin
                 @inbounds @fastmath begin
                     $code

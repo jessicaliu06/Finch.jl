@@ -709,10 +709,33 @@ function compute_parse(ctx, args::Tuple)
     return ress
 end
 
-function Base.argmax(arr::LazyTensor, dims::Real=2)
-    return argmax(arr, dims)
+function Base.argmax(A::AbstractTensor; dims=:)
+    return compute(argmax(lazy(A), dims=dims))
 end
 
-function Base.argmin(arr::LazyTensor, dims::Real=2)
-    return argmin(arr, dims)
+function Base.argmax(A::LazyTensor; dims=:)
+    dims = dims == Colon() ? (1:ndims(A)) : collect(dims)
+
+    if (ndims(A) >= 2)
+        A1 = (map(
+            x -> x[2], 
+            reduce(
+                maxby, 
+                map(
+                    Pair, 
+                    A, 
+                    CartesianIndices(size(A))), 
+                    dims=dims, 
+                    init=-Inf=>CartesianIndex(fill(0, length(size(A)))...)
+            )
+        ))
+        # NOTE: CURRENTLY DOES NOT WORK
+        B = expanddims(A1, dims)
+        return B
+
+    else
+        return map(x -> x[2], reduce(maxby, map(Pair, A, 1:size(A)[1]), dims=dims, init=-Inf=>0))
+    end
 end
+
+

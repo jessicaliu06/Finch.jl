@@ -766,3 +766,35 @@ function Base.argmin(A::LazyTensor; dims=:)
         return expanddims(map(x -> x[2], reduce(minby, map(Pair, A, 1:size(A)[1]), dims=dims, init=Inf=>0)), dims)
     end
 end
+
+function argmin_python(A::AbstractTensor, axis::Union{Int, Nothing}=nothing, keepdims=false) 
+    dims = axis == nothing ? Colon() : axis
+    min_A = map(Tuple, argmin(A, dims=dims))
+
+    if keepdims && axis != nothing
+        min_A = expanddims(min_A, dims)
+    end
+
+    # for when the expanddims is working
+    # if !keepdims && axis != nothing
+    #     min_A = dropdims(min_A, dims)
+    # end
+
+    return min_A
+end
+
+function argmax_python(A::AbstractTensor, axis::Union{Int, Nothing}=nothing, keepdims=false) 
+    dims = axis == nothing ? Colon() : axis
+    min_A = map(Tuple, argmax(A, dims=dims))
+
+    if keepdims && axis != nothing
+        min_A = expanddims(min_A, dims)
+    end
+
+    # for when the expanddims is working
+    # if !keepdims && axis != nothing
+    #     min_A = dropdims(min_A, dims)
+    # end
+
+    return min_A
+end

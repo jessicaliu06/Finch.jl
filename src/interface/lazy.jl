@@ -738,4 +738,33 @@ function Base.argmax(A::LazyTensor; dims=:)
     end
 end
 
+function Base.argmin(A::AbstractTensor; dims=:)
+    return compute(argmin(lazy(A), dims=dims))
+end
+
+function Base.argmin(A::LazyTensor; dims=:)
+    dims = dims == Colon() ? (1:ndims(A)) : collect(dims)
+
+    if (ndims(A) >= 2)
+        A1 = (map(
+            x -> x[2], 
+            reduce(
+                minby, 
+                map(
+                    Pair, 
+                    A, 
+                    CartesianIndices(size(A))), 
+                    dims=dims, 
+                    init=Inf=>CartesianIndex(fill(0, length(size(A)))...)
+            )
+        ))
+        # NOTE: CURRENTLY DOES NOT WORK
+        B = expanddims(A1, dims)
+        return B
+
+    else
+        return map(x -> x[2], reduce(minby, map(Pair, A, 1:size(A)[1]), dims=dims, init=Inf=>0))
+    end
+end
+
 

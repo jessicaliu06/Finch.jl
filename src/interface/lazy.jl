@@ -758,5 +758,3 @@ function Base.argmin(A::LazyTensor; dims=:)
         return expanddims(map(x -> x[2], reduce(minby, map(Pair, A, 1:size(A)[1]), dims=dims, init=Inf=>0)), dims)
     end
 end
-
-

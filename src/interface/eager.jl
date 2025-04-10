@@ -187,6 +187,56 @@ appear at the `dims` position in the array shape.
 """
 Base.dropdims(arr::AbstractTensor, dims) = compute(dropdims(lazy(arr), dims))
 
+"""
+    argmax(arr::AbstractTensor, dims)
+
+Find the maximum value in an array across dims
+"""
+function Base.argmax(A::AbstractTensor; dims=:)
+    return compute(argmax(lazy(A), dims=dims))
+end
+
+"""
+    argmin(arr::AbstractTensor, dims)
+
+Find the minimum value in an array across dims
+"""
+function Base.argmin(A::AbstractTensor; dims=:)
+    return compute(argmin(lazy(A), dims=dims))
+end
+
+function argmin_python(A::AbstractTensor, axis::Union{Int, Nothing}=nothing, keepdims=false) 
+    dims = axis == nothing ? Colon() : axis
+    min_A = map(Tuple, argmin(A, dims=dims))
+
+    if keepdims && axis != nothing
+        min_A = expanddims(min_A, dims)
+    end
+
+    # for when the expanddims is working
+    # if !keepdims && axis != nothing
+    #     min_A = dropdims(min_A, dims)
+    # end
+
+    return min_A
+end
+
+function argmax_python(A::AbstractTensor, axis::Union{Int, Nothing}=nothing, keepdims=false) 
+    dims = axis == nothing ? Colon() : axis
+    min_A = map(Tuple, argmax(A, dims=dims))
+
+    if keepdims && axis != nothing
+        min_A = expanddims(min_A, dims)
+    end
+
+    # for when the expanddims is working
+    # if !keepdims && axis != nothing
+    #     min_A = dropdims(min_A, dims)
+    # end
+
+    return min_A
+end
+
 function Statistics.mean(tns::AbstractTensorOrBroadcast; dims=:)
     res = compute(mean(lazy(tns); dims=dims))
     if dims === Colon()

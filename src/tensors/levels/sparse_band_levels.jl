@@ -369,17 +369,21 @@ function unfurl(
             end,
             body=(ctx) -> Sequence([
                 Phase(;
-                    stop = (ctx, ext) -> call(-, value(my_i_start), 1),
-                    body = (ctx, ext) -> Run(FillLeaf(virtual_level_fill_value(lvl))),
+                    stop=(ctx, ext) -> call(-, value(my_i_start), 1),
+                    body=(ctx, ext) -> Run(FillLeaf(virtual_level_fill_value(lvl))),
                 ),
                 Phase(;
-                    stop = (ctx, ext) -> value(my_i1),
-                    body = (ctx, ext) -> Lookup(;
-                    body=(ctx, i) -> Thunk(;
-                    preamble=:($my_q = $my_q_ofs + $(ctx(i))),
-                    body=(ctx) -> instantiate(ctx, VirtualSubFiber(lvl.lvl, value(my_q, Tp)), mode)
-                )
-                ),
+                    stop=(ctx, ext) -> value(my_i1),
+                    body=(ctx, ext) -> Lookup(;
+                        body=(ctx, i) -> Thunk(;
+                            preamble=:($my_q = $my_q_ofs + $(ctx(i))),
+                            body=(ctx) -> instantiate(
+                                ctx,
+                                VirtualSubFiber(lvl.lvl, value(my_q, Tp)),
+                                mode,
+                            ),
+                        ),
+                    ),
                 ),
                 Phase(;
                     body=(ctx, ext) -> Run(FillLeaf(virtual_level_fill_value(lvl)))
@@ -428,62 +432,88 @@ function unfurl(
     Unfurled(;
         arr=fbr,
         body=Thunk(;
-            preamble = quote
+            preamble=quote
                 $qos = $qos_fill + 1
                 $qos_set = $qos_fill
                 $my_i_prev = $(Ti(-1))
                 $my_i_set = $(Ti(-1))
-                $(if issafe(get_mode_flag(ctx))
-                    quote
-                        $(lvl.prev_pos) < $(ctx(pos)) || throw(FinchProtocolError("SparseBandLevels cannot be updated multiple times"))
-                    end
-                end)
-            end,
-            body     = (ctx) -> Lookup(;
-            body=(ctx, idx) -> Thunk(;
-            preamble = quote
-                if $my_i_prev > 0
-                    $(if issafe(get_mode_flag(ctx))
+                $(
+                    if issafe(get_mode_flag(ctx))
                         quote
-                            if $(ctx(idx)) < $my_i_prev
-                                throw(FinchProtocolError("SparseBandLevels cannot be updated out of order"))
-                            end
+                            $(lvl.prev_pos) < $(ctx(pos)) || throw(
+                                FinchProtocolError(
+                                    "SparseBandLevels cannot be updated multiple times"
+                                ),
+                            )
                         end
-                    end)
-                    $qos = $(ctx(idx)) - $my_i_prev + $qos_fill + 1
-                end
-                if $qos > $qos_stop
-                    $qos_2 = $qos_stop + 1
-                    while $qos > $qos_stop
-                        $qos_stop = max($qos_stop << 1, 1)
                     end
-                    $(contain(ctx_2 -> assemble_level!(ctx_2, lvl.lvl, value(qos_2, Tp), value(qos_stop, Tp)), ctx))
-                end
-                $dirty = false
+                )
             end,
-            body     = (ctx) -> instantiate(ctx, VirtualHollowSubFiber(lvl.lvl, value(qos, Tp), dirty), mode),
-            epilogue = quote
-                if $dirty
-                    $(fbr.dirty) = true
-                    if $my_i_prev <= 0
-                        $my_i_prev = $(ctx(idx))
-                    end
-                    $my_i_set = $(ctx(idx))
-                    $qos_set = $qos
-                end
-            end
-        )
-        ),
-            epilogue = quote
+            body=(ctx) -> Lookup(;
+                body=(ctx, idx) -> Thunk(;
+                    preamble=quote
+                        if $my_i_prev > 0
+                            $(
+                                if issafe(get_mode_flag(ctx))
+                                    quote
+                                        if $(ctx(idx)) < $my_i_prev
+                                            throw(
+                                                FinchProtocolError(
+                                                    "SparseBandLevels cannot be updated out of order"
+                                                ),
+                                            )
+                                        end
+                                    end
+                                end
+                            )
+                            $qos = $(ctx(idx)) - $my_i_prev + $qos_fill + 1
+                        end
+                        if $qos > $qos_stop
+                            $qos_2 = $qos_stop + 1
+                            while $qos > $qos_stop
+                                $qos_stop = max($qos_stop << 1, 1)
+                            end
+                            $(contain(
+                                ctx_2 -> assemble_level!(
+                                    ctx_2,
+                                    lvl.lvl,
+                                    value(qos_2, Tp),
+                                    value(qos_stop, Tp),
+                                ),
+                                ctx,
+                            ))
+                        end
+                        $dirty = false
+                    end,
+                    body=(ctx) -> instantiate(
+                        ctx,
+                        VirtualHollowSubFiber(lvl.lvl, value(qos, Tp), dirty),
+                        mode,
+                    ),
+                    epilogue=quote
+                        if $dirty
+                            $(fbr.dirty) = true
+                            if $my_i_prev <= 0
+                                $my_i_prev = $(ctx(idx))
+                            end
+                            $my_i_set = $(ctx(idx))
+                            $qos_set = $qos
+                        end
+                    end,
+                ),
+            ),
+            epilogue=quote
                 if $my_i_prev > 0
                     $qos = $qos_set
                     $(lvl.idx)[$(ctx(pos))] = $my_i_set
                     $(lvl.ofs)[$(ctx(pos)) + 1] = $my_i_set - $my_i_prev + 1
-                    $(if issafe(get_mode_flag(ctx))
-                        quote
-                            $(lvl.prev_pos) = $(ctx(pos))
+                    $(
+                        if issafe(get_mode_flag(ctx))
+                            quote
+                                $(lvl.prev_pos) = $(ctx(pos))
+                            end
                         end
-                    end)
+                    )
                     $qos_fill = $qos
                 end
             end,

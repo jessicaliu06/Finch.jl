@@ -763,7 +763,7 @@ function argmin_python(A::LazyTensor; dims=:)
             last,
             reduce(
                 minby, 
-                map(
+                broadcast(
                     Pair, 
                     A, 
                     expanddims(lazy(1:size(A)[dim]), dims=setdiff(1:ndims(A), dim))
@@ -799,7 +799,7 @@ function argmax_python(A::LazyTensor; dims=:)
             last,
             reduce(
                 maxby, 
-                map(
+                broadcast(
                     Pair, 
                     A, 
                     expanddims(lazy(1:size(A)[dim]), dims=setdiff(1:ndims(A), dim))

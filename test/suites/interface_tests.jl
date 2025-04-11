@@ -949,13 +949,12 @@ end
 
                     A = rand(4, 5)
                     flat = LinearIndices(size(A))
-                    ind = 1:size(A)[1]
                     @test flat[argmin(A)] == Finch.argmin_python(Tensor(A))
-                    @test dropdims(ind[argmin(A, dims=1)], dims=1) == Finch.argmin_python(Tensor(A), dims=1)
-                    @test dropdims(flat[argmin(A, dims=(1,2))],dims=(1,2)) == Finch.argmin_python(Tensor(A), dims=(1, 2))
+                    @test dropdims(first.(Tuple.(argmin(A, dims=1))), dims=1) == Finch.argmin_python(Tensor(A), dims=1)
+                    @test dropdims(map(i -> flat[i], argmin(A, dims=(1,2))),dims=(1,2)) == Finch.argmin_python(Tensor(A), dims=(1, 2))
                     @test flat[argmax(A)] == Finch.argmax_python(Tensor(A))
-                    @test dropdims(ind[argmax(A, dims=1)],dims=1) == Finch.argmax_python(Tensor(A), dims=1)
-                    @test dropdims(flat[argmax(A, dims=(1,2))],dims=(1,2)) == Finch.argmax_python(Tensor(A), dims=(1, 2))
+                    @test dropdims(first.(Tuple.(argmax(A, dims=1))), dims=1) == Finch.argmax_python(Tensor(A), dims=1)
+                    @test dropdims(map(i -> flat[i], argmax(A, dims=(1,2))),dims=(1,2)) == Finch.argmax_python(Tensor(A), dims=(1, 2))
                 end
 
                 #https://github.com/finch-tensor/Finch.jl/issues/726

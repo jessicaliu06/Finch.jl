@@ -714,7 +714,7 @@ function Base.argmax(A::LazyTensor; dims=:)
 
     if (ndims(A) >= 2)
         return map(
-            x -> x[2], 
+            last,
             reduce(
                 maxby, 
                 map(
@@ -726,7 +726,7 @@ function Base.argmax(A::LazyTensor; dims=:)
             )
         )
     else
-        return map(x -> x[2], reduce(maxby, map(Pair, A, 1:size(A)[1]), dims=dims, init=-Inf=>0))
+        return map(last, reduce(maxby, map(Pair, A, 1:size(A)[1]), dims=dims, init=-Inf=>0))
     end
 end
 
@@ -747,6 +747,6 @@ function Base.argmin(A::LazyTensor; dims=:)
             )
         )
     else
-        return map(x -> x[2], reduce(minby, map(Pair, A, 1:size(A)[1]), dims=dims, init=Inf=>0))
+        return map(last, reduce(minby, map(Pair, A, 1:size(A)[1]), dims=dims, init=Inf=>0))
     end
 end

@@ -917,16 +917,16 @@ end
                 #https://github.com/finch-tensor/Finch.jl/issues/702
                 let
                     u = fsprand(1, 2, 1, 0.2)
-                    v = dropdims(u, [1, 3])
+                    v = dropdims(u, dims=[1, 3])
 
                     @test size(v) == (2,)
-                    @test expanddims(v, [1, 3]) == u
+                    @test expanddims(v, dims = [1, 3]) == u
 
                     u = fsprand(3, 1, 2, 0.2)
-                    v = dropdims(u, 2)
+                    v = dropdims(u, dims = 2)
 
                     @test size(v) == (3, 2)
-                    @test expanddims(v, 2) == u
+                    @test expanddims(v, dims = 2) == u
                 end
 
                 #https://github.com/finch-tensor/Finch.jl/issues/701

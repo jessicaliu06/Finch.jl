@@ -172,20 +172,20 @@ function LinearAlgebra.norm(arr::AbstractTensorOrBroadcast, p::Real=2)
 end
 
 """
-    expanddims(arr::AbstractTensor, dims)
+    expanddims(arr::AbstractTensor; dims)
 
 Expand the dimensions of an array by inserting a new singleton axis or axes that
 will appear at the `dims` position in the expanded array shape.
 """
-expanddims(arr::AbstractTensor, dims) = compute(expanddims(lazy(arr), dims))
+expanddims(arr::AbstractTensor; dims) = compute(expanddims(lazy(arr), dims=dims))
 
 """
-    dropdims(arr::AbstractTensor, dims)
+    dropdims(arr::AbstractTensor; dims)
 
 Reduces the dimensions of an array by removing the singleton axis or axes that
 appear at the `dims` position in the array shape.
 """
-Base.dropdims(arr::AbstractTensor, dims) = compute(dropdims(lazy(arr), dims))
+Base.dropdims(arr::AbstractTensor; dims) = compute(dropdims(lazy(arr), dims=dims))
 
 """
     argmax(arr::AbstractTensor, dims)
@@ -205,12 +205,15 @@ function Base.argmin(A::AbstractTensor; dims=:)
     return compute(argmin(lazy(A), dims=dims))
 end
 
+# TODO :also add a lazy version, always returns an integer, call expanddims on a range
+# TODO: remove the expanddims at the end, make expanddims/dropdims kwargs
+
 function argmin_python(A::AbstractTensor, axis::Union{Int, Nothing}=nothing, keepdims=false) 
     dims = axis == nothing ? Colon() : axis
     min_A = map(Tuple, argmin(A, dims=dims))
 
     if keepdims && axis != nothing
-        min_A = expanddims(min_A, dims)
+        min_A = expanddims(min_A, dims=dims)
     end
 
     # for when the expanddims is working
@@ -226,7 +229,7 @@ function argmax_python(A::AbstractTensor, axis::Union{Int, Nothing}=nothing, kee
     min_A = map(Tuple, argmax(A, dims=dims))
 
     if keepdims && axis != nothing
-        min_A = expanddims(min_A, dims)
+        min_A = expanddims(min_A, dims=dims)
     end
 
     # for when the expanddims is working

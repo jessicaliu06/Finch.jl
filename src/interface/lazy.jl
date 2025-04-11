@@ -51,10 +51,10 @@ function Base.getindex(arr::LazyTensor, idxs::Vararg{Union{Nothing,Colon}})
             ),
         )
     end
-    return expanddims(arr, findall(isnothing, idxs))
+    return expanddims(arr, dims=findall(isnothing, idxs))
 end
 
-function expanddims(arr::LazyTensor{Vf,Tv}, dims) where {Vf,Tv}
+function expanddims(arr::LazyTensor{Vf,Tv}; dims) where {Vf,Tv}
     dims = collect(dims)
     @assert allunique(dims)
     @assert issubset(dims, 1:(ndims(arr) + length(dims)))
@@ -71,10 +71,11 @@ function expanddims(arr::LazyTensor{Vf,Tv}, dims) where {Vf,Tv}
         n -> n in dims ? 1 : arr.shape[n - offset[n]], ndims(arr) + length(dims)
     )
 
+    println("EXPADN", shape_2)
     return LazyTensor{Vf,Tv}(data_2, shape_2)
 end
 
-function Base.dropdims(arr::LazyTensor{Vf,Tv}, dims) where {Vf,Tv}
+function Base.dropdims(arr::LazyTensor{Vf,Tv}; dims) where {Vf,Tv}
     @assert allunique(dims)
     @assert issubset(dims, 1:ndims(arr))
     @assert all(isone, arr.shape[dims])
@@ -580,7 +581,7 @@ end
 function Statistics.var(tns::LazyTensor; mean=nothing, corrected=true, dims=:)
     dims = dims == Colon() ? (1:ndims(tns)) : collect(dims)
     if mean === nothing
-        mean = expanddims(Statistics.mean(tns; dims=dims), dims)
+        mean = expanddims(Statistics.mean(tns; dims=dims), dims=dims)
     end
     n = prod(collect(size(tns))[dims])
     return sum(abs2.(tns .- mean); dims=dims) ./ (n - corrected)
@@ -726,11 +727,11 @@ function Base.argmax(A::LazyTensor; dims=:)
             )
         ))
         # NOTE: CURRENTLY DOES NOT WORK
-        B = expanddims(A1, dims)
+        B = expanddims(A1, dims=dims)
         return B
 
     else
-        return expanddims(map(x -> x[2], reduce(maxby, map(Pair, A, 1:size(A)[1]), dims=dims, init=-Inf=>0)), dims)
+        return expanddims(map(x -> x[2], reduce(maxby, map(Pair, A, 1:size(A)[1]), dims=dims, init=-Inf=>0)), dims=dims)
     end
 end
 
@@ -739,7 +740,7 @@ function Base.argmin(A::LazyTensor; dims=:)
 
     if (ndims(A) >= 2)
         A1 = (map(
-            x -> x[2], 
+            last,
             reduce(
                 minby, 
                 map(
@@ -751,10 +752,11 @@ function Base.argmin(A::LazyTensor; dims=:)
             )
         ))
         # NOTE: CURRENTLY DOES NOT WORK
-        B = expanddims(A1, dims)
+        B = expanddims(A1, dims=dims)
+        # display(B.data)
         return B
 
     else
-        return expanddims(map(x -> x[2], reduce(minby, map(Pair, A, 1:size(A)[1]), dims=dims, init=Inf=>0)), dims)
+        return expanddims(map(x -> x[2], reduce(minby, map(Pair, A, 1:size(A)[1]), dims=dims, init=Inf=>0)), dims=dims)
     end
 end

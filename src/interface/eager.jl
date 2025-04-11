@@ -177,7 +177,7 @@ end
 Expand the dimensions of an array by inserting a new singleton axis or axes that
 will appear at the `dims` position in the expanded array shape.
 """
-expanddims(arr::AbstractTensor; dims=:) = compute(expanddims(lazy(arr), dims=dims))
+expanddims(arr::AbstractTensor; dims=:) = compute(expanddims(lazy(arr); dims=dims))
 
 """
     dropdims(arr::AbstractTensor; dims=:)
@@ -185,7 +185,7 @@ expanddims(arr::AbstractTensor; dims=:) = compute(expanddims(lazy(arr), dims=dim
 Reduces the dimensions of an array by removing the singleton axis or axes that
 appear at the `dims` position in the array shape.
 """
-Base.dropdims(arr::AbstractTensor; dims=:) = compute(dropdims(lazy(arr), dims=dims))
+Base.dropdims(arr::AbstractTensor; dims=:) = compute(dropdims(lazy(arr); dims=dims))
 
 """
     argmax(arr::AbstractTensor, dims=:)
@@ -193,7 +193,7 @@ Base.dropdims(arr::AbstractTensor; dims=:) = compute(dropdims(lazy(arr), dims=di
 Find the index of the maximum value in an array across dims
 """
 function Base.argmax(A::AbstractTensor; dims=:)
-    res = compute(argmax(lazy(A), dims=dims))
+    res = compute(argmax(lazy(A); dims=dims))
     if dims === Colon()
         return res[]
     else
@@ -207,7 +207,7 @@ end
 Find the index of the minimum value in an array across dims
 """
 function Base.argmin(A::AbstractTensor; dims=:)
-    res = compute(argmin(lazy(A), dims=dims))
+    res = compute(argmin(lazy(A); dims=dims))
     if dims === Colon()
         return res[]
     else
@@ -227,7 +227,7 @@ the returned array contains the index of the maximum value in the flattened
 array. 
 """
 function argmax_python(A::AbstractTensor; dims=:)
-    res = compute(argmax_python(lazy(A), dims=dims))
+    res = compute(argmax_python(lazy(A); dims=dims))
     if dims === Colon()
         return res[]
     else
@@ -247,7 +247,7 @@ the returned array contains the index of the minimum value in the flattened
 array. 
 """
 function argmin_python(A::AbstractTensor; dims=:)
-    res = compute(argmin_python(lazy(A), dims=dims))
+    res = compute(argmin_python(lazy(A); dims=dims))
     if dims === Colon()
         return res[]
     else

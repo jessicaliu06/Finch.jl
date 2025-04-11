@@ -100,7 +100,7 @@ function modify_protocols!(expr)
                     size_before_var = estimate_nnz(
                         reduce_tensor_stats(
                             min,
-                            typemax(get_default_value(input)),
+                            typemax(get_fill_value(input)),
                             setdiff(get_index_set(input), indices_before_var),
                             input,
                         ),
@@ -109,7 +109,7 @@ function modify_protocols!(expr)
                 size_after_var = estimate_nnz(
                     reduce_tensor_stats(
                         min,
-                        typemax(get_default_value(input)),
+                        typemax(get_fill_value(input)),
                         setdiff(get_index_set(input), [indices_before_var..., var]),
                         input,
                     ),

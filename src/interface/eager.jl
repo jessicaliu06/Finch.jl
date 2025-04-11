@@ -172,45 +172,87 @@ function LinearAlgebra.norm(arr::AbstractTensorOrBroadcast, p::Real=2)
 end
 
 """
-    expanddims(arr::AbstractTensor; dims)
+    expanddims(arr::AbstractTensor; dims=:)
 
 Expand the dimensions of an array by inserting a new singleton axis or axes that
 will appear at the `dims` position in the expanded array shape.
 """
-expanddims(arr::AbstractTensor; dims) = compute(expanddims(lazy(arr), dims=dims))
+expanddims(arr::AbstractTensor; dims=:) = compute(expanddims(lazy(arr), dims=dims))
 
 """
-    dropdims(arr::AbstractTensor; dims)
+    dropdims(arr::AbstractTensor; dims=:)
 
 Reduces the dimensions of an array by removing the singleton axis or axes that
 appear at the `dims` position in the array shape.
 """
-Base.dropdims(arr::AbstractTensor; dims) = compute(dropdims(lazy(arr), dims=dims))
+Base.dropdims(arr::AbstractTensor; dims=:) = compute(dropdims(lazy(arr), dims=dims))
 
 """
-    argmax(arr::AbstractTensor, dims)
+    argmax(arr::AbstractTensor, dims=:)
 
-Find the maximum value in an array across dims
+Find the index of the maximum value in an array across dims
 """
 function Base.argmax(A::AbstractTensor; dims=:)
-    return compute(argmax(lazy(A), dims=dims))
+    res = compute(argmax(lazy(A), dims=dims))
+    if dims === Colon()
+        return res[]
+    else
+        return res
+    end
 end
 
 """
     argmin(arr::AbstractTensor, dims)
 
-Find the minimum value in an array across dims
+Find the index of the minimum value in an array across dims
 """
 function Base.argmin(A::AbstractTensor; dims=:)
-    return compute(argmin(lazy(A), dims=dims))
+    res = compute(argmin(lazy(A), dims=dims))
+    if dims === Colon()
+        return res[]
+    else
+        return res
+    end
 end
 
-function argmax_python(A::AbstractTensor, axis::Union{Int, Nothing}=nothing, keepdims=false) 
-    return compute(argmax_python(lazy(A), axis=axis, keepdims=keepdims))
+"""
+    argmax_python(A; dims=:) 
+
+Find the index of the maximum value in an array across dims, following
+https://data-apis.org/array-api/latest/API_specification/generated/array_api.argmax.html#argmax,
+which is different from Base Julia semantics. This version only accepts either a
+single dimension or all dimensions. When dims is a single dimension, the returned
+array contains integer indices along that dimension. When dims is all dimensions,
+the returned array contains the index of the maximum value in the flattened
+array. 
+"""
+function argmax_python(A::AbstractTensor; dims=:)
+    res = compute(argmax_python(lazy(A), dims=dims))
+    if dims === Colon()
+        return res[]
+    else
+        return res
+    end
 end
 
-function argmin_python(A::AbstractTensor; axis::Union{Int, Nothing}=nothing, keepdims=false) 
-    return compute(argmin_python(lazy(A), axis=axis, keepdims=keepdims))
+"""
+    argmin_python(A; dims=:) 
+
+Find the index of the minimum value in an array across dims, following
+https://data-apis.org/array-api/latest/API_specification/generated/array_api.argmin.html#argmin,
+which is different from Base Julia semantics. This version only accepts either a
+single dimension or all dimensions. When dims is a single dimension, the returned
+array contains integer indices along that dimension. When dims is all dimensions,
+the returned array contains the index of the minimum value in the flattened
+array. 
+"""
+function argmin_python(A::AbstractTensor; dims=:)
+    res = compute(argmin_python(lazy(A), dims=dims))
+    if dims === Colon()
+        return res[]
+    else
+        return res
+    end
 end
 
 function Statistics.mean(tns::AbstractTensorOrBroadcast; dims=:)

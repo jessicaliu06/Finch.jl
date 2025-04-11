@@ -709,27 +709,6 @@ function compute_parse(ctx, args::Tuple)
     return ress
 end
 
-function Base.argmax(A::LazyTensor; dims=:)
-    dims = dims == Colon() ? (1:ndims(A)) : collect(dims)
-
-    if (ndims(A) >= 2)
-        return map(
-            last,
-            reduce(
-                maxby, 
-                map(
-                    Pair, 
-                    A, 
-                    CartesianIndices(size(A))), 
-                    dims=dims, 
-                    init=-Inf=>CartesianIndex(fill(0, length(size(A)))...)
-            )
-        )
-    else
-        return map(last, reduce(maxby, map(Pair, A, 1:size(A)[1]), dims=dims, init=-Inf=>0))
-    end
-end
-
 function Base.argmin(A::LazyTensor; dims=:)
     dims = dims == Colon() ? (1:ndims(A)) : collect(dims)
 
@@ -741,9 +720,10 @@ function Base.argmin(A::LazyTensor; dims=:)
                 map(
                     Pair, 
                     A, 
-                    CartesianIndices(size(A))), 
-                    dims=dims, 
-                    init=Inf=>CartesianIndex(fill(0, length(size(A)))...)
+                    CartesianIndices(size(A))
+                ), 
+                dims=dims, 
+                init=Inf=>CartesianIndex(fill(0, length(size(A)))...)
             )
         )
     else
@@ -751,44 +731,96 @@ function Base.argmin(A::LazyTensor; dims=:)
     end
 end
 
-function argmin_python(A::LazyTensor; axis::Union{Int, Nothing}=nothing, keepdims=false) 
-    dims = axis == nothing ? (1:ndims(A)) : axis
+function Base.argmax(A::LazyTensor; dims=:)
+    dims = dims == Colon() ? (1:ndims(A)) : collect(dims)
 
-    if axis != nothing
-        # since axis is 1d, this should just be one value
-        # otherDimension = setdiff(1:ndims(A), dims)
-        # newIndexArray = expanddims(1:size(A, otherDimension), dims=dims)
-        # min_A = newIndexArray[argmin(A, dims=dims)]
-        min_A = argmin(A, dims=dims)
+    if (ndims(A) >= 2)
+        return map(
+            last,
+            reduce(
+                maxby, 
+                map(
+                    Pair, 
+                    A, 
+                    CartesianIndices(size(A))
+                ), 
+                dims=dims, 
+                init=-Inf=>CartesianIndex(fill(0, length(size(A)))...)
+            )
+        )
     else
-        # TODO: how to reduce to an integer if no axis
-        min_A = argmin(A, dims=dims)
+        return map(last, reduce(maxby, map(Pair, A, 1:size(A)[1]), dims=dims, init=-Inf=>0))
     end
-
-    if keepdims && axis != nothing
-        min_A = expanddims(min_A, dims=dims)
-    end
-
-    return min_A
 end
 
-function argmax_python(A::LazyTensor; axis::Union{Int, Nothing}=nothing, keepdims=false) 
-    dims = axis == nothing ? (1:ndims(A)) : axis
+function argmin_python(A::LazyTensor; dims=:) 
+    dims = dims == Colon() ? (1:ndims(A)) : collect(dims)
 
-    if axis != nothing
-        # since axis is 1d, this should just be one value
-        # otherDimension = setdiff(1:ndims(A), dims)
-        # newIndexArray = expanddims(1:size(A, otherDimension), dims=dims)
-        # max_A = newIndexArray[argmax(A, dims=dims)]
-        max_A = argmax(A, dims=dims)
-    else
-        # TODO: how to reduce to an integer if no axis
-        max_A = argmax(A, dims=dims)
+    if length(dims) == 1
+        dim = first(dims)
+
+        return map(
+            last,
+            reduce(
+                minby, 
+                map(
+                    Pair, 
+                    A, 
+                    expanddims(lazy(1:size(A)[dim]), dims=setdiff(1:ndims(A), dim))
+                ),
+                dims = dims,
+                init=Inf=>0
+            )
+        )
+    elseif length(dims) == ndims(A)
+        return map(
+            last,
+            reduce(
+                minby, 
+                map(
+                    Pair, 
+                    A, 
+                    LinearIndices(size(A))
+                ), 
+                dims=dims, 
+                init=Inf=>0
+            )
+        )
     end
+end
 
-    if keepdims && axis != nothing
-        max_A = expanddims(max_A, dims=dims)
+function argmax_python(A::LazyTensor; dims=:) 
+    dims = dims == Colon() ? (1:ndims(A)) : collect(dims)
+
+    if length(dims) == 1
+        dim = first(dims)
+
+        return map(
+            last,
+            reduce(
+                maxby, 
+                map(
+                    Pair, 
+                    A, 
+                    expanddims(lazy(1:size(A)[dim]), dims=setdiff(1:ndims(A), dim))
+                ),
+                dims = dims,
+                init=-Inf=>0
+            )
+        )
+    elseif length(dims) == ndims(A)
+        return map(
+            last,
+            reduce(
+                maxby, 
+                map(
+                    Pair, 
+                    A, 
+                    LinearIndices(size(A))
+                ), 
+                dims=dims, 
+                init=-Inf=>0
+            )
+        )
     end
-
-    return max_A
 end

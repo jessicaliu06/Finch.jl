@@ -750,3 +750,45 @@ function Base.argmin(A::LazyTensor; dims=:)
         return map(last, reduce(minby, map(Pair, A, 1:size(A)[1]), dims=dims, init=Inf=>0))
     end
 end
+
+function argmin_python(A::LazyTensor; axis::Union{Int, Nothing}=nothing, keepdims=false) 
+    dims = axis == nothing ? (1:ndims(A)) : axis
+
+    if axis != nothing
+        # since axis is 1d, this should just be one value
+        # otherDimension = setdiff(1:ndims(A), dims)
+        # newIndexArray = expanddims(1:size(A, otherDimension), dims=dims)
+        # min_A = newIndexArray[argmin(A, dims=dims)]
+        min_A = argmin(A, dims=dims)
+    else
+        # TODO: how to reduce to an integer if no axis
+        min_A = argmin(A, dims=dims)
+    end
+
+    if keepdims && axis != nothing
+        min_A = expanddims(min_A, dims=dims)
+    end
+
+    return min_A
+end
+
+function argmax_python(A::LazyTensor; axis::Union{Int, Nothing}=nothing, keepdims=false) 
+    dims = axis == nothing ? (1:ndims(A)) : axis
+
+    if axis != nothing
+        # since axis is 1d, this should just be one value
+        # otherDimension = setdiff(1:ndims(A), dims)
+        # newIndexArray = expanddims(1:size(A, otherDimension), dims=dims)
+        # max_A = newIndexArray[argmax(A, dims=dims)]
+        max_A = argmax(A, dims=dims)
+    else
+        # TODO: how to reduce to an integer if no axis
+        max_A = argmax(A, dims=dims)
+    end
+
+    if keepdims && axis != nothing
+        max_A = expanddims(max_A, dims=dims)
+    end
+
+    return max_A
+end

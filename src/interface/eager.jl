@@ -205,39 +205,12 @@ function Base.argmin(A::AbstractTensor; dims=:)
     return compute(argmin(lazy(A), dims=dims))
 end
 
-# TODO :also add a lazy version, always returns an integer, call expanddims on a range
-# TODO: remove the expanddims at the end, make expanddims/dropdims kwargs
-
-function argmin_python(A::AbstractTensor, axis::Union{Int, Nothing}=nothing, keepdims=false) 
-    dims = axis == nothing ? Colon() : axis
-    min_A = map(Tuple, argmin(A, dims=dims))
-
-    if keepdims && axis != nothing
-        min_A = expanddims(min_A, dims=dims)
-    end
-
-    # for when the expanddims is working
-    # if !keepdims && axis != nothing
-    #     min_A = dropdims(min_A, dims)
-    # end
-
-    return min_A
+function argmax_python(A::AbstractTensor, axis::Union{Int, Nothing}=nothing, keepdims=false) 
+    return compute(argmax_python(lazy(A), axis=axis, keepdims=keepdims))
 end
 
-function argmax_python(A::AbstractTensor, axis::Union{Int, Nothing}=nothing, keepdims=false) 
-    dims = axis == nothing ? Colon() : axis
-    min_A = map(Tuple, argmax(A, dims=dims))
-
-    if keepdims && axis != nothing
-        min_A = expanddims(min_A, dims=dims)
-    end
-
-    # for when the expanddims is working
-    # if !keepdims && axis != nothing
-    #     min_A = dropdims(min_A, dims)
-    # end
-
-    return min_A
+function argmin_python(A::AbstractTensor; axis::Union{Int, Nothing}=nothing, keepdims=false) 
+    return compute(argmin_python(lazy(A), axis=axis, keepdims=keepdims))
 end
 
 function Statistics.mean(tns::AbstractTensorOrBroadcast; dims=:)

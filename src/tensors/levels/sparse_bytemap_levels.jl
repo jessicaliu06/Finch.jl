@@ -437,24 +437,32 @@ function unfurl(
             end,
             body=(ctx) -> Sequence([
                 Phase(;
-                    stop = (ctx, ext) -> value(my_i_stop),
-                    body = (ctx, ext) -> Stepper(;
-                    seek=(ctx, ext) -> quote
-                        while $my_r + $(Tp(1)) < $my_r_stop && last($(lvl.srt)[$my_r]) < $(ctx(getstart(ext)))
-                            $my_r += $(Tp(1))
-                        end
-                    end,
-                    preamble=:($my_i = last($(lvl.srt)[$my_r])),
-                    stop=(ctx, ext) -> value(my_i),
-                    chunk=Spike(;
-                    body = FillLeaf(virtual_level_fill_value(lvl)),
-                    tail = Thunk(;
-                    preamble=:($my_q = ($(ctx(pos)) - $(Tp(1))) * $(ctx(lvl.shape)) + $my_i),
-                    body=(ctx) -> instantiate(ctx, VirtualSubFiber(lvl.lvl, value(my_q, lvl.Ti)), mode)
-                )
-                ),
-                    next=(ctx, ext) -> :($my_r += $(Tp(1)))
-                ),
+                    stop=(ctx, ext) -> value(my_i_stop),
+                    body=(ctx, ext) -> Stepper(;
+                        seek=(ctx, ext) -> quote
+                            while $my_r + $(Tp(1)) < $my_r_stop &&
+                                last($(lvl.srt)[$my_r]) < $(ctx(getstart(ext)))
+                                $my_r += $(Tp(1))
+                            end
+                        end,
+                        preamble=:($my_i = last($(lvl.srt)[$my_r])),
+                        stop=(ctx, ext) -> value(my_i),
+                        chunk=Spike(;
+                            body=FillLeaf(virtual_level_fill_value(lvl)),
+                            tail=Thunk(;
+                                preamble=:(
+                                    $my_q =
+                                        ($(ctx(pos)) - $(Tp(1))) * $(ctx(lvl.shape)) + $my_i
+                                ),
+                                body=(ctx) -> instantiate(
+                                    ctx,
+                                    VirtualSubFiber(lvl.lvl, value(my_q, lvl.Ti)),
+                                    mode,
+                                ),
+                            ),
+                        ),
+                        next=(ctx, ext) -> :($my_r += $(Tp(1))),
+                    ),
                 ),
                 Phase(;
                     body=(ctx, ext) -> Run(FillLeaf(virtual_level_fill_value(lvl)))
@@ -494,24 +502,32 @@ function unfurl(
             end,
             body=(ctx) -> Sequence([
                 Phase(;
-                    stop = (ctx, ext) -> value(my_i_stop),
-                    body = (ctx, ext) -> Jumper(;
-                    seek=(ctx, ext) -> quote
-                        while $my_r + $(Tp(1)) < $my_r_stop && last($(lvl.srt)[$my_r]) < $(ctx(getstart(ext)))
-                            $my_r += $(Tp(1))
-                        end
-                    end,
-                    preamble=:($my_i = last($(lvl.srt)[$my_r])),
-                    stop=(ctx, ext) -> value(my_i),
-                    chunk=Spike(;
-                    body = FillLeaf(virtual_level_fill_value(lvl)),
-                    tail = Thunk(;
-                    preamble=:($my_q = ($(ctx(pos)) - $(Tp(1))) * $(ctx(lvl.shape)) + $my_i),
-                    body=(ctx) -> instantiate(ctx, VirtualSubFiber(lvl.lvl, value(my_q, lvl.Ti)), mode)
-                )
-                ),
-                    next=(ctx, ext) -> :($my_r += $(Tp(1)))
-                ),
+                    stop=(ctx, ext) -> value(my_i_stop),
+                    body=(ctx, ext) -> Jumper(;
+                        seek=(ctx, ext) -> quote
+                            while $my_r + $(Tp(1)) < $my_r_stop &&
+                                last($(lvl.srt)[$my_r]) < $(ctx(getstart(ext)))
+                                $my_r += $(Tp(1))
+                            end
+                        end,
+                        preamble=:($my_i = last($(lvl.srt)[$my_r])),
+                        stop=(ctx, ext) -> value(my_i),
+                        chunk=Spike(;
+                            body=FillLeaf(virtual_level_fill_value(lvl)),
+                            tail=Thunk(;
+                                preamble=:(
+                                    $my_q =
+                                        ($(ctx(pos)) - $(Tp(1))) * $(ctx(lvl.shape)) + $my_i
+                                ),
+                                body=(ctx) -> instantiate(
+                                    ctx,
+                                    VirtualSubFiber(lvl.lvl, value(my_q, lvl.Ti)),
+                                    mode,
+                                ),
+                            ),
+                        ),
+                        next=(ctx, ext) -> :($my_r += $(Tp(1))),
+                    ),
                 ),
                 Phase(;
                     body=(ctx, ext) -> Run(FillLeaf(virtual_level_fill_value(lvl)))
@@ -576,12 +592,16 @@ function unfurl(
         arr=fbr,
         body=Lookup(;
             body=(ctx, idx) -> Thunk(;
-                preamble = quote
+                preamble=quote
                     $my_q = ($(ctx(pos)) - $(Tp(1))) * $(ctx(lvl.shape)) + $(ctx(idx))
                     $dirty = false
                 end,
-                body     = (ctx) -> instantiate(ctx, VirtualHollowSubFiber(lvl.lvl, value(my_q, lvl.Ti), dirty), mode),
-                epilogue = quote
+                body=(ctx) -> instantiate(
+                    ctx,
+                    VirtualHollowSubFiber(lvl.lvl, value(my_q, lvl.Ti), dirty),
+                    mode,
+                ),
+                epilogue=quote
                     if $dirty
                         $(fbr.dirty) = true
                         if !$(lvl.tbl)[$my_q]

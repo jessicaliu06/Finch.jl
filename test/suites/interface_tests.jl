@@ -943,6 +943,13 @@ end
                     @test dropdims(argmax(A, dims=1),dims=1) == argmax(Tensor(A), dims=1)
                     @test dropdims(argmax(A, dims=(1,2)),dims=(1,2)) == argmax(Tensor(A), dims=(1, 2))
                 end
+
+                #https://github.com/finch-tensor/Finch.jl/issues/726
+                let
+                    A = Tensor(Dense(SparseList(Element(0))), [1 2 3; 4 5 6; 7 8 9])
+                    B = compute(expanddims(sum(lazy(A)), 1))
+                    @test size(B) == (1,)
+                end
             end
         end
     end

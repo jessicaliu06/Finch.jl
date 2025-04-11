@@ -71,7 +71,6 @@ function expanddims(arr::LazyTensor{Vf,Tv}; dims) where {Vf,Tv}
         n -> n in dims ? 1 : arr.shape[n - offset[n]], ndims(arr) + length(dims)
     )
 
-    println("EXPADN", shape_2)
     return LazyTensor{Vf,Tv}(data_2, shape_2)
 end
 
@@ -714,7 +713,7 @@ function Base.argmax(A::LazyTensor; dims=:)
     dims = dims == Colon() ? (1:ndims(A)) : collect(dims)
 
     if (ndims(A) >= 2)
-        A1 = (map(
+        return map(
             x -> x[2], 
             reduce(
                 maxby, 
@@ -725,13 +724,9 @@ function Base.argmax(A::LazyTensor; dims=:)
                     dims=dims, 
                     init=-Inf=>CartesianIndex(fill(0, length(size(A)))...)
             )
-        ))
-        # NOTE: CURRENTLY DOES NOT WORK
-        B = expanddims(A1, dims=dims)
-        return B
-
+        )
     else
-        return expanddims(map(x -> x[2], reduce(maxby, map(Pair, A, 1:size(A)[1]), dims=dims, init=-Inf=>0)), dims=dims)
+        return map(x -> x[2], reduce(maxby, map(Pair, A, 1:size(A)[1]), dims=dims, init=-Inf=>0))
     end
 end
 
@@ -739,7 +734,7 @@ function Base.argmin(A::LazyTensor; dims=:)
     dims = dims == Colon() ? (1:ndims(A)) : collect(dims)
 
     if (ndims(A) >= 2)
-        A1 = (map(
+        return map(
             last,
             reduce(
                 minby, 
@@ -750,13 +745,8 @@ function Base.argmin(A::LazyTensor; dims=:)
                     dims=dims, 
                     init=Inf=>CartesianIndex(fill(0, length(size(A)))...)
             )
-        ))
-        # NOTE: CURRENTLY DOES NOT WORK
-        B = expanddims(A1, dims=dims)
-        # display(B.data)
-        return B
-
+        )
     else
-        return expanddims(map(x -> x[2], reduce(minby, map(Pair, A, 1:size(A)[1]), dims=dims, init=Inf=>0)), dims=dims)
+        return map(x -> x[2], reduce(minby, map(Pair, A, 1:size(A)[1]), dims=dims, init=Inf=>0))
     end
 end

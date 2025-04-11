@@ -95,6 +95,15 @@ function reindex_def(indices, def::TensorDef)
     )
 end
 
+set_fill_value!(def::TensorDef, fill_value) = TensorDef(
+    def.index_set,
+    def.dim_sizes,
+    fill_value,
+    def.level_formats,
+    def.index_order,
+    def.index_protocols,
+)
+
 function relabel_index!(def::TensorDef, i::IndexExpr, j::IndexExpr)
     if i == j || i ∉ def.index_set
         return nothing
@@ -217,6 +226,10 @@ end
 
 function reindex_stats(stat::NaiveStats, indices)
     return NaiveStats(reindex_def(indices, stat.def), stat.cardinality)
+end
+
+function set_fill_value!(stat::NaiveStats, fill_value)
+    return NaiveStats(set_fill_value!(stat.def, fill_value), stat.cardinality)
 end
 
 function relabel_index!(stats::NaiveStats, i::IndexExpr, j::IndexExpr)
@@ -840,6 +853,10 @@ function reindex_stats(stats::DCStats, indices)
         new_int_to_idx[int] = idx
     end
     return DCStats(new_def, new_idx_to_int, new_int_to_idx, copy(stats.dcs))
+end
+
+function set_fill_value!(stats::DCStats, fill_value)
+    return DCStats(set_fill_value!(stats.def, fill_value), stats.idx_2_int, stats.int_2_idx, stats.dcs)
 end
 
 function relabel_index!(stats::DCStats, i::IndexExpr, j::IndexExpr)

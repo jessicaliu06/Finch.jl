@@ -501,7 +501,7 @@ function is_disjunctive(n::PlanNode)
         if node.kind === MapJoin
             map_op = node.op.val
             all_conjuncts = all([
-                isannihilator(map_op, get_default_value(arg.stats)) for arg in node.args
+                isannihilator(map_op, get_fill_value(arg.stats)) for arg in node.args
             ])
             if !all_conjuncts
                 return true
@@ -521,7 +521,7 @@ function get_conjunctive_and_disjunctive_inputs(n::PlanNode, disjunct_branch=fal
         conjuncts = []
         disjuncts = []
         for arg in n.args
-            arg_results = if isannihilator(map_op, get_default_value(arg.stats))
+            arg_results = if isannihilator(map_op, get_fill_value(arg.stats))
                 get_conjunctive_and_disjunctive_inputs(arg, disjunct_branch)
             else
                 get_conjunctive_and_disjunctive_inputs(arg, true)

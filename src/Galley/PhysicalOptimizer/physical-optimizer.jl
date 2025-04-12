@@ -12,7 +12,7 @@ function reorder_input(input, expr, loop_order::Vector{IndexExpr})
     input_order = get_index_order(input.stats)
     fixed_order = relative_sort(input_order, loop_order; rev=true)
     agg_expr = Aggregate(
-        initwrite(get_default_value(input.stats)), get_default_value(input.stats), input
+        initwrite(get_fill_value(input.stats)), get_fill_value(input.stats), input
     )
     agg_expr.stats = input.stats
     formats = select_output_format(agg_expr.stats, reverse(input_order), fixed_order)
@@ -130,13 +130,13 @@ function logical_query_to_physical_queries(
     disjunct_and_conjunct_stats = (
         conjuncts=[s.stats for s in disjuncts_and_conjuncts.conjuncts],
         disjuncts=[s.stats for s in disjuncts_and_conjuncts.disjuncts])
-    agg_op = isnothing(agg_op) ? initwrite(get_default_value(expr.stats)) : agg_op
+    agg_op = isnothing(agg_op) ? initwrite(get_fill_value(expr.stats)) : agg_op
 
     output_stats = reduce_tensor_stats(agg_op, agg_init, reduce_idxs, expr.stats)
     if !isnothing(output_order)
         for idx in output_order
             if idx ∉ get_index_set(output_stats)
-                dummy_stat = ST(get_default_value(output_stats))
+                dummy_stat = ST(get_fill_value(output_stats))
                 add_dummy_idx!(dummy_stat, idx; idx_pos=1)
                 push!(disjunct_and_conjunct_stats.conjuncts, dummy_stat)
             end
@@ -189,8 +189,8 @@ function logical_query_to_physical_queries(
             alias_expr = Alias(intermediate_query.name.name)
             alias_expr.stats = reorder_stats
             result_expr = Aggregate(
-                initwrite(get_default_value(alias_expr.stats)),
-                get_default_value(alias_expr.stats),
+                initwrite(get_fill_value(alias_expr.stats)),
+                get_fill_value(alias_expr.stats),
                 alias_expr,
             )
             result_expr.stats = reorder_stats

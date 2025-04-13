@@ -199,11 +199,38 @@ end
 function unfurl(ctx, arr::VirtualBandMaskColumn, ext, mode, proto::typeof(defaultread))
     Sequence([
         Phase(;
-            stop = (ctx, ext) -> value(:($(ctx(j)) - 1)),
-            body = (ctx, ext) -> Run(; body=FillLeaf(false)),
+            stop=(ctx, ext) -> call(-, arr.j_lo, 1),
+            body=(ctx, ext) -> Run(; body=FillLeaf(false)),
         ),
         Phase(;
-            stop = (ctx, ext) -> k,
+            stop = (ctx, ext) -> arr.j_hi,
+            body = (ctx, ext) -> Run(; body=FillLeaf(true)),
+        ),
+        Phase(;
+            body=(ctx, ext) -> Run(; body=FillLeaf(false))
+        ),
+    ])
+end
+
+struct VirtualBandMaskSimple
+    j_lo
+    j_hi
+    stop
+end
+
+FinchNotation.finch_leaf(x::VirtualBandMaskSimple) = virtual(x)
+function Finch.virtual_size(ctx, arr::VirtualBandMaskSimple)
+    (VirtualExtent(literal(1), arr.stop))
+end
+
+function unfurl(ctx, arr::VirtualBandMaskSimple, ext, mode, proto::typeof(defaultread))
+    Sequence([
+        Phase(;
+            stop=(ctx, ext) -> call(-, arr.j_lo, 1),
+            body=(ctx, ext) -> Run(; body=FillLeaf(false)),
+        ),
+        Phase(;
+            stop = (ctx, ext) -> arr.j_hi,
             body = (ctx, ext) -> Run(; body=FillLeaf(true)),
         ),
         Phase(;

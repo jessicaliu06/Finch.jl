@@ -385,15 +385,32 @@ function lower_parallel_loop(
             tid = get_task_num(subtask)
             open_scope(ctx_3) do ctx_4
                 distribute_device(ctx_4, root.body, subtask) do ctx_5, body_3
-                    i = index(freshen(ctx, :i))
+                    # i = index(freshen(ctx_5, :i))
+                    # root_2 = loop(i, VirtualExtent(tid, tid),
+                    #     loop(root.idx, ext.ext,
+                    #         sieve(
+                    #             access(
+                    #                 VirtualSplitMask(getstop(ext.ext), device.n),
+                    #                 reader(),
+                    #                 root.idx,
+                    #                 i,
+                    #             ), #=TODO correct only for 1:n ranges =#
+                    #             body_3,
+                    #         ),
+                    #     ),
+                    # )
+
+                    i = index(freshen(ctx_5, :i))
+                    i_lo = call(fld, call(*, getstop(ext.ext), call(-, tid, 1)), device.n)
+                    i_hi = call(fld, call(*, getstop(ext.ext), tid), device.n)
                     root_2 = loop(i, VirtualExtent(tid, tid),
                         loop(root.idx, ext.ext,
                             sieve(
                                 access(
-                                    VirtualSplitMask(getstop(ext.ext), device.n),
+                                    VirtualBandMaskSimple(i_lo, i_hi, getstop(ext.ext)),
+                                    # VirtualBandMaskColumn(i_lo, i_hi),
                                     reader(),
                                     root.idx,
-                                    i,
                                 ), #=TODO correct only for 1:n ranges =#
                                 body_3,
                             ),
@@ -408,7 +425,7 @@ end
 
 function lower_parallel_loop(
     ctx, root, ext::VirtualParallelDimension,
-    schedule::Union{VirtualOneSchedule, VirtualTwoSchedule,VirtualThreeSchedule}
+    schedule::Union{VirtualOneSchedule,VirtualTwoSchedule,VirtualThreeSchedule},
 )
     root = ensure_concurrent(root, ctx)
     device = ext.device

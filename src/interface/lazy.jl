@@ -55,7 +55,7 @@ function Base.getindex(arr::LazyTensor, idxs::Vararg{Union{Nothing,Colon}})
 end
 
 function expanddims(arr::LazyTensor{Vf,Tv}; dims) where {Vf,Tv}
-    dims = collect(dims)
+    dims = [dims...]
     @assert allunique(dims)
     @assert issubset(dims, 1:(ndims(arr) + length(dims)))
     offset = zeros(Int, ndims(arr) + length(dims))
@@ -75,7 +75,8 @@ function expanddims(arr::LazyTensor{Vf,Tv}; dims) where {Vf,Tv}
 end
 
 function Base.dropdims(arr::LazyTensor{Vf,Tv}; dims) where {Vf,Tv}
-    dims = dims == Colon() ? collect(1:N) : collect(dims)
+    dims = dims == Colon() ? (1:ndims(arr)) : dims
+    dims = [dims...]
     @assert allunique(dims)
     @assert issubset(dims, 1:ndims(arr))
     @assert all(isone, arr.shape[dims])
@@ -185,7 +186,7 @@ end
 function Base.reduce(
     op, arg::LazyTensor{Vf,Tv,N}; dims=:, init=initial_value(op, Tv)
 ) where {Vf,Tv,N}
-    dims = dims == Colon() ? (1:N) : collect(dims)
+    dims = dims == Colon() ? [1:N...] : [dims...]
     shape = ((arg.shape[n] for n in 1:N if !(n in dims))...,)
     fields = [field(gensym(:i)) for _ in 1:N]
     Sv = fixpoint_type(op, init, Tv)
@@ -334,7 +335,7 @@ function Base.permutedims(arg::LazyTensor{Vf,Tv,N}, perm) where {Vf,Tv,N}
     length(perm) == N ||
         throw(ArgumentError("permutedims given wrong number of dimensions"))
     isperm(perm) || throw(ArgumentError("permutedims given invalid permutation"))
-    perm = collect(perm)
+    perm = [perm...]
     idxs = [field(gensym(:i)) for _ in 1:N]
     return LazyTensor{Vf,Tv}(
         reorder(relabel(arg.data, idxs...), idxs[perm]...),
@@ -577,19 +578,22 @@ function LinearAlgebra.norm(arr::LazyTensor, p::Real=2)
 end
 
 function Statistics.mean(tns::LazyTensor; dims=:)
-    dims = dims == Colon() ? (1:ndims(tns)) : collect(dims)
+    dims = dims == Colon() ? (1:ndims(tns)) : dims
+    dims = [dims...]
     n = prod(collect(size(tns))[dims])
     return sum(tns; dims=dims) ./ n
 end
 
 function Statistics.mean(f, tns::LazyTensor; dims=:)
-    dims = dims == Colon() ? (1:ndims(tns)) : collect(dims)
+    dims = dims == Colon() ? (1:ndims(tns)) : dims
+    dims = [dims...]
     n = prod(collect(size(tns))[dims])
     return sum(map(f, tns); dims=dims) ./ n
 end
 
 function Statistics.var(tns::LazyTensor; mean=nothing, corrected=true, dims=:)
-    dims = dims == Colon() ? (1:ndims(tns)) : collect(dims)
+    dims = dims == Colon() ? (1:ndims(tns)) : dims
+    dims = [dims...]
     if mean === nothing
         mean = expanddims(Statistics.mean(tns; dims=dims); dims=dims)
     end
@@ -704,7 +708,7 @@ function compute(args::Tuple; ctx=get_scheduler(), kwargs...)
     compute_parse(set_options(ctx; kwargs...), map(lazy, args))
 end
 function compute_parse(ctx, args::Tuple)
-    args = collect(args)
+    args = [args...]
     vars = map(arg -> alias(gensym(:A)), args)
     bodies = map((arg, var) -> query(var, arg.data), args, vars)
     prgm = plan(bodies, produces(vars))
@@ -721,7 +725,8 @@ function compute_parse(ctx, args::Tuple)
 end
 
 function Base.argmin(A::LazyTensor; dims=:)
-    dims = dims == Colon() ? (1:ndims(A)) : collect(dims)
+    dims = dims == Colon() ? (1:ndims(A)) : dims
+    dims = [dims...]
 
     if (ndims(A) >= 2)
         return map(
@@ -745,7 +750,8 @@ function Base.argmin(A::LazyTensor; dims=:)
 end
 
 function Base.argmax(A::LazyTensor; dims=:)
-    dims = dims == Colon() ? (1:ndims(A)) : collect(dims)
+    dims = dims == Colon() ? (1:ndims(A)) : dims
+    dims = [dims...]
 
     if (ndims(A) >= 2)
         return map(
@@ -769,7 +775,8 @@ function Base.argmax(A::LazyTensor; dims=:)
 end
 
 function argmin_python(A::LazyTensor; dims=:)
-    dims = dims == Colon() ? (1:ndims(A)) : collect(dims)
+    dims = dims == Colon() ? (1:ndims(A)) : dims
+    dims = [dims...]
 
     if length(dims) == 1
         dim = first(dims)
@@ -805,7 +812,8 @@ function argmin_python(A::LazyTensor; dims=:)
 end
 
 function argmax_python(A::LazyTensor; dims=:)
-    dims = dims == Colon() ? (1:ndims(A)) : collect(dims)
+    dims = dims == Colon() ? (1:ndims(A)) : dims
+    dims = [dims...]
 
     if length(dims) == 1
         dim = first(dims)

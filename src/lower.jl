@@ -407,8 +407,8 @@ function lower_parallel_loop(
                         loop(root.idx, ext.ext,
                             sieve(
                                 access(
-                                    VirtualBandMaskSimple(i_lo, i_hi, getstop(ext.ext)),
-                                    # VirtualBandMaskColumn(i_lo, i_hi),
+                                    # VirtualBandMaskSimple(i_lo, i_hi, getstop(ext.ext)),
+                                    VirtualBandMaskColumn(i_lo, i_hi),
                                     reader(),
                                     root.idx,
                                 ), #=TODO correct only for 1:n ranges =#

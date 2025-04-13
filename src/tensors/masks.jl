@@ -180,6 +180,7 @@ struct VirtualBandMaskColumn
 end
 
 FinchNotation.finch_leaf(x::VirtualBandMaskColumn) = virtual(x)
+Finch.virtual_size(ctx, ::VirtualBandMaskColumn) = (auto)
 
 function unfurl(ctx, arr::VirtualBandMask, ext, mode, proto::typeof(defaultread))
     Unfurled(;

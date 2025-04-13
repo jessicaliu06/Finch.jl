@@ -75,6 +75,7 @@ function expanddims(arr::LazyTensor{Vf,Tv}; dims) where {Vf,Tv}
 end
 
 function Base.dropdims(arr::LazyTensor{Vf,Tv}; dims) where {Vf,Tv}
+    dims = dims == Colon() ? collect(1:N) : collect(dims)
     @assert allunique(dims)
     @assert issubset(dims, 1:ndims(arr))
     @assert all(isone, arr.shape[dims])

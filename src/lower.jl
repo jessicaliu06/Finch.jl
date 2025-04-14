@@ -286,8 +286,9 @@ dimension of virtual tensor `tns`. `ext` is the extent of the looplet. `proto`
 is the protocol that should be used for this index, but one doesn't need to
 unfurl all the indices at once.
 """
-unfurl(ctx, tns, ext, mode, proto) =
+function unfurl(ctx, tns, ext, mode, proto)
     throw(FinchProtocolError("$tns does not support $mode with protocol $proto"))
+end
 
 function lower_loop(ctx, root, ext)
     contain(ctx) do ctx_2
@@ -392,6 +393,7 @@ function lower_parallel_loop(
                     end
                     body = redistribute(ctx_5, body, diff)
                     i = index(freshen(ctx, :i))
+                    #=TODO correct only for 1:n ranges =#
                     root_2 = loop(i, VirtualExtent(tid, tid),
                         loop(root.idx, ext.ext,
                             sieve(
@@ -400,7 +402,7 @@ function lower_parallel_loop(
                                     reader(),
                                     root.idx,
                                     i,
-                                ), #=TODO correct only for 1:n ranges =#
+                                ),
                                 body,
                             ),
                         ),

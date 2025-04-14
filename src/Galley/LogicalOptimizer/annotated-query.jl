@@ -154,8 +154,8 @@ function AnnotatedQuery(q::PlanNode, ST)
                         idx_top_order[idx.name] = top_counter
                         top_counter += 1
                         if isnothing(f.val)
-                            idx_op[idx.name] = initwrite(get_default_value(a.stats))
-                            idx_init[idx.name] = get_default_value(a.stats)
+                            idx_op[idx.name] = initwrite(get_fill_value(a.stats))
+                            idx_init[idx.name] = get_fill_value(a.stats)
                         else
                             idx_op[idx.name] = f.val
                             idx_init[idx.name] = init.val

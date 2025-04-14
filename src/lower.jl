@@ -385,33 +385,21 @@ function lower_parallel_loop(
             tid = get_task_num(subtask)
             open_scope(ctx_3) do ctx_4
                 distribute_device(ctx_4, root.body, subtask) do ctx_5, body_3
-                    # i = index(freshen(ctx_5, :i))
-                    # root_2 = loop(i, VirtualExtent(tid, tid),
-                    #     loop(root.idx, ext.ext,
-                    #         sieve(
-                    #             access(
-                    #                 VirtualSplitMask(getstop(ext.ext), device.n),
-                    #                 reader(),
-                    #                 root.idx,
-                    #                 i,
-                    #             ), #=TODO correct only for 1:n ranges =#
-                    #             body_3,
-                    #         ),
-                    #     ),
-                    # )
-
                     i = index(freshen(ctx_5, :i))
-                    i_lo = call(fld, call(*, getstop(ext.ext), call(-, tid, 1)), device.n)
+                    i_lo = call(
+                        +,
+                        call(fld, call(*, getstop(ext.ext), call(-, tid, 1)), device.n),
+                        1,
+                    )
                     i_hi = call(fld, call(*, getstop(ext.ext), tid), device.n)
                     root_2 = loop(i, VirtualExtent(tid, tid),
                         loop(root.idx, ext.ext,
                             sieve(
                                 access(
-                                    # VirtualBandMaskSimple(i_lo, i_hi, getstop(ext.ext)),
                                     VirtualBandMaskColumn(i_lo, i_hi),
                                     reader(),
                                     root.idx,
-                                ), #=TODO correct only for 1:n ranges =#
+                                ),
                                 body_3,
                             ),
                         ),
@@ -436,16 +424,17 @@ function lower_parallel_loop(
                 subtask = get_task(ctx_3)
                 open_scope(ctx_3) do ctx_4
                     distribute_device(ctx_4, root.body, subtask) do ctx_5, body_3
-                        i = index(freshen(ctx, :i))
+                        i = index(freshen(ctx_5, :i))
+                        i_lo = call(+, call(*, schedule.chk, call(-, chk_id, 1)), 1)
+                        i_hi = call(min, call(*, schedule.chk, chk_id), getstop(ext.ext))
                         root_2 = loop(i, VirtualExtent(chk_id, chk_id),
                             loop(root.idx, ext.ext,
                                 sieve(
                                     access(
-                                        VirtualChunkMask(getstop(ext.ext), schedule.chk),
+                                        VirtualBandMaskColumn(i_lo, i_hi),
                                         reader(),
                                         root.idx,
-                                        i,
-                                    ), #=TODO correct only for 1:n ranges =#
+                                    ),
                                     body_3,
                                 ),
                             ),

@@ -5,7 +5,7 @@
 @auto_hash_equals mutable struct TensorDef
     index_set::Set{IndexExpr}
     dim_sizes::Dict{IndexExpr,UInt128}
-    default_value::Any
+    fill_val::Any
     level_formats::Union{Nothing,Vector{LevelFormat}}
     index_order::Union{Nothing,Vector{IndexExpr}}
     index_protocols::Union{Nothing,Vector{AccessProtocol}}
@@ -24,7 +24,7 @@ end
 function copy_def(def::TensorDef)
     TensorDef(Set{IndexExpr}(x for x in def.index_set),
         Dict{IndexExpr,UInt128}(x for x in def.dim_sizes),
-        def.default_value,
+        def.fill_val,
         isnothing(def.level_formats) ? nothing : [x for x in def.level_formats],
         isnothing(def.index_order) ? nothing : [x for x in def.index_order],
         isnothing(def.index_protocols) ? nothing : [x for x in def.index_protocols])
@@ -63,9 +63,9 @@ function TensorDef(tensor::Tensor, indices)
     dim_size = Dict{IndexExpr,UInt128}(
         indices[i] => shape_tuple[i] for i in 1:length(size(tensor))
     )
-    default_value = Finch.fill_value(tensor)
+    fill_val = Finch.fill_value(tensor)
     return TensorDef(
-        Set{IndexExpr}(indices), dim_size, default_value, level_formats, indices, nothing
+        Set{IndexExpr}(indices), dim_size, fill_val, level_formats, indices, nothing
     )
 end
 
@@ -88,9 +88,20 @@ function reindex_def(indices, def::TensorDef)
     return TensorDef(
         new_index_set,
         new_dim_sizes,
-        def.default_value,
+        def.fill_val,
         def.level_formats,
         indices,
+        def.index_protocols,
+    )
+end
+
+function set_fill_value!(def::TensorDef, fill_val)
+    TensorDef(
+        def.index_set,
+        def.dim_sizes,
+        fill_val,
+        def.level_formats,
+        def.index_order,
         def.index_protocols,
     )
 end
@@ -125,7 +136,7 @@ get_dim_sizes(def::TensorDef) = def.dim_sizes
 get_dim_size(def::TensorDef, idx::IndexExpr) = def.dim_sizes[idx]
 get_index_set(def::TensorDef) = def.index_set
 get_index_order(def::TensorDef) = def.index_order
-get_default_value(def::TensorDef) = def.default_value
+get_fill_value(def::TensorDef) = def.fill_val
 function get_index_format(def::TensorDef, idx::IndexExpr)
     def.level_formats[findfirst(x -> x == idx, def.index_order)]
 end
@@ -153,7 +164,7 @@ get_dim_sizes(stat::TensorStats) = get_dim_sizes(get_def(stat))
 get_dim_size(stat::TensorStats, idx::IndexExpr) = get_dim_size(get_def(stat), idx)
 get_index_set(stat::TensorStats) = get_index_set(get_def(stat))
 get_index_order(stat::TensorStats) = get_index_order(get_def(stat))
-get_default_value(stat::TensorStats) = get_default_value(get_def(stat))
+get_fill_value(stat::TensorStats) = get_fill_value(get_def(stat))
 get_index_format(stat::TensorStats, idx::IndexExpr) = get_index_format(get_def(stat), idx)
 get_index_formats(stat::TensorStats) = get_index_formats(get_def(stat))
 function get_index_protocol(stat::TensorStats, idx::IndexExpr)
@@ -206,8 +217,8 @@ end
 
 copy_stats(stat::NaiveStats) = NaiveStats(copy_def(stat.def), stat.cardinality)
 
-function NaiveStats(index_set, dim_sizes, cardinality, default_value)
-    NaiveStats(TensorDef(index_set, dim_sizes, default_value, nothing), cardinality)
+function NaiveStats(index_set, dim_sizes, cardinality, fill_val)
+    NaiveStats(TensorDef(index_set, dim_sizes, fill_val, nothing), cardinality)
 end
 
 function NaiveStats(x)
@@ -217,6 +228,10 @@ end
 
 function reindex_stats(stat::NaiveStats, indices)
     return NaiveStats(reindex_def(indices, stat.def), stat.cardinality)
+end
+
+function set_fill_value!(stat::NaiveStats, fill_val)
+    return NaiveStats(set_fill_value!(stat.def, fill_val), stat.cardinality)
 end
 
 function relabel_index!(stats::NaiveStats, i::IndexExpr, j::IndexExpr)
@@ -840,6 +855,12 @@ function reindex_stats(stats::DCStats, indices)
         new_int_to_idx[int] = idx
     end
     return DCStats(new_def, new_idx_to_int, new_int_to_idx, copy(stats.dcs))
+end
+
+function set_fill_value!(stats::DCStats, fill_val)
+    return DCStats(
+        set_fill_value!(stats.def, fill_val), stats.idx_2_int, stats.int_2_idx, stats.dcs
+    )
 end
 
 function relabel_index!(stats::DCStats, i::IndexExpr, j::IndexExpr)

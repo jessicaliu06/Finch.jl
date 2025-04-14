@@ -20,7 +20,7 @@ end
 # We now define a set of functions for manipulating the TensorDefs that will be shared
 # across all statistics types
 function merge_tensor_def(op, all_defs::Vararg{TensorDef})
-    new_default_value = op([def.default_value for def in all_defs]...)
+    new_fill_value = op([def.fill_val for def in all_defs]...)
     new_index_set = union([def.index_set for def in all_defs]...)
     new_dim_sizes = Dict{IndexExpr,UInt128}()
     for index in new_index_set
@@ -32,7 +32,7 @@ function merge_tensor_def(op, all_defs::Vararg{TensorDef})
     end
     #    @assert new_index_set ⊆ keys(new_dim_sizes)
     return TensorDef(
-        new_index_set, new_dim_sizes, new_default_value, nothing, nothing, nothing
+        new_index_set, new_dim_sizes, new_fill_value, nothing, nothing, nothing
     )
 end
 
@@ -41,23 +41,23 @@ function reduce_tensor_def(op, init, reduce_indices::Set{IndexExpr}, def::Tensor
     init = init isa PlanNode ? init.val : init
     if isnothing(init)
         if isnothing(op) && isnothing(init)
-            init = def.default_value
-        elseif isidentity(op, def.default_value) || isidempotent(op)
-            init = op(def.default_value, def.default_value)
+            init = def.fill_val
+        elseif isidentity(op, def.fill_val) || isidempotent(op)
+            init = op(def.fill_val, def.fill_val)
         elseif op == +
-            init = def.default_value * prod([def.dim_sizes[x] for x in reduce_indices])
+            init = def.fill_val * prod([def.dim_sizes[x] for x in reduce_indices])
         elseif op == *
-            init = def.default_value^prod([def.dim_sizes[x] for x in reduce_indices])
+            init = def.fill_val^prod([def.dim_sizes[x] for x in reduce_indices])
         else
-            # This is going to be VERY SLOW. Should raise a warning about reductions over non-identity default values.
+            # This is going to be VERY SLOW. Should raise a warning about reductions over non-identity fill values.
             # Depending on the semantics of reductions, we might be able to do this faster.
             println(
-                "Warning: A reduction can take place over a tensor whose default value is not the reduction operator's identity. \\
-                        This can result in a large slowdown as the new default is calculated.",
+                "Warning: A reduction can take place over a tensor whose fill value is not the reduction operator's identity. \\
+                        This can result in a large slowdown as the new fill is calculated.",
             )
             init = op(
                 [
-                    def.default_value for
+                    def.fill_val for
                     _ in prod([def.dim_sizes[x] for x in reduce_indices])
                 ]...,
             )
@@ -82,14 +82,14 @@ function merge_tensor_stats(op, all_stats::Vararg{ST}) where {ST<:TensorStats}
         if length(get_index_set(stats)) == 0
             continue
         end
-        if isannihilator(op, get_default_value(stats))
+        if isannihilator(op, get_fill_value(stats))
             push!(join_like_args, stats)
         else
             push!(union_like_args, stats)
         end
     end
     if length(union_like_args) == 0 && length(join_like_args) == 0
-        return ST(get_default_value(new_def))
+        return ST(get_fill_value(new_def))
     elseif length(union_like_args) == 0
         return merge_tensor_stats_join(op, new_def, join_like_args...)
     elseif length(join_like_args) == 0
@@ -125,12 +125,12 @@ function merge_tensor_stats_join(op, new_def::TensorDef, all_stats::Vararg{Naive
     new_dim_space_size = sum([
         log2(get_dim_size(new_def, idx)) for idx in new_def.index_set
     ])
-    prob_non_default = sum([
+    prob_non_fill = sum([
         log2(stats.cardinality) -
         sum([log2(get_dim_size(stats, idx)) for idx in get_index_set(stats)]) for
         stats in all_stats
     ])
-    new_cardinality = 2^(prob_non_default + new_dim_space_size)
+    new_cardinality = 2^(prob_non_fill + new_dim_space_size)
     return NaiveStats(new_def, new_cardinality)
 end
 
@@ -138,7 +138,7 @@ function merge_tensor_stats_union(op, new_def::TensorDef, all_stats::Vararg{Naiv
     new_dim_space_size = sum([
         log2(get_dim_size(new_def, idx)) for idx in new_def.index_set
     ])
-    prob_default = sum([
+    prob_fill = sum([
         log2(
             1 -
             2^(
@@ -147,7 +147,7 @@ function merge_tensor_stats_union(op, new_def::TensorDef, all_stats::Vararg{Naiv
             ),
         ) for stats in all_stats
     ])
-    new_cardinality = 2^(log2(1 - 2^prob_default) + new_dim_space_size)
+    new_cardinality = 2^(log2(1 - 2^prob_fill) + new_dim_space_size)
     return NaiveStats(new_def, new_cardinality)
 end
 
@@ -162,10 +162,10 @@ function reduce_tensor_stats(op, init, reduce_indices::Set{IndexExpr}, stats::Na
     old_dim_space_size = sum([
         log2(get_dim_size(stats, idx)) for idx in get_index_set(stats)
     ])
-    prob_default_value = 1 - 2^(log2(stats.cardinality) - old_dim_space_size)
-    prob_non_default_subspace =
-        1 - 2^(log2(prob_default_value) * 2^(old_dim_space_size - new_dim_space_size))
-    new_cardinality = 2^(new_dim_space_size + log2(prob_non_default_subspace))
+    prob_fill_value = 1 - 2^(log2(stats.cardinality) - old_dim_space_size)
+    prob_non_fill_subspace =
+        1 - 2^(log2(prob_fill_value) * 2^(old_dim_space_size - new_dim_space_size))
+    new_cardinality = 2^(new_dim_space_size + log2(prob_non_fill_subspace))
     return NaiveStats(new_def, new_cardinality)
 end
 

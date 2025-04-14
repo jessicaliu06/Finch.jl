@@ -286,8 +286,9 @@ dimension of virtual tensor `tns`. `ext` is the extent of the looplet. `proto`
 is the protocol that should be used for this index, but one doesn't need to
 unfurl all the indices at once.
 """
-unfurl(ctx, tns, ext, mode, proto) =
+function unfurl(ctx, tns, ext, mode, proto)
     throw(FinchProtocolError("$tns does not support $mode with protocol $proto"))
+end
 
 function lower_loop(ctx, root, ext)
     contain(ctx) do ctx_2
@@ -346,11 +347,11 @@ function distribute_helper(f, ctx, body, object, on_host)
     contain(ctx) do ctx_2
         diff = Dict()
         if on_host
-            helper_local  = host_local
+            helper_local = host_local
             helper_shared = host_shared
             helper_global = host_global
         else
-            helper_local  = device_local
+            helper_local = device_local
             helper_shared = device_shared
             helper_global = device_global
         end

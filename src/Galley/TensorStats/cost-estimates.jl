@@ -15,22 +15,24 @@ const SparseAllocateCost = 60
 function get_loop_lookups(vars::Set{IndexExpr}, rel_conjuncts, rel_disjuncts)
     # This tensor stats doesn't actually correspond to a particular place in the expr tree,
     # so we unfortunately have to mangle the statistics interface a bit.
+    rel_conjuncts = map(stat -> set_fill_value!(stat, false), rel_conjuncts)
+    rel_disjuncts = map(stat -> set_fill_value!(stat, false), rel_disjuncts)
     join_stats =
         if length(rel_disjuncts) == 0 ||
             vars ⊆ union(get_index_set(stat) for stat in rel_conjuncts)
-            join_def = merge_tensor_def(+, [get_def(stat) for stat in rel_conjuncts]...)
-            merge_tensor_stats_join(+, join_def, rel_conjuncts...)
+            join_def = merge_tensor_def(|, [get_def(stat) for stat in rel_conjuncts]...)
+            merge_tensor_stats_join(|, join_def, rel_conjuncts...)
         elseif length(rel_conjuncts) == 0
-            new_def = merge_tensor_def(+, [get_def(stat) for stat in rel_disjuncts]...)
-            merge_tensor_stats_union(+, new_def, rel_disjuncts...)
+            new_def = merge_tensor_def(|, [get_def(stat) for stat in rel_disjuncts]...)
+            merge_tensor_stats_union(|, new_def, rel_disjuncts...)
         else
-            disjunct_def = merge_tensor_def(+, [get_def(stat) for stat in rel_disjuncts]...)
-            disjunct_stats = merge_tensor_stats_union(+, disjunct_def, rel_disjuncts...)
+            disjunct_def = merge_tensor_def(|, [get_def(stat) for stat in rel_disjuncts]...)
+            disjunct_stats = merge_tensor_stats_union(|, disjunct_def, rel_disjuncts...)
 
             join_def = merge_tensor_def(
-                +, [get_def(stat) for stat in rel_conjuncts]..., disjunct_def
+                |, [get_def(stat) for stat in rel_conjuncts]..., disjunct_def
             )
-            merge_tensor_stats_join(+, join_def, rel_conjuncts..., disjunct_stats)
+            merge_tensor_stats_join(|, join_def, rel_conjuncts..., disjunct_stats)
         end
 
     lookups = estimate_nnz(join_stats; indices=vars)

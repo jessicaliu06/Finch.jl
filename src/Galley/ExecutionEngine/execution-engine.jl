@@ -189,7 +189,7 @@ function execute_query(alias_dict, q::PlanNode, verbose, cannonicalize, return_p
     output_formats = [f.val for f in mat_expr.formats]
     output_idx_order = [idx.name for idx in mat_expr.idx_order]
     agg_expr = mat_expr.expr
-    output_default = get_default_value(agg_expr.stats)
+    output_fill_value = get_fill_value(agg_expr.stats)
     output_dimensions = [get_dim_size(mat_expr.stats, idx) for idx in output_idx_order]
     agg_op = agg_expr.op.val
     rhs_expr = agg_expr.arg
@@ -199,7 +199,7 @@ function execute_query(alias_dict, q::PlanNode, verbose, cannonicalize, return_p
 
     output_tensor = initialize_tensor(output_formats,
         output_dimensions,
-        output_default)
+        output_fill_value)
     output_name = cannonicalize ? :output_tensor : name
     output_access = initialize_access(output_name,
         output_tensor,
@@ -209,7 +209,7 @@ function execute_query(alias_dict, q::PlanNode, verbose, cannonicalize, return_p
         read=false,
         cannonicalize=cannonicalize)
     dec_instance = declare_instance(variable_instance(output_name),
-        literal_instance(output_default), literal_instance(auto))
+        literal_instance(output_fill_value), literal_instance(auto))
 
     prgm_instance = assign_instance(output_access, literal_instance(agg_op), rhs_instance)
     loop_order = [
@@ -239,7 +239,7 @@ function execute_query(alias_dict, q::PlanNode, verbose, cannonicalize, return_p
 
     if return_prgm
         output_tensor_init = tensor_initializer(
-            output_formats, output_dimensions, output_default
+            output_formats, output_dimensions, output_fill_value
         )
         return :($output_name = $output_tensor_init), prgm_instance
     end
@@ -247,7 +247,7 @@ function execute_query(alias_dict, q::PlanNode, verbose, cannonicalize, return_p
     Finch.execute(prgm_instance; mode=:fast)
     verbose >= 2 && println("Kernel Execution Took: ", time() - start_time)
     verbose >= 2 && println("Stored Entries: ", count_stored(output_tensor))
-    verbose >= 2 && println("Non Default Entries: ", count_non_default(output_tensor))
+    verbose >= 2 && println("Non fill Entries: ", count_non_fill(output_tensor))
     alias_dict[name] = output_tensor
 end
 

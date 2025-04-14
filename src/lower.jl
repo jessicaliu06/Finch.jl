@@ -386,23 +386,20 @@ function lower_parallel_loop(
             tid = get_task_num(subtask)
             open_scope(ctx_3) do ctx_4
                 distribute_device(ctx_4, root.body, subtask) do ctx_5, body_3
-                    i = index(freshen(ctx_5, :i))
                     i_lo = call(
                         +,
                         call(fld, call(*, getstop(ext.ext), call(-, tid, 1)), device.n),
                         1,
                     )
                     i_hi = call(fld, call(*, getstop(ext.ext), tid), device.n)
-                    root_2 = loop(i, VirtualExtent(tid, tid),
-                        loop(root.idx, ext.ext,
-                            sieve(
-                                access(
-                                    VirtualBandMaskColumn(i_lo, i_hi),
-                                    reader(),
-                                    root.idx,
-                                ),
-                                body_3,
+                    root_2 = loop(root.idx, ext.ext,
+                        sieve(
+                            access(
+                                VirtualBandMaskColumn(i_lo, i_hi),
+                                reader(),
+                                root.idx,
                             ),
+                            body_3,
                         ),
                     )
                     ctx_5(instantiate!(ctx_5, root_2))
@@ -425,19 +422,16 @@ function lower_parallel_loop(
                 subtask = get_task(ctx_3)
                 open_scope(ctx_3) do ctx_4
                     distribute_device(ctx_4, root.body, subtask) do ctx_5, body_3
-                        i = index(freshen(ctx_5, :i))
                         i_lo = call(+, call(*, schedule.chk, call(-, chk_id, 1)), 1)
                         i_hi = call(min, call(*, schedule.chk, chk_id), getstop(ext.ext))
-                        root_2 = loop(i, VirtualExtent(chk_id, chk_id),
-                            loop(root.idx, ext.ext,
-                                sieve(
-                                    access(
-                                        VirtualBandMaskColumn(i_lo, i_hi),
-                                        reader(),
-                                        root.idx,
-                                    ),
-                                    body_3,
+                        root_2 = loop(root.idx, ext.ext,
+                            sieve(
+                                access(
+                                    VirtualBandMaskColumn(i_lo, i_hi),
+                                    reader(),
+                                    root.idx,
                                 ),
+                                body_3,
                             ),
                         )
                         ctx_5(instantiate!(ctx_5, root_2))

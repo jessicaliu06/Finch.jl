@@ -36,7 +36,7 @@ quote
     x_lvl_2_val_2 = (Finch).transfer(Finch.CPUSharedMemory(Finch.CPU(n)), x_lvl_2_val)
     y_lvl_3_val_2 = (Finch).transfer(Finch.CPUSharedMemory(Finch.CPU(n)), y_lvl_3_val)
     y_lvl_2_locks_2 = (Finch).transfer(Finch.CPUSharedMemory(Finch.CPU(n)), y_lvl_2_locks)
-    Threads.@threads for tid = 1:n
+    Threads.@threads :dynamic for tid = 1:n
             Finch.@barrier begin
                     @inbounds @fastmath(begin
                                 x_lvl_2_val_3 = (Finch).transfer(Finch.CPUThread(tid, Finch.CPU(n), Finch.Serial()), x_lvl_2_val_2)

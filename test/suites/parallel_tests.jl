@@ -1,4 +1,3 @@
-using Finch: static_schedule
 # FIXME: Add a test for failures of concurrent.
 @testitem "parallel" setup = [CheckOutput] begin
     if Threads.nthreads() <= 1

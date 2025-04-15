@@ -26,7 +26,7 @@ begin
     tmp_lvl_2_val_2 = (Finch).transfer(Finch.CPULocalMemory(Finch.CPU(n)), tmp_lvl_2_val)
     input_lvl_3_val_2 = (Finch).transfer(Finch.CPUSharedMemory(Finch.CPU(n)), input_lvl_3_val)
     output_lvl_3_val_2 = (Finch).transfer(Finch.CPUSharedMemory(Finch.CPU(n)), output_lvl_3_val)
-    Threads.@threads for tid = 1:n
+    Threads.@threads :dynamic for tid = 1:n
             Finch.@barrier begin
                     @inbounds @fastmath(begin
                                 tmp_lvl_2_val_3 = (Finch).transfer(Finch.CPUThread(tid, Finch.CPU(n), Finch.Serial()), tmp_lvl_2_val_2)

@@ -505,52 +505,22 @@ function virtual_parallel_region(
     f, ctx, ext::VirtualParallelDimension, device::VirtualCPU, schedule::VirtualZeroSchedule
 )
     tid = freshen(ctx, :tid)
+    i_lo = call(
+        +,
+        call(fld, call(*, getstop(ext.ext), call(-, value(tid, Int), 1)), device.n),
+        1,
+    )
+    i_hi = call(fld, call(*, getstop(ext.ext), value(tid, Int)), device.n)
 
     code = contain(ctx) do ctx_2
         subtask = VirtualCPUThread(value(tid, Int), device, ctx_2.code.task)
-        contain(f, ctx_2; task=subtask)
+        contain(ctx_2; task=subtask) do ctx_3
+            f(ctx_3, i_lo, i_hi)
+        end
     end
 
     return quote
         Threads.@threads for $tid in 1:($(ctx(device.n)))
-            Finch.@barrier begin
-                @inbounds @fastmath begin
-                    $code
-                end
-                nothing
-            end
-        end
-    end
-end
-
-function virtual_parallel_region(
-    f, ctx, ext::VirtualParallelDimension, device::VirtualCPU, schedule::VirtualOneSchedule
-)
-    tid = freshen(ctx, :tid)
-    num_chks = freshen(ctx, :num_chks)
-
-    push_preamble!(
-        ctx,
-        quote
-            $num_chks = cld($(ctx(getstop(ext.ext))), $(ctx(schedule.chk)))
-        end,
-    )
-
-    code = contain(ctx) do ctx_2
-        chk_id = freshen(ctx, :chk_id)
-        push_preamble!(
-            ctx_2,
-            quote
-                $chk_id = $tid
-            end,
-        )
-
-        subtask = VirtualCPUThread(value(tid, Int), device, ctx_2.code.task)
-        contain(f(value(tid, Int), value(chk_id, Int)), ctx_2; task=subtask)
-    end
-
-    return quote
-        Threads.@threads for $tid in 1:($num_chks)
             Finch.@barrier begin
                 @inbounds @fastmath begin
                     $code
@@ -568,6 +538,8 @@ function virtual_parallel_region(
     chk_id = freshen(ctx, :chk_id)
     chk_ctr = freshen(ctx, :chk_ctr)
     num_chks = freshen(ctx, :num_chks)
+    i_lo = call(+, call(*, schedule.chk, call(-, value(chk_id, Int), 1)), 1)
+    i_hi = call(min, call(*, schedule.chk, value(chk_id, Int)), getstop(ext.ext))
 
     push_preamble!(
         ctx,
@@ -579,7 +551,9 @@ function virtual_parallel_region(
 
     code = contain(ctx) do ctx_2
         subtask = VirtualCPUThread(value(tid, Int), device, ctx_2.code.task)
-        contain(f(value(tid, Int), value(chk_id, Int)), ctx_2; task=subtask)
+        contain(ctx_2; task=subtask) do ctx_3
+            f(ctx_3, i_lo, i_hi)
+        end
     end
 
     return quote
@@ -606,8 +580,11 @@ function virtual_parallel_region(
 )
     tid_tmp = freshen(ctx, :tid)
     tid_ch = freshen(ctx, :tid_ch)
+    tid = freshen(ctx, :tid)
     chk_id = freshen(ctx, :chk_id)
     num_chks = freshen(ctx, :num_chks)
+    i_lo = call(+, call(*, schedule.chk, call(-, value(chk_id, Int), 1)), 1)
+    i_hi = call(min, call(*, schedule.chk, value(chk_id, Int)), getstop(ext.ext))
 
     push_preamble!(
         ctx,
@@ -617,7 +594,6 @@ function virtual_parallel_region(
     )
 
     code = contain(ctx) do ctx_2
-        tid = freshen(ctx, :tid)
         push_preamble!(
             ctx_2,
             quote
@@ -631,7 +607,9 @@ function virtual_parallel_region(
             end,
         )
         subtask = VirtualCPUThread(value(tid, Int), device, ctx_2.code.task)
-        contain(f(value(tid, Int), value(chk_id, Int)), ctx_2; task=subtask)
+        contain(ctx_2; task=subtask) do ctx_3
+            f(ctx_3, i_lo, i_hi)
+        end
     end
 
     return quote

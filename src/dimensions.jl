@@ -232,44 +232,6 @@ function virtual_call_def(ctx, alg, ::typeof(zero_schedule), ::Any)
     VirtualZeroSchedule()
 end
 
-struct OneSchedule <: AbstractSchedule
-    chk::Int
-end
-
-@kwdef struct VirtualOneSchedule <: AbstractVirtualSchedule
-    chk
-end
-
-FinchNotation.finch_leaf(x::VirtualOneSchedule) = virtual(x)
-
-function virtualize(ctx, ex, ::Type{OneSchedule})
-    chk = freshen(ctx, :chk)
-    push_preamble!(
-        ctx,
-        quote
-            $chk = ($ex.chk)
-        end,
-    )
-    VirtualOneSchedule(value(chk, Int))
-end
-
-function lower(ctx, ex::VirtualOneSchedule)
-    :($OneSchedule($(ctx(ex.chk))))
-end
-
-one_schedule(chk=1) = OneSchedule(chk)
-
-function virtual_call_def(ctx, alg, ::typeof(one_schedule), ::Any, chk=value(:(1), Int))
-    chk_2 = freshen(ctx, :chk)
-    push_preamble!(
-        ctx,
-        quote
-            $chk_2 = $(ctx(chk))
-        end,
-    )
-    VirtualOneSchedule(value(chk_2, Int))
-end
-
 struct TwoSchedule <: AbstractSchedule
     chk::Int
 end

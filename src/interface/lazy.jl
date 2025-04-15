@@ -187,12 +187,16 @@ function Base.reduce(
     op, arg::LazyTensor{Vf,Tv,N}; dims=:, init=initial_value(op, Tv)
 ) where {Vf,Tv,N}
     dims = dims == Colon() ? [1:N...] : [dims...]
-    shape = ((arg.shape[n] for n in 1:N if !(n in dims))...,)
+    shape = ((n in ndims ? arg.shape[n] : one(arg.shape[n]) for n in 1:N...),)
     fields = [field(gensym(:i)) for _ in 1:N]
+    fields2 = copy(fields)
+    for i in dims
+        fields2[i] = field(gensym(:i))
+    end
     Sv = fixpoint_type(op, init, Tv)
-    data = aggregate(
+    data = reorder(aggregate(
         immediate(op), immediate(init), relabel(arg.data, fields), fields[dims]...
-    )
+    ), fields2...)
     LazyTensor{init,Sv}(identify(data), shape)
 end
 

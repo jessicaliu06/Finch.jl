@@ -591,6 +591,7 @@ end
         A = fspeye(5, 6, 7)
         ref = [i == j == k for i in 1:5, j in 1:6, k in 1:7]
         @test A == ref
+    end
 
     for (key, scheduler) in [
         "default" => Finch.default_scheduler(),

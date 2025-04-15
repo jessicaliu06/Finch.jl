@@ -375,42 +375,13 @@ function distribute_helper(f, ctx, body, object, on_host)
 end
 
 function lower_parallel_loop(
-    ctx, root, ext::VirtualParallelDimension, schedule::VirtualZeroSchedule
+    ctx, root, ext::VirtualParallelDimension, schedule::AbstractVirtualSchedule
 )
     root = ensure_concurrent(root, ctx)
     device = ext.device
 
     distribute_host(ctx, root.body, device) do ctx_2, body_2
         virtual_parallel_region(ctx_2, ext, device, schedule) do ctx_3, i_lo, i_hi
-            subtask = get_task(ctx_3)
-            open_scope(ctx_3) do ctx_4
-                distribute_device(ctx_4, root.body, subtask) do ctx_5, body_3
-                    root_2 = loop(root.idx, ext.ext,
-                        sieve(
-                            access(
-                                VirtualBandMaskColumn(i_lo, i_hi),
-                                reader(),
-                                root.idx,
-                            ),
-                            body_3,
-                        ),
-                    )
-                    ctx_5(instantiate!(ctx_5, root_2))
-                end
-            end
-        end
-    end
-end
-
-function lower_parallel_loop(
-    ctx, root, ext::VirtualParallelDimension,
-    schedule::Union{VirtualTwoSchedule,VirtualThreeSchedule},
-)
-    root = ensure_concurrent(root, ctx)
-    device = ext.device
-
-    distribute_host(ctx, root.body, device) do ctx_2, body_2
-        virtual_parallel_region(ctx_2, ext, device, schedule) do ctx_3, i_lo, i_hi 
             subtask = get_task(ctx_3)
             open_scope(ctx_3) do ctx_4
                 distribute_device(ctx_4, root.body, subtask) do ctx_5, body_3

@@ -497,20 +497,120 @@ for T in [
     end
 end
 
+abstract type AbstractSchedule end
+
+abstract type AbstractVirtualSchedule end
+
+struct FinchStaticSchedule <: AbstractSchedule end
+
+struct VirtualFinchStaticSchedule <: AbstractVirtualSchedule end
+
+FinchNotation.finch_leaf(x::VirtualFinchStaticSchedule) = virtual(x)
+
+function virtualize(ctx, ex, ::Type{FinchStaticSchedule})
+    VirtualFinchStaticSchedule()
+end
+
+function lower(ctx, ex::VirtualFinchStaticSchedule)
+    :($FinchStaticSchedule())
+end
+
+static_schedule() = FinchStaticSchedule()
+
+function virtual_call_def(ctx, alg, ::typeof(static_schedule), ::Any)
+    VirtualFinchStaticSchedule()
+end
+
+struct FinchGreedySchedule <: AbstractSchedule
+    chk::Int
+end
+
+@kwdef struct VirtualFinchGreedySchedule <: AbstractVirtualSchedule
+    chk
+end
+
+FinchNotation.finch_leaf(x::VirtualFinchGreedySchedule) = virtual(x)
+
+function virtualize(ctx, ex, ::Type{FinchGreedySchedule})
+    chk = freshen(ctx, :chk)
+    push_preamble!(
+        ctx,
+        quote
+            $chk = ($ex.chk)
+        end,
+    )
+    VirtualFinchGreedySchedule(value(chk, Int))
+end
+
+function lower(ctx, ex::VirtualFinchGreedySchedule)
+    :($FinchGreedySchedule($(ctx(ex.chk))))
+end
+
+greedy_schedule(chk=1) = FinchGreedySchedule(chk)
+
+function virtual_call_def(ctx, alg, ::typeof(greedy_schedule), ::Any, chk=value(:(1), Int))
+    chk_2 = freshen(ctx, :chk)
+    push_preamble!(
+        ctx,
+        quote
+            $chk_2 = $(ctx(chk))
+        end,
+    )
+    VirtualFinchGreedySchedule(value(chk_2, Int))
+end
+
+struct FinchJuliaSchedule <: AbstractSchedule
+    chk::Int
+end
+
+@kwdef struct VirtualFinchJuliaSchedule <: AbstractVirtualSchedule
+    chk
+end
+
+FinchNotation.finch_leaf(x::VirtualFinchJuliaSchedule) = virtual(x)
+
+function virtualize(ctx, ex, ::Type{FinchJuliaSchedule})
+    chk = freshen(ctx, :chk)
+    push_preamble!(
+        ctx,
+        quote
+            $chk = ($ex.chk)
+        end,
+    )
+    VirtualFinchJuliaSchedule(value(chk, Int))
+end
+
+function lower(ctx, ex::VirtualFinchJuliaSchedule)
+    :($FinchJuliaSchedule($(ctx(ex.chk))))
+end
+
+julia_schedule(chk=1) = FinchJuliaSchedule(chk)
+
+function virtual_call_def(ctx, alg, ::typeof(julia_schedule), ::Any, chk=value(:(1), Int))
+    chk_2 = freshen(ctx, :chk)
+    push_preamble!(
+        ctx,
+        quote
+            $chk_2 = $(ctx(chk))
+        end,
+    )
+    VirtualFinchJuliaSchedule(value(chk_2, Int))
+end
+
 function virtual_parallel_region(f, ctx, ::Serial)
     contain(f, ctx)
 end
 
 function virtual_parallel_region(
-    f, ctx, ext::VirtualParallelDimension, device::VirtualCPU, schedule::VirtualZeroSchedule
+    f, ctx, ext::VirtualParallelDimension, device::VirtualCPU, schedule::VirtualFinchStaticSchedule
 )
     tid = freshen(ctx, :tid)
     i_lo = call(
         +,
-        call(fld, call(*, getstop(ext.ext), call(-, value(tid, Int), 1)), device.n),
+        call(fld, call(*, measure(ext.ext), call(-, value(tid, Int), 1)), device.n),
         1,
     )
-    i_hi = call(fld, call(*, getstop(ext.ext), value(tid, Int)), device.n)
+    i_hi = call(fld, call(*, measure(ext.ext), value(tid, Int)), device.n)
 
     code = contain(ctx) do ctx_2
         subtask = VirtualCPUThread(value(tid, Int), device, ctx_2.code.task)
@@ -532,20 +632,20 @@ function virtual_parallel_region(
 end
 
 function virtual_parallel_region(
-    f, ctx, ext::VirtualParallelDimension, device::VirtualCPU, schedule::VirtualTwoSchedule
+    f, ctx, ext::VirtualParallelDimension, device::VirtualCPU, schedule::VirtualFinchGreedySchedule
 )
     tid = freshen(ctx, :tid)
     chk_id = freshen(ctx, :chk_id)
     chk_ctr = freshen(ctx, :chk_ctr)
     num_chks = freshen(ctx, :num_chks)
     i_lo = call(+, call(*, schedule.chk, call(-, value(chk_id, Int), 1)), 1)
-    i_hi = call(min, call(*, schedule.chk, value(chk_id, Int)), getstop(ext.ext))
+    i_hi = call(min, call(*, schedule.chk, value(chk_id, Int)), measure(ext.ext))
 
     push_preamble!(
         ctx,
         quote
             $chk_ctr = Threads.Atomic{Int}(0)
-            $num_chks = cld($(ctx(getstop(ext.ext))), $(ctx(schedule.chk)))
+            $num_chks = cld($(ctx(measure(ext.ext))), $(ctx(schedule.chk)))
         end,
     )
 
@@ -576,7 +676,7 @@ end
 
 function virtual_parallel_region(
     f, ctx, ext::VirtualParallelDimension, device::VirtualCPU,
-    schedule::VirtualThreeSchedule,
+    schedule::VirtualFinchJuliaSchedule,
 )
     tid_tmp = freshen(ctx, :tid)
     tid_ch = freshen(ctx, :tid_ch)
@@ -584,12 +684,12 @@ function virtual_parallel_region(
     chk_id = freshen(ctx, :chk_id)
     num_chks = freshen(ctx, :num_chks)
     i_lo = call(+, call(*, schedule.chk, call(-, value(chk_id, Int), 1)), 1)
-    i_hi = call(min, call(*, schedule.chk, value(chk_id, Int)), getstop(ext.ext))
+    i_hi = call(min, call(*, schedule.chk, value(chk_id, Int)), measure(ext.ext))
 
     push_preamble!(
         ctx,
         quote
-            $num_chks = cld($(ctx(getstop(ext.ext))), $(ctx(schedule.chk)))
+            $num_chks = cld($(ctx(measure(ext.ext))), $(ctx(schedule.chk)))
         end,
     )
 

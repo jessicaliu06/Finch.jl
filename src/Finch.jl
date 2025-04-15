@@ -59,7 +59,7 @@ export fill_value, AsArray, expanddims, tensor_tree
 
 export parallelAnalysis, ParallelAnalysisResults
 export parallel, extent, auto
-export zero_schedule, one_schedule, two_schedule, three_schedule
+export static_schedule, greedy_schedule, julia_schedule
 export serial, cpu
 
 export Limit, Eps

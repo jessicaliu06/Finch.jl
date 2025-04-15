@@ -1,3 +1,4 @@
+using Finch: static_schedule
 # FIXME: Add a test for failures of concurrent.
 @testitem "parallel" setup = [CheckOutput] begin
     if Threads.nthreads() <= 1
@@ -687,18 +688,15 @@
             @test norm(y - permutedims(A) * x) / norm(permutedims(A) * x) < 1e-10
         end
 
-        # Check that passing static as argument to parallel is working
+        # Check that passing static_schedule() as argument to parallel is working
         let
             A = Tensor(Dense(SparseList(Element(0.0))), fsprand(UInt, 42, 42, 0.1))
             x = Tensor(Dense(Element(0.0)), rand(UInt, 42))
             y = Tensor(Dense(Element(0.0)))
 
-            Cpu = cpu(Threads.nthreads())
-            schedule = static()
-
             @finch begin
                 y .= 0
-                for j in parallel(_, Cpu, schedule)
+                for j in parallel(_, cpu(Threads.nthreads()), static_schedule())
                     for i in _
                         y[j] += A[i, j] * x[i]
                     end
@@ -709,18 +707,34 @@
             @test norm(y - y_ref) / norm(y_ref) < 1e-10
         end
 
-        # Check that passing dynamic as argument to parallel is working
+        # Check that passing greedy_schedule as argument to parallel is working
         let
             A = Tensor(Dense(SparseList(Element(0.0))), fsprand(UInt, 42, 42, 0.1))
             x = Tensor(Dense(Element(0.0)), rand(UInt, 42))
             y = Tensor(Dense(Element(0.0)))
 
-            Cpu = cpu(Threads.nthreads())
-            schedule = dynamic(4)
+            @finch begin
+                y .= 0
+                for j in parallel(_, cpu(Threads.nthreads()), greedy_schedule(4, :static))
+                    for i in _
+                        y[j] += A[i, j] * x[i]
+                    end
+                end
+            end
+
+            y_ref = swizzle(A, 2, 1) * x
+            @test norm(y - y_ref) / norm(y_ref) < 1e-10
+        end
+
+        # Check that passing julia_schedule as argument to parallel is working
+        let
+            A = Tensor(Dense(SparseList(Element(0.0))), fsprand(UInt, 42, 42, 0.1))
+            x = Tensor(Dense(Element(0.0)), rand(UInt, 42))
+            y = Tensor(Dense(Element(0.0)))
 
             @finch begin
                 y .= 0
-                for j in parallel(_, Cpu, schedule)
+                for j in parallel(_, cpu(Threads.nthreads()), julia_schedule(4, :greedy))
                     for i in _
                         y[j] += A[i, j] * x[i]
                     end

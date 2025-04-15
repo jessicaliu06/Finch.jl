@@ -501,37 +501,40 @@ abstract type AbstractSchedule end
 
 abstract type AbstractVirtualSchedule end
 
-struct FinchStaticSchedule <: AbstractSchedule end
+struct FinchStaticSchedule{schedule} <: AbstractSchedule end
 
-struct VirtualFinchStaticSchedule <: AbstractVirtualSchedule end
+struct VirtualFinchStaticSchedule <: AbstractVirtualSchedule
+    schedule
+end
 
 FinchNotation.finch_leaf(x::VirtualFinchStaticSchedule) = virtual(x)
 
-function virtualize(ctx, ex, ::Type{FinchStaticSchedule})
-    VirtualFinchStaticSchedule()
+function virtualize(ctx, ex, ::Type{FinchStaticSchedule{schedule}}) where {schedule}
+    VirtualFinchStaticSchedule(schedule)
 end
 
 function lower(ctx, ex::VirtualFinchStaticSchedule)
-    :($FinchStaticSchedule())
+    :(FinchStaticSchedule{$(QuoteNode(ex.schedule))}())
 end
 
-static_schedule() = FinchStaticSchedule()
+static_schedule(schedule::Symbol=:dynamic) = FinchStaticSchedule{schedule}()
 
-function virtual_call_def(ctx, alg, ::typeof(static_schedule), ::Any)
-    VirtualFinchStaticSchedule()
+function virtual_call_def(ctx, alg, ::typeof(static_schedule), ::Any, schedule=value(:dynamic, Symbol))
+    VirtualFinchStaticSchedule(schedule.val)
 end
 
-struct FinchGreedySchedule <: AbstractSchedule
+struct FinchGreedySchedule{schedule} <: AbstractSchedule
     chk::Int
 end
 
-@kwdef struct VirtualFinchGreedySchedule <: AbstractVirtualSchedule
+struct VirtualFinchGreedySchedule <: AbstractVirtualSchedule
     chk
+    schedule
 end
 
 FinchNotation.finch_leaf(x::VirtualFinchGreedySchedule) = virtual(x)
 
-function virtualize(ctx, ex, ::Type{FinchGreedySchedule})
+function virtualize(ctx, ex, ::Type{FinchGreedySchedule{schedule}}) where {schedule}
     chk = freshen(ctx, :chk)
     push_preamble!(
         ctx,
@@ -539,16 +542,16 @@ function virtualize(ctx, ex, ::Type{FinchGreedySchedule})
             $chk = ($ex.chk)
         end,
     )
-    VirtualFinchGreedySchedule(value(chk, Int))
+    VirtualFinchGreedySchedule(value(chk, Int), schedule)
 end
 
 function lower(ctx, ex::VirtualFinchGreedySchedule)
-    :($FinchGreedySchedule($(ctx(ex.chk))))
+    :(FinchGreedySchedule{$(QuoteNode(ex.schedule))}($(ctx(ex.chk))))
 end
 
-greedy_schedule(chk=1) = FinchGreedySchedule(chk)
+greedy_schedule(chk::Int=1, schedule::Symbol=:static) = FinchGreedySchedule{schedule}(chk)
 
-function virtual_call_def(ctx, alg, ::typeof(greedy_schedule), ::Any, chk=value(:(1), Int))
+function virtual_call_def(ctx, alg, ::typeof(greedy_schedule), ::Any, chk=value(:(1), Int), schedule=value(:static, Symbol))
     chk_2 = freshen(ctx, :chk)
     push_preamble!(
         ctx,
@@ -556,20 +559,21 @@ function virtual_call_def(ctx, alg, ::typeof(greedy_schedule), ::Any, chk=value(
             $chk_2 = $(ctx(chk))
         end,
     )
-    VirtualFinchGreedySchedule(value(chk_2, Int))
+    VirtualFinchGreedySchedule(value(chk_2, Int), schedule.val)
 end
 
-struct FinchJuliaSchedule <: AbstractSchedule
+struct FinchJuliaSchedule{schedule} <: AbstractSchedule
     chk::Int
 end
 
-@kwdef struct VirtualFinchJuliaSchedule <: AbstractVirtualSchedule
+struct VirtualFinchJuliaSchedule <: AbstractVirtualSchedule
     chk
+    schedule
 end
 
 FinchNotation.finch_leaf(x::VirtualFinchJuliaSchedule) = virtual(x)
 
-function virtualize(ctx, ex, ::Type{FinchJuliaSchedule})
+function virtualize(ctx, ex, ::Type{FinchJuliaSchedule{schedule}}) where {schedule}
     chk = freshen(ctx, :chk)
     push_preamble!(
         ctx,
@@ -577,16 +581,16 @@ function virtualize(ctx, ex, ::Type{FinchJuliaSchedule})
             $chk = ($ex.chk)
         end,
     )
-    VirtualFinchJuliaSchedule(value(chk, Int))
+    VirtualFinchJuliaSchedule(value(chk, Int), schedule)
 end
 
 function lower(ctx, ex::VirtualFinchJuliaSchedule)
-    :($FinchJuliaSchedule($(ctx(ex.chk))))
+    :(FinchJuliaSchedule{$(QuoteNode(ex.schedule))}($(ctx(ex.chk))))
 end
 
-julia_schedule(chk=1) = FinchJuliaSchedule(chk)
+julia_schedule(chk::Int=1, schedule::Symbol=:greedy) = FinchJuliaSchedule{schedule}(chk)
 
-function virtual_call_def(ctx, alg, ::typeof(julia_schedule), ::Any, chk=value(:(1), Int))
+function virtual_call_def(ctx, alg, ::typeof(julia_schedule), ::Any, chk=value(:(1), Int), schedule=value(:greedy, Symbol))
     chk_2 = freshen(ctx, :chk)
     push_preamble!(
         ctx,
@@ -594,7 +598,7 @@ function virtual_call_def(ctx, alg, ::typeof(julia_schedule), ::Any, chk=value(:
             $chk_2 = $(ctx(chk))
         end,
     )
-    VirtualFinchJuliaSchedule(value(chk_2, Int))
+    VirtualFinchJuliaSchedule(value(chk_2, Int), schedule.val)
 end
 
 function virtual_parallel_region(f, ctx, ::Serial)
@@ -620,7 +624,7 @@ function virtual_parallel_region(
     end
 
     return quote
-        Threads.@threads for $tid in 1:($(ctx(device.n)))
+        Threads.@threads $(QuoteNode(schedule.schedule)) for $tid in 1:($(ctx(device.n)))
             Finch.@barrier begin
                 @inbounds @fastmath begin
                     $code
@@ -657,7 +661,7 @@ function virtual_parallel_region(
     end
 
     return quote
-        Threads.@threads for $tid in 1:($(ctx(device.n)))
+        Threads.@threads $(QuoteNode(schedule.schedule)) for $tid in 1:($(ctx(device.n)))
             Finch.@barrier begin
                 @inbounds @fastmath begin
                     while true
@@ -718,7 +722,7 @@ function virtual_parallel_region(
             put!($tid_ch, $tid_tmp)
         end
 
-        Threads.@threads for $chk_id in 1:($num_chks)
+        Threads.@threads $(QuoteNode(schedule.schedule)) for $chk_id in 1:($num_chks)
             Finch.@barrier begin
                 @inbounds @fastmath begin
                     $code

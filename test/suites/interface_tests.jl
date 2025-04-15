@@ -251,6 +251,35 @@ end
         @test check_output("interface/permutedims.txt", String(take!(io)))
     end
 
+    @testset "reshape" begin
+        io = IOBuffer()
+        println(io, "reshape tests")
+
+        @repl io A = Tensor(Dense(Sparse(Element(0))), LinearIndices((6, 6)))
+        @repl io reshape(A, (3, 12))
+        @test reshape(LinearIndices((6, 6)), (3, 12)) == reshape(A, (3, 12))
+        @test reshape(LinearIndices((6, 6)), 3, 12) == reshape(A, 3, 12)
+        @test reshape(LinearIndices((6, 6)), 3, :) == reshape(A, 3, :)
+
+        @repl io reshape(A, (3, 2, 6))
+        @test reshape(LinearIndices((6, 6)), (3, 2, 6)) == reshape(A, (3, 2, 6))
+
+        @repl io reshape(A, (3, 2, 2, 3))
+        @test reshape(LinearIndices((6, 6)), (3, 2, 2, 3)) == reshape(A, (3, 2, 2, 3))
+
+        @repl io reshape(A, (9, 4))
+        @test reshape(LinearIndices((6, 6)), (9, 4)) == reshape(A, (9, 4))
+
+        @repl io reshape(A, :)
+        @test reshape(LinearIndices((6, 6)), :) == reshape(A, :)
+
+        @repl io A = Tensor(Dense(Element(0)), 1:36)
+        @repl io reshape(A, (3, 12))
+        @test reshape(1:36, (3, 12)) == reshape(A, (3, 12))
+
+        @test check_output("interface/reshape.txt", String(take!(io)))
+    end
+
     let
         io = IOBuffer()
         println(io, "getindex tests")

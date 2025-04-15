@@ -306,3 +306,19 @@ function ffindnz(src)
     val = tmp.lvl.lvl.val
     (ntuple(n -> tbl[n][1:nnz], ndims(src))..., val[1:nnz])
 end
+
+"""
+    fspeye(dims...)
+
+Return a Boolean identity matrix of size `dims`, in COO format.
+
+See also: (`speye`)(https://www.mathworks.com/help/matlab/ref/speye.html)
+"""
+function fspeye(dims...)
+    idx = collect(1:min(dims...))
+    Tensor(
+        SparseCOOLevel{length(dims)}(
+            Pattern(), dims, [1, length(idx) + 1], ((idx for _ in dims)...,)
+        ),
+    )
+end

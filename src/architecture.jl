@@ -519,7 +519,9 @@ end
 
 static_schedule(schedule::Symbol=:dynamic) = FinchStaticSchedule{schedule}()
 
-function virtual_call_def(ctx, alg, ::typeof(static_schedule), ::Any, schedule=value(:dynamic, Symbol))
+function virtual_call_def(
+    ctx, alg, ::typeof(static_schedule), ::Any, schedule=value(:dynamic, Symbol)
+)
     VirtualFinchStaticSchedule(schedule.val)
 end
 
@@ -551,7 +553,14 @@ end
 
 greedy_schedule(chk::Int=1, schedule::Symbol=:static) = FinchGreedySchedule{schedule}(chk)
 
-function virtual_call_def(ctx, alg, ::typeof(greedy_schedule), ::Any, chk=value(:(1), Int), schedule=value(:static, Symbol))
+function virtual_call_def(
+    ctx,
+    alg,
+    ::typeof(greedy_schedule),
+    ::Any,
+    chk=value(:(1), Int),
+    schedule=value(:static, Symbol),
+)
     chk_2 = freshen(ctx, :chk)
     push_preamble!(
         ctx,
@@ -590,7 +599,14 @@ end
 
 julia_schedule(chk::Int=1, schedule::Symbol=:greedy) = FinchJuliaSchedule{schedule}(chk)
 
-function virtual_call_def(ctx, alg, ::typeof(julia_schedule), ::Any, chk=value(:(1), Int), schedule=value(:greedy, Symbol))
+function virtual_call_def(
+    ctx,
+    alg,
+    ::typeof(julia_schedule),
+    ::Any,
+    chk=value(:(1), Int),
+    schedule=value(:greedy, Symbol),
+)
     chk_2 = freshen(ctx, :chk)
     push_preamble!(
         ctx,
@@ -606,7 +622,8 @@ function virtual_parallel_region(f, ctx, ::Serial)
 end
 
 function virtual_parallel_region(
-    f, ctx, ext::VirtualParallelDimension, device::VirtualCPU, schedule::VirtualFinchStaticSchedule
+    f, ctx, ext::VirtualParallelDimension, device::VirtualCPU,
+    schedule::VirtualFinchStaticSchedule,
 )
     tid = freshen(ctx, :tid)
     i_lo = call(
@@ -636,7 +653,8 @@ function virtual_parallel_region(
 end
 
 function virtual_parallel_region(
-    f, ctx, ext::VirtualParallelDimension, device::VirtualCPU, schedule::VirtualFinchGreedySchedule
+    f, ctx, ext::VirtualParallelDimension, device::VirtualCPU,
+    schedule::VirtualFinchGreedySchedule,
 )
     tid = freshen(ctx, :tid)
     chk_id = freshen(ctx, :chk_id)

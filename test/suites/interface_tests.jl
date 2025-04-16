@@ -280,7 +280,7 @@ end
         @test check_output("interface/reshape.txt", String(take!(io)))
 
         A = [1]
-        @test reshape(Tensor(rand(1)), 1, 1, 1, 1) == reshape(A, 1, 1, 1, 1)
+        @test reshape(Tensor(A), 1, 1, 1, 1) == reshape(A, 1, 1, 1, 1)
 
         A = swizzle(Tensor(Dense(Sparse(Element(0))), LinearIndices((6, 6))), 2, 1)
         B = permutedims(LinearIndices((6, 6)))

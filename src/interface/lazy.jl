@@ -75,8 +75,7 @@ function expanddims(arr::LazyTensor{Vf,Tv}; dims) where {Vf,Tv}
 end
 
 function Base.dropdims(arr::LazyTensor{Vf,Tv}; dims) where {Vf,Tv}
-    dims = dims == Colon() ? (1:ndims(arr)) : dims
-    dims = [dims...]
+    dims = dims === Colon() ? [1:ndims(arr)...] : [dims...]
     @assert allunique(dims)
     @assert issubset(dims, 1:ndims(arr))
     @assert all(isone, arr.shape[dims])
@@ -186,17 +185,22 @@ end
 function Base.reduce(
     op, arg::LazyTensor{Vf,Tv,N}; dims=:, init=initial_value(op, Tv)
 ) where {Vf,Tv,N}
-    dims = dims == Colon() ? [1:N...] : [dims...]
-    shape = ((n in ndims ? arg.shape[n] : one(arg.shape[n]) for n in 1:N...),)
+    dims_2 = dims === Colon() ? [1:N...] : [dims...]
+    shape = ((n in dims_2 ? one(arg.shape[n]) : arg.shape[n] for n in 1:N)...,)
     fields = [field(gensym(:i)) for _ in 1:N]
     fields2 = copy(fields)
-    for i in dims
+    for i in dims_2
         fields2[i] = field(gensym(:i))
     end
     Sv = fixpoint_type(op, init, Tv)
-    data = reorder(aggregate(
-        immediate(op), immediate(init), relabel(arg.data, fields), fields[dims]...
-    ), fields2...)
+    data = aggregate(
+        immediate(op), immediate(init), relabel(arg.data, fields), fields[dims_2]...
+    )
+    if dims === Colon()
+        shape = ()
+    else
+        data = reorder(data, fields2...)
+    end
     LazyTensor{init,Sv}(identify(data), shape)
 end
 
@@ -582,26 +586,23 @@ function LinearAlgebra.norm(arr::LazyTensor, p::Real=2)
 end
 
 function Statistics.mean(tns::LazyTensor; dims=:)
-    dims = dims == Colon() ? (1:ndims(tns)) : dims
-    dims = [dims...]
-    n = prod(collect(size(tns))[dims])
+    dims_2 = dims === Colon() ? [1:ndims(tns)...] : [dims...]
+    n = prod(collect(size(tns))[dims_2])
     return sum(tns; dims=dims) ./ n
 end
 
 function Statistics.mean(f, tns::LazyTensor; dims=:)
-    dims = dims == Colon() ? (1:ndims(tns)) : dims
-    dims = [dims...]
-    n = prod(collect(size(tns))[dims])
+    dims_2 = dims === Colon() ? [1:ndims(tns)...] : [dims...]
+    n = prod(collect(size(tns))[dims_2])
     return sum(map(f, tns); dims=dims) ./ n
 end
 
 function Statistics.var(tns::LazyTensor; mean=nothing, corrected=true, dims=:)
-    dims = dims == Colon() ? (1:ndims(tns)) : dims
-    dims = [dims...]
+    dims_2 = dims === Colon() ? [1:ndims(tns)...] : [dims...]
     if mean === nothing
-        mean = expanddims(Statistics.mean(tns; dims=dims); dims=dims)
+        mean = Statistics.mean(tns; dims=dims)
     end
-    n = prod(collect(size(tns))[dims])
+    n = prod(collect(size(tns))[dims_2])
     return sum(abs2.(tns .- mean); dims=dims) ./ (n - corrected)
 end
 
@@ -729,9 +730,6 @@ function compute_parse(ctx, args::Tuple)
 end
 
 function Base.argmin(A::LazyTensor; dims=:)
-    dims = dims == Colon() ? (1:ndims(A)) : dims
-    dims = [dims...]
-
     if (ndims(A) >= 2)
         return map(
             last,
@@ -754,9 +752,6 @@ function Base.argmin(A::LazyTensor; dims=:)
 end
 
 function Base.argmax(A::LazyTensor; dims=:)
-    dims = dims == Colon() ? (1:ndims(A)) : dims
-    dims = [dims...]
-
     if (ndims(A) >= 2)
         return map(
             last,
@@ -779,11 +774,9 @@ function Base.argmax(A::LazyTensor; dims=:)
 end
 
 function argmin_python(A::LazyTensor; dims=:)
-    dims = dims == Colon() ? (1:ndims(A)) : dims
-    dims = [dims...]
-
-    if length(dims) == 1
-        dim = first(dims)
+    dims_2 = dims === Colon() ? [1:ndims(A)...] : [dims...]
+    if length(dims_2) == 1
+        dim = first(dims_2)
 
         return map(
             last,
@@ -798,7 +791,7 @@ function argmin_python(A::LazyTensor; dims=:)
                 init=Inf => 0,
             ),
         )
-    elseif length(dims) == ndims(A)
+    elseif dims === Colon() || length(dims_2) == ndims(A)
         return map(
             last,
             reduce(
@@ -816,11 +809,9 @@ function argmin_python(A::LazyTensor; dims=:)
 end
 
 function argmax_python(A::LazyTensor; dims=:)
-    dims = dims == Colon() ? (1:ndims(A)) : dims
-    dims = [dims...]
-
-    if length(dims) == 1
-        dim = first(dims)
+    dims_2 = dims === Colon() ? [1:ndims(A)...] : [dims...]
+    if length(dims_2) == 1
+        dim = first(dims_2)
 
         return map(
             last,
@@ -835,7 +826,7 @@ function argmax_python(A::LazyTensor; dims=:)
                 init=-Inf => 0,
             ),
         )
-    elseif length(dims) == ndims(A)
+    elseif dims === Colon() || length(dims_2) === ndims(A)
         return map(
             last,
             reduce(

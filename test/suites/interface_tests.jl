@@ -515,8 +515,13 @@ end
                         ),
                     )
                     c_correct = Tensor(
-                        Dense(Dense(Element(0))),
-                        [1936 0 2420 0; 0 121 242 363; 2420 242 3509 726; 0 363 726 1089],
+                        Dense(Dense(Dense(Element(0)))),
+                        [
+                            1936; 0; 2420; 0;;;
+                            0; 121; 242; 363;;;
+                            2420; 242; 3509; 726;;;
+                            0; 363; 726; 1089
+                        ],
                     )
                     c = compute(sum(A[:, :, nothing] .* B[nothing, :, :]; dims=[2]))
                     @test c == c_correct
@@ -530,11 +535,11 @@ end
                     result = mean(A)
                     @test result == expected
 
-                    expected = mean(A_ref; dims=1:1)[1, :]
+                    expected = mean(A_ref; dims=1:1)
                     result = mean(A; dims=1:1)
                     @test all(isapprox.(result, expected))
 
-                    expected = mean(A_ref; dims=2:2)[:, 1]
+                    expected = mean(A_ref; dims=2:2)
                     result = mean(A; dims=2:2)
                     @test all(isapprox.(result, expected))
                 end
@@ -551,19 +556,19 @@ end
                     result = var(A)
                     @test result == expected
 
-                    expected = var(A_ref; dims=1, corrected=false)[1, :]
+                    expected = var(A_ref; dims=1, corrected=false)
                     result = var(A; dims=1, corrected=false)
                     @test all(isapprox.(result, expected))
 
-                    expected = var(A_ref; dims=1)[1, :]
+                    expected = var(A_ref; dims=1)
                     result = var(A; dims=1)
                     @test all(isapprox.(result, expected))
 
-                    expected = var(A_ref; dims=2, corrected=false)[:, 1]
+                    expected = var(A_ref; dims=2, corrected=false)
                     result = var(A; dims=2, corrected=false)
                     @test all(isapprox.(result, expected))
 
-                    expected = var(A_ref; dims=2)[:, 1]
+                    expected = var(A_ref; dims=2)
                     result = var(A; dims=2)
                     @test all(isapprox.(result, expected))
                 end
@@ -580,19 +585,19 @@ end
                     result = std(A)
                     @test result == expected
 
-                    expected = std(A_ref; dims=1, corrected=false)[1, :]
+                    expected = std(A_ref; dims=1, corrected=false)
                     result = std(A; dims=1, corrected=false)
                     @test all(isapprox.(result, expected))
 
-                    expected = std(A_ref; dims=1)[1, :]
+                    expected = std(A_ref; dims=1)
                     result = std(A; dims=1)
                     @test all(isapprox.(result, expected))
 
-                    expected = std(A_ref; dims=2, corrected=false)[:, 1]
+                    expected = std(A_ref; dims=2, corrected=false)
                     result = std(A; dims=2, corrected=false)
                     @test all(isapprox.(result, expected))
 
-                    expected = std(A_ref; dims=2)[:, 1]
+                    expected = std(A_ref; dims=2)
                     result = std(A; dims=2)
                     @test all(isapprox.(result, expected))
                 end
@@ -966,13 +971,11 @@ end
 
                     A = rand(4, 5)
                     @test argmin(A) == argmin(Tensor(A))
-                    @test dropdims(argmin(A; dims=1); dims=1) == argmin(Tensor(A); dims=1)
-                    @test dropdims(argmin(A; dims=(1, 2)); dims=(1, 2)) ==
-                        argmin(Tensor(A); dims=(1, 2))
+                    @test argmin(A; dims=1) == argmin(Tensor(A); dims=1)
+                    @test argmin(A; dims=(1, 2)) == argmin(Tensor(A); dims=(1, 2))
                     @test argmax(A) == argmax(Tensor(A))
-                    @test dropdims(argmax(A; dims=1); dims=1) == argmax(Tensor(A); dims=1)
-                    @test dropdims(argmax(A; dims=(1, 2)); dims=(1, 2)) ==
-                        argmax(Tensor(A); dims=(1, 2))
+                    @test argmax(A; dims=1) == argmax(Tensor(A); dims=1)
+                    @test argmax(A; dims=(1, 2)) == argmax(Tensor(A); dims=(1, 2))
 
                     A = rand(4)
                     @test argmin(A) == Finch.argmin_python(Tensor(A))
@@ -981,17 +984,15 @@ end
                     A = rand(4, 5)
                     flat = LinearIndices(size(A))
                     @test flat[argmin(A)] == Finch.argmin_python(Tensor(A))
-                    @test dropdims(first.(Tuple.(argmin(A; dims=1))); dims=1) ==
+                    @test first.(Tuple.(argmin(A; dims=1))) ==
                         Finch.argmin_python(Tensor(A); dims=1)
-                    @test dropdims(
-                        map(i -> flat[i], argmin(A; dims=(1, 2))); dims=(1, 2)
-                    ) == Finch.argmin_python(Tensor(A); dims=(1, 2))
+                    @test map(i -> flat[i], argmin(A; dims=(1, 2))) ==
+                        Finch.argmin_python(Tensor(A); dims=(1, 2))
                     @test flat[argmax(A)] == Finch.argmax_python(Tensor(A))
-                    @test dropdims(first.(Tuple.(argmax(A; dims=1))); dims=1) ==
+                    @test first.(Tuple.(argmax(A; dims=1))) ==
                         Finch.argmax_python(Tensor(A); dims=1)
-                    @test dropdims(
-                        map(i -> flat[i], argmax(A; dims=(1, 2))); dims=(1, 2)
-                    ) == Finch.argmax_python(Tensor(A); dims=(1, 2))
+                    @test map(i -> flat[i], argmax(A; dims=(1, 2))) ==
+                        Finch.argmax_python(Tensor(A); dims=(1, 2))
                 end
 
                 #https://github.com/finch-tensor/Finch.jl/issues/726

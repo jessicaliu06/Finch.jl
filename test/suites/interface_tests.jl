@@ -611,6 +611,22 @@ end
     using SparseArrays
     using LinearAlgebra
 
+    #https://github.com/finch-tensor/Finch.jl/issues/499
+    let
+        A = fspzeros(5, 6)
+        @test A == zeros(5, 6)
+        A = fspzeros(5, 6, 7)
+        @test A == zeros(5, 6, 7)
+
+        A = fspeye(5, 6)
+        ref = [i == j for i in 1:5, j in 1:6]
+        @test A == ref
+
+        A = fspeye(5, 6, 7)
+        ref = [i == j == k for i in 1:5, j in 1:6, k in 1:7]
+        @test A == ref
+    end
+
     for (key, scheduler) in [
         "default" => Finch.default_scheduler(),
         "interp" => Finch.DefaultLogicOptimizer(Finch.LogicInterpreter()),

@@ -506,14 +506,14 @@ end
 
 Base.reshape(tns::AbstractTensor, dims::Union{Integer,Colon}...) =
     reshape(tns, (dims...,))
-function Base.reshape(tns::SwizzleArray{perm}, dims::Union{Integer,Colon}) where {perm}
+function Base.reshape(tns::SwizzleArray{perm}, dims::Tuple{Vararg{Union{Integer,Colon}}}) where {perm}
     #TODO this is not perfect, we might be able to do better when the swizzled dims align with the reshape groups.
     if perm == 1:ndims(tns)
         return reshape(tns.body, dims...)
     elseif perm == ndims(tns):-1:1
         return swizzle(reshape(tns.body, (reverse(dims)...,)), length(dims):-1:1...)
     else
-        return reshape(permutedims(tns, (1:ndims(tns)...,)), dims...)
+        return reshape(permutedims(tns.body, perm), dims)
     end
 end
 function Base.reshape(tns::AbstractTensor, dims::Tuple{Vararg{Union{Integer,Colon}}})
@@ -554,7 +554,7 @@ function reshape!(dst, src::SwizzleArray{perm}, dims::Union{Integer,Colon}) wher
     elseif perm == ndims(src):-1:1
         return reshape!(swizzle(dst, (ndims(dst):-1:1)...), src.body, (reverse(dims)...,)).body
     else
-        return reshape!(dst, permutedims(src, (1:ndims(src)...,)), dims)
+        return reshape!(dst, permutedims(src.body, perm), dims)
     end
 end
 function reshape!(dst, src::AbstractTensor, dims::Tuple{Vararg{Union{Integer,Colon}}})

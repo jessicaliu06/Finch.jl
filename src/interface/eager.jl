@@ -506,7 +506,16 @@ end
 
 Base.reshape(tns::AbstractTensor, dims::Union{Integer,Colon}...) =
     reshape(tns, (dims...,))
-Base.reshape(tns::SwizzleArray, dims::Tuple{Vararg{Union{Integer,Colon}}}) = swizzle(reshape(tns.body, (dims[invperm(tns.perm)]...,)), tns.perm...)
+function Base.reshape(tns::SwizzleArray{perm}, dims::Union{Integer,Colon}) where {perm}
+    #TODO this is not perfect, we might be able to do better when the swizzled dims align with the reshape groups.
+    if perm == 1:ndims(tns)
+        return reshape(tns.body, dims...)
+    elseif perm == ndims(tns):-1:1
+        return swizzle(reshape(tns.body, (reverse(dims)...,)), length(dims):-1:1...)
+    else
+        return reshape(permutedims(tns, (1:ndims(tns)...,)), dims...)
+    end
+end
 function Base.reshape(tns::AbstractTensor, dims::Tuple{Vararg{Union{Integer,Colon}}})
     num_colon = count(x -> x === Colon(), dims)
     if num_colon > 1
@@ -536,12 +545,17 @@ function Base.reshape(tns::AbstractTensor, dims::Tuple{Vararg{Union{Integer,Colo
     reshape_kernel(dst, tns, dims, Val(combine_mask), Val(split_mask))
 end
 function reshape!(dst, src::AbstractTensor, dims::Union{Integer,Colon}...)
-    reshape!(dst, src, (dims...,))
+    reshape!(dst, src, dims)
 end
-function reshape!(dst, tns::SwizzleArray, dims::Tuple{Vararg{Union{Integer,Colon}}})
-    iperm = invperm(tns.perm)
-    reshape!(swizzle(dst, iperm...), src, (dims[iperm]...,))
-    return dst
+function reshape!(dst, src::SwizzleArray{perm}, dims::Union{Integer,Colon}) where {perm}
+    #TODO this is not perfect, we might be able to do better when the swizzled dims align with the reshape groups.
+    if perm == 1:ndims(src)
+        return reshape!(dst, src.body, dims)
+    elseif perm == ndims(src):-1:1
+        return reshape!(swizzle(dst, (ndims(dst):-1:1)...), src.body, (reverse(dims)...,)).body
+    else
+        return reshape!(dst, permutedims(src, (1:ndims(src)...,)), dims)
+    end
 end
 function reshape!(dst, src::AbstractTensor, dims::Tuple{Vararg{Union{Integer,Colon}}})
     (combine_mask, split_mask) = reshape_plan(tns, dims)

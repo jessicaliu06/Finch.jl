@@ -342,13 +342,19 @@ function reshape_plan(tns, dims)
 
     prod_mask = cumprod(dims)
     prod_shape = cumprod(size(tns))
-    combine_stops = findall(i -> prod_shape[i] in prod_mask && (i == ndims(tns) || size(tns)[i+1] != 1), 1:ndims(tns))
+    combine_stops = findall(
+        i -> prod_shape[i] in prod_mask && (i == ndims(tns) || size(tns)[i + 1] != 1),
+        1:ndims(tns),
+    )
     combine_mask = (
         map(
             (x, y) -> ((x + 1):y...,), [0, combine_stops[1:(end - 1)]...], combine_stops
         )...,
     )
-    split_stops = findall(i -> prod_mask[i] in prod_shape && (i == length(dims) || dims[i+1] != 1), 1:length(dims))
+    split_stops = findall(
+        i -> prod_mask[i] in prod_shape && (i == length(dims) || dims[i + 1] != 1),
+        1:length(dims),
+    )
     split_mask = (
         map((x, y) -> ((x + 1):y...,), [0, split_stops[1:(end - 1)]...], split_stops)...,
     )
@@ -506,7 +512,9 @@ end
 
 Base.reshape(tns::AbstractTensor, dims::Union{Integer,Colon}...) =
     reshape(tns, (dims...,))
-function Base.reshape(tns::SwizzleArray{perm}, dims::Tuple{Vararg{Union{Integer,Colon}}}) where {perm}
+function Base.reshape(
+    tns::SwizzleArray{perm}, dims::Tuple{Vararg{Union{Integer,Colon}}}
+) where {perm}
     if perm == 1:ndims(tns)
         return reshape(tns.body, dims...)
     else

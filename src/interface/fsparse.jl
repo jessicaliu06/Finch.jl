@@ -333,12 +333,12 @@ See also: (`python.eye`)(https://data-apis.org/array-api/latest/API_specificatio
 function eye_python(m, n, k, z)
     if k > 0
         i_idx = collect(1:min(m, n - k))
-        j_idx = collect(1 + k:min(n, m + k))
+        j_idx = collect((1 + k):min(n, m + k))
     elseif k == 0
         i_idx = collect(1:min(m, n))
         j_idx = i_idx
     elseif k < 0
-        i_idx = collect(1-k:min(m, n - k))
+        i_idx = collect((1 - k):min(m, n - k))
         j_idx = collect(1:min(n, m + k))
     end
     val = [typeof(z)(true) for _ in i_idx]

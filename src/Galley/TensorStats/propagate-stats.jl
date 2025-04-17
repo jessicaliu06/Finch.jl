@@ -22,7 +22,7 @@ end
 function merge_tensor_def(op, all_defs::Vararg{TensorDef})
     new_fill_value = op([def.fill_val for def in all_defs]...)
     new_index_set = union([def.index_set for def in all_defs]...)
-    new_dim_sizes = Dict{IndexExpr,Float64}()
+    new_dim_sizes = OrderedDict{IndexExpr,Float64}()
     for index in new_index_set
         for def in all_defs
             if index in def.index_set
@@ -65,7 +65,7 @@ function reduce_tensor_def(op, init, reduce_indices::Set{IndexExpr}, def::Tensor
     end
     @assert !isnothing(init)
     new_index_set = setdiff(def.index_set, reduce_indices)
-    new_dim_sizes = Dict{IndexExpr,Float64}()
+    new_dim_sizes = OrderedDict{IndexExpr,Float64}()
     for index in new_index_set
         new_dim_sizes[index] = def.dim_sizes[index]
     end
@@ -178,8 +178,8 @@ end
 ################# DCStats Propagation ##################################################
 
 function unify_dc_ints(all_stats, new_def)
-    final_idx_2_int = Dict{IndexExpr,Int}()
-    final_int_2_idx = Dict{Int,IndexExpr}()
+    final_idx_2_int = OrderedDict{IndexExpr,Int}()
+    final_int_2_idx = OrderedDict{Int,IndexExpr}()
     max_int = 1
     for (i, idx) in enumerate(union([keys(stat.idx_2_int) for stat in all_stats]...))
         final_idx_2_int[idx] = max_int
@@ -208,7 +208,7 @@ function merge_tensor_stats_join(op, new_def::TensorDef, all_stats::Vararg{DCSta
         )
     end
     final_idx_2_int, final_int_2_idx = unify_dc_ints(all_stats, new_def)
-    new_dc_dict = Dict{DCKey,Float64}()
+    new_dc_dict = OrderedDict{DCKey,Float64}()
     for stats in all_stats
         for dc in stats.dcs
             dc_key = (X=BitSet(Int[final_idx_2_int[stats.int_2_idx[x]] for x in dc.X]),
@@ -242,7 +242,7 @@ function merge_tensor_stats_union(op, new_def::TensorDef, all_stats::Vararg{DCSt
     stats_dcs = []
     # We start by extending all arguments' dcs to the new dimensions and infer dcs as needed
     for stats in all_stats
-        dcs = Dict{DCKey,Float64}()
+        dcs = OrderedDict{DCKey,Float64}()
         Z = setdiff(get_index_set(new_def), get_index_set(stats))
         Z_dimension_space_size = get_dim_space_size(new_def, Z)
         for dc in stats.dcs
@@ -262,7 +262,7 @@ function merge_tensor_stats_union(op, new_def::TensorDef, all_stats::Vararg{DCSt
 
     # We only keep DCs which can be inferred from all inputs. Otherwise, we might miss
     # important information which simply wasn't inferred
-    new_dcs = Dict{DCKey,Float64}()
+    new_dcs = OrderedDict{DCKey,Float64}()
     for (key, count) in dc_keys
         if count == length(all_stats)
             new_dcs[key] = min(

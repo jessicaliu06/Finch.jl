@@ -109,7 +109,7 @@ end
 # values and 1 at all other entries.
 function get_sparsity_structure(tensor::Tensor)
     fill_value = Finch.fill_value(tensor)
-    index_sym_dict = Dict()
+    index_sym_dict = OrderedDict()
     indices = [IndexExpr("t_" * string(i)) for i in 1:length(size(tensor))]
     tensor_instance = initialize_access(
         :A, tensor, indices, [t_default for _ in indices], index_sym_dict; read=true
@@ -183,7 +183,7 @@ function one_off_reduce(op,
     if fully_compat_with_loop_prefix(output_indices, loop_order)
         output_formats = [t_sparse_list for _ in output_indices]
     end
-    index_sym_dict = Dict()
+    index_sym_dict = OrderedDict()
     tensor_instance = initialize_access(
         :s, s, input_indices, [t_default for _ in input_indices], index_sym_dict
     )
@@ -223,7 +223,7 @@ function count_non_fill(A)
     n = length(size(A))
     indexes = [Symbol("i_$i") for i in 1:n]
     count = Scalar(0)
-    index_sym_dict = Dict()
+    index_sym_dict = OrderedDict()
     count_access = initialize_access(:count, count, [], [], index_sym_dict; read=false)
     A_access = initialize_access(
         :A, A, indexes, [t_default for _ in indexes], index_sym_dict

@@ -114,7 +114,7 @@ function validate_physical_query(q::PlanNode)
     q = plan_copy(q)
     input_indices = get_input_indices(q.expr)
     indices_and_dims = get_input_indices_and_dims(q.expr)
-    idx_dim = Dict()
+    idx_dim = OrderedDict()
     for (idx, dim) in indices_and_dims
         if !haskey(idx_dim, idx)
             idx_dim[idx] = dim

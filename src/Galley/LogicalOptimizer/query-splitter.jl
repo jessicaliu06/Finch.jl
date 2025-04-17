@@ -78,7 +78,7 @@ function split_query(q::PlanNode, ST, max_kernel_size, alias_stats, verbose)
     agg_init = has_agg ? aq.idx_init[first(aq.reduce_idxs)] : nothing
     node_id_counter = maximum([n.node_id for n in PostOrderDFS(pe)]) + 1
     queries = []
-    cost_cache = Dict()
+    cost_cache = OrderedDict()
     cur_occurences = count_index_occurences([pe])
     if verbose > 2 && cur_occurences > max_kernel_size
         println(
@@ -193,7 +193,7 @@ function split_query(q::PlanNode, ST, max_kernel_size, alias_stats, verbose)
     return queries
 end
 
-function split_queries(ST, max_kernel_size, p::PlanNode; alias_stats=Dict(), verbose)
+function split_queries(ST, max_kernel_size, p::PlanNode; alias_stats=OrderedDict(), verbose)
     new_queries = []
     for query in p.queries
         append!(new_queries, split_query(query, ST, max_kernel_size, alias_stats, verbose))

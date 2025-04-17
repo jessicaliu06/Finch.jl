@@ -4,7 +4,7 @@
 # intermediates but is required to be defined for the inputs to an executable query.
 @auto_hash_equals mutable struct TensorDef
     index_set::Set{IndexExpr}
-    dim_sizes::Dict{IndexExpr,Float64}
+    dim_sizes::OrderedDict{IndexExpr,Float64}
     fill_val::Any
     level_formats::Union{Nothing,Vector{LevelFormat}}
     index_order::Union{Nothing,Vector{IndexExpr}}
@@ -13,7 +13,7 @@ end
 function TensorDef(x)
     TensorDef(
         Set{IndexExpr}(),
-        Dict{IndexExpr,Float64}(),
+        OrderedDict{IndexExpr,Float64}(),
         x,
         IndexExpr[],
         IndexExpr[],
@@ -23,7 +23,7 @@ end
 
 function copy_def(def::TensorDef)
     TensorDef(Set{IndexExpr}(x for x in def.index_set),
-        Dict{IndexExpr,Float64}(x for x in def.dim_sizes),
+        OrderedDict{IndexExpr,Float64}(x for x in def.dim_sizes),
         def.fill_val,
         isnothing(def.level_formats) ? nothing : [x for x in def.level_formats],
         isnothing(def.index_order) ? nothing : [x for x in def.index_order],
@@ -60,7 +60,7 @@ end
 function TensorDef(tensor::Tensor, indices)
     shape_tuple = size(tensor)
     level_formats = get_tensor_formats(tensor::Tensor)
-    dim_size = Dict{IndexExpr,Float64}(
+    dim_size = OrderedDict{IndexExpr,Float64}(
         indices[i] => shape_tuple[i] for i in 1:length(size(tensor))
     )
     fill_val = Finch.fill_value(tensor)
@@ -71,7 +71,7 @@ end
 
 function reindex_def(indices, def::TensorDef)
     @assert length(indices) == length(def.index_order)
-    rename_dict = Dict{IndexExpr,IndexExpr}()
+    rename_dict = OrderedDict{IndexExpr,IndexExpr}()
     for i in eachindex(indices)
         rename_dict[def.index_order[i]] = indices[i]
     end
@@ -80,7 +80,7 @@ function reindex_def(indices, def::TensorDef)
         push!(new_index_set, rename_dict[idx])
     end
 
-    new_dim_sizes = Dict{IndexExpr,Float64}()
+    new_dim_sizes = OrderedDict{IndexExpr,Float64}()
     for (idx, size) in def.dim_sizes
         new_dim_sizes[rename_dict[idx]] = size
     end
@@ -222,7 +222,9 @@ function NaiveStats(index_set, dim_sizes, cardinality, fill_val)
 end
 
 function NaiveStats(x)
-    def = TensorDef(Set{IndexExpr}(), Dict{IndexExpr,Int}(), x, nothing, nothing, nothing)
+    def = TensorDef(
+        Set{IndexExpr}(), OrderedDict{IndexExpr,Int}(), x, nothing, nothing, nothing
+    )
     return NaiveStats(def, 1)
 end
 
@@ -257,8 +259,8 @@ end
 
 @auto_hash_equals mutable struct DCStats <: TensorStats
     def::TensorDef
-    idx_2_int::Dict{IndexExpr,Int}
-    int_2_idx::Dict{Int,IndexExpr}
+    idx_2_int::OrderedDict{IndexExpr,Int}
+    int_2_idx::OrderedDict{Int,IndexExpr}
     dcs::Set{DC}
 
     DCStats(def, idx_2_int, int_2_idx, dcs) = new(def, idx_2_int, int_2_idx, dcs)
@@ -268,8 +270,8 @@ end
             tensor = Tensor(tensor)
         end
         def = TensorDef(tensor, indices)
-        idx_2_int = Dict{IndexExpr,Int}()
-        int_2_idx = Dict{Int,IndexExpr}()
+        idx_2_int = OrderedDict{IndexExpr,Int}()
+        int_2_idx = OrderedDict{Int,IndexExpr}()
         for (i, idx) in enumerate(Set(indices))
             idx_2_int[idx] = i
             int_2_idx[i] = idx
@@ -298,7 +300,11 @@ function copy_stats(stat::DCStats)
         Set{DC}(dc for dc in stat.dcs),
     )
 end
-DCStats(x) = DCStats(TensorDef(x), Dict{IndexExpr,Int}(), Dict{Int,IndexExpr}(), Set{DC}())
+function DCStats(x)
+    DCStats(
+        TensorDef(x), OrderedDict{IndexExpr,Int}(), OrderedDict{Int,IndexExpr}(), Set{DC}()
+    )
+end
 
 # Return a stats object where values have been geometrically rounded.
 function get_cannonical_stats(stat::DCStats, rel_granularity=4)
@@ -322,7 +328,7 @@ function issimilar(stat1::DCStats, stat2::DCStats, rel_granularity)
             end
         end
     else
-        dc_dict = Dict{DCKey}()
+        dc_dict = OrderedDict{DCKey}()
         for dc1 in stat1.dcs
             dc_dict[get_dc_key(dc1)] = dc1.d
         end
@@ -343,11 +349,11 @@ function get_index_bitset(stat::DCStats)
 end
 
 idxs_to_bitset(stat::DCStats, indices) = idxs_to_bitset(stat.idx_2_int, indices)
-function idxs_to_bitset(idx_2_int::Dict{IndexExpr,Int}, indices)
+function idxs_to_bitset(idx_2_int::OrderedDict{IndexExpr,Int}, indices)
     BitSet(Int[idx_2_int[idx] for idx in indices])
 end
 bitset_to_idxs(stat::DCStats, bitset) = bitset_to_idxs(stat.int_2_idx, bitset)
-function bitset_to_idxs(int_2_idx::Dict{Int,IndexExpr}, bitset)
+function bitset_to_idxs(int_2_idx::OrderedDict{Int,IndexExpr}, bitset)
     Set{IndexExpr}(int_2_idx[idx] for idx in bitset)
 end
 
@@ -393,7 +399,7 @@ end
 # When we're only attempting to infer for nnz estimation, we only need to consider
 # left dcs which have X = {}.
 function _infer_dcs(dcs::Set{DC}; timeout=Inf, strength=0)
-    all_dcs = Dict{DCKey,Float64}()
+    all_dcs = OrderedDict{DCKey,Float64}()
     for dc in dcs
         all_dcs[(X=dc.X, Y=dc.Y)] = dc.d
     end
@@ -405,7 +411,7 @@ function _infer_dcs(dcs::Set{DC}; timeout=Inf, strength=0)
         if strength <= 0
             max_dc_size = maximum([length(x.Y) for x in keys(prev_new_dcs)]; init=0)
         end
-        new_dcs = Dict{DCKey,Float64}()
+        new_dcs = OrderedDict{DCKey,Float64}()
 
         for (l, ld) in all_dcs
             strength <= 1 && length(l.X) > 0 && continue
@@ -429,7 +435,7 @@ function _infer_dcs(dcs::Set{DC}; timeout=Inf, strength=0)
             time > timeout && break
         end
 
-        prev_new_dcs = Dict{DCKey,Float64}()
+        prev_new_dcs = OrderedDict{DCKey,Float64}()
         for (dc_key, dc) in new_dcs
             strength <= 0 && length(dc_key.Y) < max_dc_size && continue
             all_dcs[dc_key] = dc
@@ -455,7 +461,7 @@ function condense_stats!(stat::DCStats; timeout=100000, cheap=false)
         inferred_dcs = _infer_dcs(stat.dcs; timeout=min(timeout, 10000), strength=1)
         inferred_dcs = _infer_dcs(inferred_dcs; timeout=max(timeout - 10000, 0), strength=0)
     end
-    min_dcs = Dict{DCKey,Float64}()
+    min_dcs = OrderedDict{DCKey,Float64}()
     for dc in inferred_dcs
         valid = true
         for x in dc.X
@@ -488,7 +494,7 @@ function estimate_nnz(
     end
     indices_bitset = idxs_to_bitset(stat, indices)
     conditional_indices_bitset = idxs_to_bitset(stat, conditional_indices)
-    current_weights = Dict{BitSet,Float64}(
+    current_weights = OrderedDict{BitSet,Float64}(
         conditional_indices_bitset => 1, BitSet() => 1
     )
     frontier = Set{BitSet}([BitSet(), conditional_indices_bitset])
@@ -841,8 +847,10 @@ end
 
 function reindex_stats(stats::DCStats, indices)
     new_def = reindex_def(indices, stats.def)
-    rename_dict = Dict(get_index_order(stats)[i] => indices[i] for i in eachindex(indices))
-    new_idx_to_int = Dict{IndexExpr,Int}()
+    rename_dict = OrderedDict(
+        get_index_order(stats)[i] => indices[i] for i in eachindex(indices)
+    )
+    new_idx_to_int = OrderedDict{IndexExpr,Int}()
     for (idx, int) in stats.idx_2_int
         if haskey(rename_dict, idx)
             new_idx_to_int[rename_dict[idx]] = int
@@ -850,7 +858,7 @@ function reindex_stats(stats::DCStats, indices)
             new_idx_to_int[idx] = int
         end
     end
-    new_int_to_idx = Dict{Int,IndexExpr}()
+    new_int_to_idx = OrderedDict{Int,IndexExpr}()
     for (idx, int) in new_idx_to_int
         new_int_to_idx[int] = idx
     end

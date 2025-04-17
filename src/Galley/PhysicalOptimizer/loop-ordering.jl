@@ -95,12 +95,12 @@ function get_join_loop_order_bounded(disjunct_and_conjunct_stats,
 
     # At all times, we keep track of the best plans for each level of output compatability.
     # This will let us consider the cost of random writes and transposes at the end.
-    reformat_costs = Dict(
+    reformat_costs = OrderedDict(
         i => cost_of_reformat(transposable_stats[i]) for i in eachindex(transposable_stats)
     )
     PLAN_CLASS = Tuple{Set{IndexExpr},Set{Int}}
     PLAN = Tuple{Vector{IndexExpr},Float64}
-    optimal_plans = Dict{PLAN_CLASS,PLAN}()
+    optimal_plans = OrderedDict{PLAN_CLASS,PLAN}()
     for var in all_vars
         prefix = [var]
         rf_set = get_reformat_set(transposable_stats, prefix)
@@ -110,7 +110,7 @@ function get_join_loop_order_bounded(disjunct_and_conjunct_stats,
     end
 
     for iter in 2:length(all_vars)
-        new_plans = Dict{PLAN_CLASS,PLAN}()
+        new_plans = OrderedDict{PLAN_CLASS,PLAN}()
         for (plan_class, plan) in optimal_plans
             prefix_set = plan_class[1]
             prefix = plan[1]
@@ -151,18 +151,18 @@ function get_join_loop_order_bounded(disjunct_and_conjunct_stats,
             end
         end
 
-        plans_by_set = Dict()
+        plans_by_set = OrderedDict()
         for (plan_class, plan) in new_plans
             idx_set = plan_class[1]
             if !haskey(plans_by_set, idx_set)
-                plans_by_set[idx_set] = Dict()
+                plans_by_set[idx_set] = OrderedDict()
             end
             plans_by_set[idx_set][plan_class] = plan
         end
 
         # If a plan has worse reformatting & worse cost than another plan, we don't need to
         # consider it further.
-        undominated_plans = Dict()
+        undominated_plans = OrderedDict()
         for (plan_class_1, plan_1) in new_plans
             cost_1 = plan_1[2]
             reformat_set_1 = plan_class_1[2]
@@ -190,7 +190,7 @@ function get_join_loop_order_bounded(disjunct_and_conjunct_stats,
                 (pc, p) in undominated_plans
             ]
             sort!(plan_and_cost; by=(x) -> x[1])
-            undominated_plans = Dict(x[2] for x in plan_and_cost[1:top_k])
+            undominated_plans = OrderedDict(x[2] for x in plan_and_cost[1:top_k])
         end
         optimal_plans = undominated_plans
     end

@@ -97,13 +97,14 @@ function galley(input_plan::PlanNode;
     # First, we perform high level optimization where each query is translated to one or
     # more queries with a simpler structure: Query(name, Aggregate(op, init, idxs, point_expr))
     # where point_expr is made up of just MapJoin, Input, and Alias nodes.
-    alias_stats, alias_hash = Dict{IndexExpr,TensorStats}(), Dict{IndexExpr,UInt}()
+    alias_stats, alias_hash = OrderedDict{IndexExpr,TensorStats}(),
+    OrderedDict{IndexExpr,UInt}()
     output_aliases = if isnothing(output_aliases)
         [input_query.name for input_query in input_plan.queries]
     else
         output_aliases
     end
-    output_orders = Dict(
+    output_orders = OrderedDict(
         input_query.name => input_query.expr.idx_order for input_query in input_plan.queries
     )
     opt_start = time()
@@ -133,7 +134,7 @@ function galley(input_plan::PlanNode;
 
     # Loop Order Selection
     phys_opt_start = time()
-    alias_to_loop_order = Dict{IndexExpr,Vector{IndexExpr}}()
+    alias_to_loop_order = OrderedDict{IndexExpr,Vector{IndexExpr}}()
     physical_plan = split_plan_to_physical_plan(
         split_plan, ST, alias_to_loop_order, alias_stats
     )

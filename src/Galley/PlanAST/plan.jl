@@ -35,7 +35,7 @@ function PlanNode(kind::PlanNodeKind, children::Vector, val::Any, stats::Any)
 end
 
 function freshen_idxs!(p::PlanNode)
-    idx_dict = Dict()
+    idx_dict = OrderedDict()
     for n in PostOrderDFS(p)
         if n.kind == Index
             if !haskey(idx_dict, n.val)
@@ -76,7 +76,7 @@ function PlanNode(kind::PlanNodeKind, args::Vector)
                 internal_expr = mat_expr.expr
                 old_idxs = [idx for idx in mat_expr.idx_order]
                 @assert length(new_idxs) == length(old_idxs)
-                new_idx_translate = Dict(
+                new_idx_translate = OrderedDict(
                     old_idxs[i].name => new_idxs[i].name for i in eachindex(old_idxs)
                 )
                 for (i, j) in new_idx_translate

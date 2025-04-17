@@ -4,7 +4,7 @@
 # intermediates but is required to be defined for the inputs to an executable query.
 @auto_hash_equals mutable struct TensorDef
     index_set::Set{IndexExpr}
-    dim_sizes::Dict{IndexExpr,UInt128}
+    dim_sizes::Dict{IndexExpr,Float64}
     fill_val::Any
     level_formats::Union{Nothing,Vector{LevelFormat}}
     index_order::Union{Nothing,Vector{IndexExpr}}
@@ -13,7 +13,7 @@ end
 function TensorDef(x)
     TensorDef(
         Set{IndexExpr}(),
-        Dict{IndexExpr,UInt128}(),
+        Dict{IndexExpr,Float64}(),
         x,
         IndexExpr[],
         IndexExpr[],
@@ -23,7 +23,7 @@ end
 
 function copy_def(def::TensorDef)
     TensorDef(Set{IndexExpr}(x for x in def.index_set),
-        Dict{IndexExpr,UInt128}(x for x in def.dim_sizes),
+        Dict{IndexExpr,Float64}(x for x in def.dim_sizes),
         def.fill_val,
         isnothing(def.level_formats) ? nothing : [x for x in def.level_formats],
         isnothing(def.index_order) ? nothing : [x for x in def.index_order],
@@ -60,7 +60,7 @@ end
 function TensorDef(tensor::Tensor, indices)
     shape_tuple = size(tensor)
     level_formats = get_tensor_formats(tensor::Tensor)
-    dim_size = Dict{IndexExpr,UInt128}(
+    dim_size = Dict{IndexExpr,Float64}(
         indices[i] => shape_tuple[i] for i in 1:length(size(tensor))
     )
     fill_val = Finch.fill_value(tensor)
@@ -80,7 +80,7 @@ function reindex_def(indices, def::TensorDef)
         push!(new_index_set, rename_dict[idx])
     end
 
-    new_dim_sizes = Dict{IndexExpr,UInt128}()
+    new_dim_sizes = Dict{IndexExpr,Float64}()
     for (idx, size) in def.dim_sizes
         new_dim_sizes[rename_dict[idx]] = size
     end
@@ -147,12 +147,12 @@ end
 get_index_protocols(def::TensorDef) = def.index_protocols
 
 function get_dim_space_size(def::TensorDef, indices)
-    dim_space_size::UInt128 = 1
+    dim_space_size::Float64 = 1
     for idx in indices
         dim_space_size *= def.dim_sizes[idx]
     end
     if dim_space_size == 0 || dim_space_size > typemax(Int)
-        return UInt128(typemax(Int))^(sizeof(Int) * 8 - 1)
+        return Float64(typemax(Int))^(sizeof(Int) * 8 - 1)
     end
     return dim_space_size
 end
@@ -247,7 +247,7 @@ end
 struct DegreeConstraint
     X::BitSet
     Y::BitSet
-    d::UInt128
+    d::Float64
 end
 DC = DegreeConstraint
 
@@ -393,7 +393,7 @@ end
 # When we're only attempting to infer for nnz estimation, we only need to consider
 # left dcs which have X = {}.
 function _infer_dcs(dcs::Set{DC}; timeout=Inf, strength=0)
-    all_dcs = Dict{DCKey,UInt128}()
+    all_dcs = Dict{DCKey,Float64}()
     for dc in dcs
         all_dcs[(X=dc.X, Y=dc.Y)] = dc.d
     end
@@ -405,7 +405,7 @@ function _infer_dcs(dcs::Set{DC}; timeout=Inf, strength=0)
         if strength <= 0
             max_dc_size = maximum([length(x.Y) for x in keys(prev_new_dcs)]; init=0)
         end
-        new_dcs = Dict{DCKey,UInt128}()
+        new_dcs = Dict{DCKey,Float64}()
 
         for (l, ld) in all_dcs
             strength <= 1 && length(l.X) > 0 && continue
@@ -429,7 +429,7 @@ function _infer_dcs(dcs::Set{DC}; timeout=Inf, strength=0)
             time > timeout && break
         end
 
-        prev_new_dcs = Dict{DCKey,UInt128}()
+        prev_new_dcs = Dict{DCKey,Float64}()
         for (dc_key, dc) in new_dcs
             strength <= 0 && length(dc_key.Y) < max_dc_size && continue
             all_dcs[dc_key] = dc
@@ -488,13 +488,13 @@ function estimate_nnz(
     end
     indices_bitset = idxs_to_bitset(stat, indices)
     conditional_indices_bitset = idxs_to_bitset(stat, conditional_indices)
-    current_weights = Dict{BitSet,UInt128}(
+    current_weights = Dict{BitSet,Float64}(
         conditional_indices_bitset => 1, BitSet() => 1
     )
     frontier = Set{BitSet}([BitSet(), conditional_indices_bitset])
     finished = false
     while !finished
-        current_bound::UInt128 = get(current_weights, indices_bitset, typemax(UInt128))
+        current_bound::Float64 = get(current_weights, indices_bitset, typemax(Float64))
         new_frontier = Set{BitSet}()
         finished = true
         for x in frontier
@@ -502,7 +502,7 @@ function estimate_nnz(
             for dc in stat.dcs
                 if x ⊇ dc.X
                     y = ∪(x, dc.Y)
-                    if min(current_bound, get(current_weights, y, typemax(UInt128))) >
+                    if min(current_bound, get(current_weights, y, typemax(Float64))) >
                        weight * dc.d && !((
                         (weight > (2^(sizeof(UInt) * 8 - 2))) ||
                         (dc.d > (2^(sizeof(UInt) * 8 - 2)))
@@ -513,7 +513,7 @@ function estimate_nnz(
                                 (weight > (2^(sizeof(UInt) * 8 - 2))) ||
                                 (dc.d > (2^(sizeof(UInt) * 8 - 2)))
                             )
-                                UInt128(2)^(sizeof(UInt) * 8)
+                                Float64(2)^(sizeof(UInt) * 8)
                             else
                                 (weight * dc.d)
                             end

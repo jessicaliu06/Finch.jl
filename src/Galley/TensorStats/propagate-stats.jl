@@ -22,7 +22,7 @@ end
 function merge_tensor_def(op, all_defs::Vararg{TensorDef})
     new_fill_value = op([def.fill_val for def in all_defs]...)
     new_index_set = union([def.index_set for def in all_defs]...)
-    new_dim_sizes = Dict{IndexExpr,UInt128}()
+    new_dim_sizes = Dict{IndexExpr,Float64}()
     for index in new_index_set
         for def in all_defs
             if index in def.index_set
@@ -65,7 +65,7 @@ function reduce_tensor_def(op, init, reduce_indices::Set{IndexExpr}, def::Tensor
     end
     @assert !isnothing(init)
     new_index_set = setdiff(def.index_set, reduce_indices)
-    new_dim_sizes = Dict{IndexExpr,UInt128}()
+    new_dim_sizes = Dict{IndexExpr,Float64}()
     for index in new_index_set
         new_dim_sizes[index] = def.dim_sizes[index]
     end
@@ -262,11 +262,11 @@ function merge_tensor_stats_union(op, new_def::TensorDef, all_stats::Vararg{DCSt
 
     # We only keep DCs which can be inferred from all inputs. Otherwise, we might miss
     # important information which simply wasn't inferred
-    new_dcs = Dict{DCKey,UInt128}()
+    new_dcs = Dict{DCKey,Float64}()
     for (key, count) in dc_keys
         if count == length(all_stats)
             new_dcs[key] = min(
-                typemax(UInt), sum([get(dcs, key, UInt128(0)) for dcs in stats_dcs])
+                typemax(UInt), sum([get(dcs, key, Float64(0)) for dcs in stats_dcs])
             )
             if key.Y ⊆ idxs_to_bitset(final_idx_2_int, get_index_set(new_def))
                 new_dcs[key] = min(

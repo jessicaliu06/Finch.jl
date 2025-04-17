@@ -245,8 +245,8 @@ end
 #################  DCStats Definition ######################################################
 
 struct DegreeConstraint
-    X::SmallBitSet
-    Y::SmallBitSet
+    X::BitSet
+    Y::BitSet
     d::UInt128
 end
 DC = DegreeConstraint
@@ -339,12 +339,12 @@ end
 
 get_def(stat::DCStats) = stat.def
 function get_index_bitset(stat::DCStats)
-    SmallBitSet(Int[stat.idx_2_int[x] for x in get_index_set(stat)])
+    BitSet(Int[stat.idx_2_int[x] for x in get_index_set(stat)])
 end
 
 idxs_to_bitset(stat::DCStats, indices) = idxs_to_bitset(stat.idx_2_int, indices)
 function idxs_to_bitset(idx_2_int::Dict{IndexExpr,Int}, indices)
-    SmallBitSet(Int[idx_2_int[idx] for idx in indices])
+    BitSet(Int[idx_2_int[idx] for idx in indices])
 end
 bitset_to_idxs(stat::DCStats, bitset) = bitset_to_idxs(stat.int_2_idx, bitset)
 function bitset_to_idxs(int_2_idx::Dict{Int,IndexExpr}, bitset)
@@ -357,7 +357,7 @@ function add_dummy_idx!(stats::DCStats, i::IndexExpr; idx_pos=-1)
     stats.idx_2_int[i] = new_idx_int
     stats.int_2_idx[new_idx_int] = i
     Y = idxs_to_bitset(stats, Set([i]))
-    push!(stats.dcs, DC(SmallBitSet(), Y, 1))
+    push!(stats.dcs, DC(BitSet(), Y, 1))
 end
 
 function fix_cardinality!(stat::DCStats, card)
@@ -365,19 +365,19 @@ function fix_cardinality!(stat::DCStats, card)
     new_dcs = Set{DC}()
     for dc in stat.dcs
         if length(dc.X) == 0 && dc.Y == get_index_bitset(stat)
-            push!(new_dcs, DC(SmallBitSet(), get_index_bitset(stat), min(card, dc.d)))
+            push!(new_dcs, DC(BitSet(), get_index_bitset(stat), min(card, dc.d)))
             had_dc = true
         else
             push!(new_dcs, dc)
         end
     end
     if !had_dc
-        push!(new_dcs, DC(SmallBitSet(), get_index_bitset(stat), card))
+        push!(new_dcs, DC(BitSet(), get_index_bitset(stat), card))
     end
     stat.dcs = new_dcs
 end
 
-DCKey = NamedTuple{(:X, :Y),Tuple{SmallBitSet,SmallBitSet}}
+DCKey = NamedTuple{(:X, :Y),Tuple{BitSet,BitSet}}
 
 function infer_dc(l, ld, r, rd, all_dcs, new_dcs)
     if l.Y ⊇ r.X
@@ -488,14 +488,14 @@ function estimate_nnz(
     end
     indices_bitset = idxs_to_bitset(stat, indices)
     conditional_indices_bitset = idxs_to_bitset(stat, conditional_indices)
-    current_weights = Dict{SmallBitSet,UInt128}(
-        conditional_indices_bitset => 1, SmallBitSet() => 1
+    current_weights = Dict{BitSet,UInt128}(
+        conditional_indices_bitset => 1, BitSet() => 1
     )
-    frontier = Set{SmallBitSet}([SmallBitSet(), conditional_indices_bitset])
+    frontier = Set{BitSet}([BitSet(), conditional_indices_bitset])
     finished = false
     while !finished
         current_bound::UInt128 = get(current_weights, indices_bitset, typemax(UInt128))
-        new_frontier = Set{SmallBitSet}()
+        new_frontier = Set{BitSet}()
         finished = true
         for x in frontier
             weight = current_weights[x]
@@ -568,7 +568,7 @@ function _vector_structure_to_dcs(indices::Vector{Int}, s::Tensor)
             d_i[] += s[i]
         end
     end
-    return Set{DC}([DC(SmallBitSet(), SmallBitSet(indices), d_i[])])
+    return Set{DC}([DC(BitSet(), BitSet(indices), d_i[])])
 end
 
 function _matrix_structure_to_dcs(indices::Vector{Int}, s::Tensor)
@@ -613,11 +613,11 @@ function _matrix_structure_to_dcs(indices::Vector{Int}, s::Tensor)
     end
     i = indices[2]
     j = indices[1]
-    return Set{DC}([DC(SmallBitSet(), SmallBitSet([i]), d_i[]),
-        DC(SmallBitSet(), SmallBitSet([j]), d_j[]),
-        DC(SmallBitSet([i]), SmallBitSet([j]), d_i_j[]),
-        DC(SmallBitSet([j]), SmallBitSet([i]), d_j_i[]),
-        DC(SmallBitSet(), SmallBitSet([i, j]), d_ij[]),
+    return Set{DC}([DC(BitSet(), BitSet([i]), d_i[]),
+        DC(BitSet(), BitSet([j]), d_j[]),
+        DC(BitSet([i]), BitSet([j]), d_i_j[]),
+        DC(BitSet([j]), BitSet([i]), d_j_i[]),
+        DC(BitSet(), BitSet([i, j]), d_ij[]),
     ])
 end
 
@@ -684,13 +684,13 @@ function _3d_structure_to_dcs(indices::Vector{Int}, s::Tensor)
     i = indices[3]
     j = indices[2]
     k = indices[1]
-    return Set{DC}([DC(SmallBitSet(), SmallBitSet([i]), d_i[]),
-        DC(SmallBitSet(), SmallBitSet([j]), d_j[]),
-        DC(SmallBitSet(), SmallBitSet([k]), d_k[]),
-        DC(SmallBitSet([i]), SmallBitSet([j, k]), d_i_jk[]),
-        DC(SmallBitSet([j]), SmallBitSet([i, k]), d_j_ik[]),
-        DC(SmallBitSet([k]), SmallBitSet([i, j]), d_k_ij[]),
-        DC(SmallBitSet(), SmallBitSet([i, j, k]), d_ijk[]),
+    return Set{DC}([DC(BitSet(), BitSet([i]), d_i[]),
+        DC(BitSet(), BitSet([j]), d_j[]),
+        DC(BitSet(), BitSet([k]), d_k[]),
+        DC(BitSet([i]), BitSet([j, k]), d_i_jk[]),
+        DC(BitSet([j]), BitSet([i, k]), d_j_ik[]),
+        DC(BitSet([k]), BitSet([i, j]), d_k_ij[]),
+        DC(BitSet(), BitSet([i, j, k]), d_ijk[]),
     ])
 end
 
@@ -774,15 +774,15 @@ function _4d_structure_to_dcs(indices::Vector{Int}, s::Tensor)
     j = indices[3]
     k = indices[2]
     l = indices[1]
-    return Set{DC}([DC(SmallBitSet(), SmallBitSet([i]), d_i[]),
-        DC(SmallBitSet(), SmallBitSet([j]), d_j[]),
-        DC(SmallBitSet(), SmallBitSet([k]), d_k[]),
-        DC(SmallBitSet(), SmallBitSet([l]), d_l[]),
-        DC(SmallBitSet([i]), SmallBitSet([j, k, l]), d_i_jkl[]),
-        DC(SmallBitSet([j]), SmallBitSet([i, k, l]), d_j_ikl[]),
-        DC(SmallBitSet([k]), SmallBitSet([i, j, l]), d_k_ijl[]),
-        DC(SmallBitSet([l]), SmallBitSet([i, j, k]), d_l_ijk[]),
-        DC(SmallBitSet(), SmallBitSet([i, j, k, l]), d_ijkl[]),
+    return Set{DC}([DC(BitSet(), BitSet([i]), d_i[]),
+        DC(BitSet(), BitSet([j]), d_j[]),
+        DC(BitSet(), BitSet([k]), d_k[]),
+        DC(BitSet(), BitSet([l]), d_l[]),
+        DC(BitSet([i]), BitSet([j, k, l]), d_i_jkl[]),
+        DC(BitSet([j]), BitSet([i, k, l]), d_j_ikl[]),
+        DC(BitSet([k]), BitSet([i, j, l]), d_k_ijl[]),
+        DC(BitSet([l]), BitSet([i, j, k]), d_l_ijk[]),
+        DC(BitSet(), BitSet([i, j, k, l]), d_ijkl[]),
     ])
 end
 
@@ -799,8 +799,8 @@ function _structure_to_dcs(int_2_idx, indices::Vector{Int}, s::Tensor)
     dcs = Set{DC}()
     # Calculate DCs for all combinations of X and Y
     for X in subsets(indices)
-        X = SmallBitSet(X)
-        Y = SmallBitSet(setdiff(indices, X))
+        X = BitSet(X)
+        Y = BitSet(setdiff(indices, X))
         isempty(Y) && continue # Anything to the empty set has degree 1
         d = _calc_dc_from_structure(
             bitset_to_idxs(int_2_idx, X),
@@ -816,7 +816,7 @@ function _structure_to_dcs(int_2_idx, indices::Vector{Int}, s::Tensor)
             [int_2_idx[i] for i in indices],
             s,
         )
-        push!(dcs, DC(SmallBitSet(), Y, d))
+        push!(dcs, DC(BitSet(), Y, d))
     end
     return dcs
 end
@@ -829,8 +829,8 @@ function dense_dcs(def, int_2_idx, indices::Vector{Int})
             push!(
                 dcs,
                 DC(
-                    SmallBitSet(X),
-                    SmallBitSet(Z),
+                    BitSet(X),
+                    BitSet(Z),
                     get_dim_space_size(def, bitset_to_idxs(int_2_idx, Z)),
                 ),
             )

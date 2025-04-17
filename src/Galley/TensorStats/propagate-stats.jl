@@ -196,7 +196,7 @@ function unify_dc_ints(all_stats, new_def)
     final_idx_2_int, final_int_2_idx
 end
 
-convert_bitset(int_to_int, b) = SmallBitSet([int_to_int[x] for x in b])
+convert_bitset(int_to_int, b) = BitSet([int_to_int[x] for x in b])
 
 function merge_tensor_stats_join(op, new_def::TensorDef, all_stats::Vararg{DCStats})
     if length(all_stats) == 1
@@ -211,8 +211,8 @@ function merge_tensor_stats_join(op, new_def::TensorDef, all_stats::Vararg{DCSta
     new_dc_dict = Dict{DCKey,Float64}()
     for stats in all_stats
         for dc in stats.dcs
-            dc_key = (X=SmallBitSet(Int[final_idx_2_int[stats.int_2_idx[x]] for x in dc.X]),
-                Y=SmallBitSet(Int[final_idx_2_int[stats.int_2_idx[y]] for y in dc.Y]))
+            dc_key = (X=BitSet(Int[final_idx_2_int[stats.int_2_idx[x]] for x in dc.X]),
+                Y=BitSet(Int[final_idx_2_int[stats.int_2_idx[y]] for y in dc.Y]))
             current_dc = get(new_dc_dict, dc_key, Inf)
             if dc.d < current_dc
                 new_dc_dict[dc_key] = dc.d
@@ -247,8 +247,8 @@ function merge_tensor_stats_union(op, new_def::TensorDef, all_stats::Vararg{DCSt
         Z_dimension_space_size = get_dim_space_size(new_def, Z)
         for dc in stats.dcs
             new_key::DCKey = (
-                X=SmallBitSet(Int[final_idx_2_int[stats.int_2_idx[x]] for x in dc.X]),
-                Y=SmallBitSet(Int[final_idx_2_int[stats.int_2_idx[y]] for y in dc.Y]))
+                X=BitSet(Int[final_idx_2_int[stats.int_2_idx[x]] for x in dc.X]),
+                Y=BitSet(Int[final_idx_2_int[stats.int_2_idx[y]] for y in dc.Y]))
             dcs[new_key] = dc.d
             inc!(dc_keys, new_key)
             ext_dc_key = (X=new_key.X, Y=(∪(new_key.Y, idxs_to_bitset(final_idx_2_int, Z))))
@@ -279,7 +279,7 @@ function merge_tensor_stats_union(op, new_def::TensorDef, all_stats::Vararg{DCSt
 
     #=
         for Y in subsets(collect(get_index_set(new_def)))
-            proj_dc_key = (X=SmallBitSet(), Y=idxs_to_bitset(final_idx_2_int, Y))
+            proj_dc_key = (X=BitSet(), Y=idxs_to_bitset(final_idx_2_int, Y))
             new_dcs[proj_dc_key] = min(get(new_dcs, proj_dc_key, typemax(UInt)/2), get_dim_space_size(new_def, Set(Y)))
         end
      =#

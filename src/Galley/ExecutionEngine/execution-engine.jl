@@ -182,7 +182,7 @@ end
 # TODO: use loop_order to label indexes
 function execute_query(alias_dict, q::PlanNode, verbose, cannonicalize, return_prgm)
     tensor_counter = [0]
-    index_sym_dict = Dict{IndexExpr,IndexExpr}()
+    index_sym_dict = OrderedDict{IndexExpr,IndexExpr}()
     name = q.name.name
     mat_expr = q.expr
     loop_order = [idx.name for idx in q.loop_order]
@@ -252,7 +252,7 @@ function execute_query(alias_dict, q::PlanNode, verbose, cannonicalize, return_p
 end
 
 function execute_plan(cse_plan::PlanNode, verbose)
-    alias_result = Dict{IndexExpr,Any}()
+    alias_result = OrderedDict{IndexExpr,Any}()
     for query in cse_plan.queries
         verbose > 2 && println("--------------- Computing: $(query.name) ---------------")
         verbose > 2 && println(query)
@@ -266,7 +266,7 @@ function get_execute_code(cse_plan::PlanNode, verbose)
     tensor_inits = []
     bodies = []
     for query in cse_plan.queries
-        tensor_init, body = execute_query(Dict(), query, verbose, false, true)
+        tensor_init, body = execute_query(OrderedDict(), query, verbose, false, true)
         push!(tensor_inits, tensor_init)
         push!(bodies, body)
     end

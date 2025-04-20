@@ -1,5 +1,5 @@
 function get_input_stats(expr::PlanNode; include_aliases=true)
-    input_stats = Dict{Int,TensorStats}()
+    input_stats = OrderedDict{Int,TensorStats}()
     for n in PostOrderDFS(expr)
         if n.kind == Input || (include_aliases && n.kind == Alias)
             input_stats[n.node_id] = n.stats
@@ -38,7 +38,7 @@ function split_plan_to_physical_plan(
     split_plan::PlanNode,
     ST,
     alias_to_loop_order,
-    alias_stats::Dict{IndexExpr,TensorStats};
+    alias_stats::OrderedDict{IndexExpr,TensorStats};
     only_add_loop_order=true,
     transpose_aliases=false,
     verbose=0,
@@ -80,7 +80,7 @@ end
 function logical_query_to_physical_queries(
     query::PlanNode,
     ST,
-    alias_stats::Dict{IndexExpr,TensorStats};
+    alias_stats::OrderedDict{IndexExpr,TensorStats};
     only_add_loop_order=true,
     transpose_aliases=false,
     verbose=0,
@@ -96,7 +96,7 @@ function logical_query_to_physical_queries(
     end
     insert_statistics!(ST, query; bindings=alias_stats)
     insert_node_ids!(query)
-    id_to_node = Dict()
+    id_to_node = OrderedDict()
     for node in PreOrderDFS(query)
         id_to_node[node.node_id] = node
     end
@@ -113,11 +113,11 @@ function logical_query_to_physical_queries(
 
     agg_op = nothing
     agg_init = nothing
-    reduce_idxs = Set{IndexExpr}()
+    reduce_idxs = StableSet{IndexExpr}()
     if expr.kind == Aggregate
         agg_op = expr.op
         agg_init = expr.init
-        reduce_idxs = Set{IndexExpr}([i.name for i in expr.idxs])
+        reduce_idxs = StableSet{IndexExpr}([i.name for i in expr.idxs])
         expr = expr.arg
     end
 

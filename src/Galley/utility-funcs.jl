@@ -23,7 +23,7 @@ function relative_sort(indices::Vector{IndexExpr}, index_order; rev=false)
     end
 end
 
-function relative_sort(indices::Set{IndexExpr}, index_order; rev=false)
+function relative_sort(indices::StableSet{IndexExpr}, index_order; rev=false)
     return relative_sort(collect(indices), index_order; rev=rev)
 end
 
@@ -109,7 +109,7 @@ end
 # values and 1 at all other entries.
 function get_sparsity_structure(tensor::Tensor)
     fill_value = Finch.fill_value(tensor)
-    index_sym_dict = Dict()
+    index_sym_dict = OrderedDict()
     indices = [IndexExpr("t_" * string(i)) for i in 1:length(size(tensor))]
     tensor_instance = initialize_access(
         :A, tensor, indices, [t_default for _ in indices], index_sym_dict; read=true
@@ -157,11 +157,11 @@ end
 
 # This function determines whether any ordering of the `l_set` is a prefix of `r_vec`.
 # If r_vec is smaller than l_set, we just check whether r_vec is a subset of l_set.
-function set_compat_with_loop_prefix(tensor_order::Set, loop_prefix::Vector)
+function set_compat_with_loop_prefix(tensor_order::StableSet, loop_prefix::Vector)
     if length(tensor_order) > length(loop_prefix)
-        return Set(loop_prefix) ⊆ tensor_order
+        return StableSet(loop_prefix) ⊆ tensor_order
     else
-        return tensor_order == Set(loop_prefix[1:length(tensor_order)])
+        return tensor_order == StableSet(loop_prefix[1:length(tensor_order)])
     end
 end
 
@@ -183,7 +183,7 @@ function one_off_reduce(op,
     if fully_compat_with_loop_prefix(output_indices, loop_order)
         output_formats = [t_sparse_list for _ in output_indices]
     end
-    index_sym_dict = Dict()
+    index_sym_dict = OrderedDict()
     tensor_instance = initialize_access(
         :s, s, input_indices, [t_default for _ in input_indices], index_sym_dict
     )
@@ -223,7 +223,7 @@ function count_non_fill(A)
     n = length(size(A))
     indexes = [Symbol("i_$i") for i in 1:n]
     count = Scalar(0)
-    index_sym_dict = Dict()
+    index_sym_dict = OrderedDict()
     count_access = initialize_access(:count, count, [], [], index_sym_dict; read=false)
     A_access = initialize_access(
         :A, A, indexes, [t_default for _ in indexes], index_sym_dict

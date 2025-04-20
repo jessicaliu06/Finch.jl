@@ -180,7 +180,7 @@ end
 function data_rep_level(
     ::Type{<:RunListLevel{Ti,Ptr,Right,merge,Lvl}}
 ) where {Ti,Ptr,Right,merge,Lvl}
-    DenseData(data_rep_level(Lvl))
+    RepeatData(data_rep_level(Lvl))
 end
 
 function isstructequal(a::T, b::T) where {T<:RunList}

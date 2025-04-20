@@ -144,8 +144,9 @@ end
     ::Type{<:SparseByteMapLevel{Ti,Ptr,Tbl,Srt,Lvl}}
 ) where {Ti,Ptr,Tbl,Srt,Lvl} = 1 + level_ndims(Lvl)
 @inline level_size(lvl::SparseByteMapLevel) = (level_size(lvl.lvl)..., lvl.shape)
-@inline level_axes(lvl::SparseByteMapLevel) =
-    (level_axes(lvl.lvl)..., Base.OneTo(lvl.shape))
+@inline level_axes(lvl::SparseByteMapLevel) = (
+    level_axes(lvl.lvl)..., Base.OneTo(lvl.shape)
+)
 @inline level_eltype(
     ::Type{<:SparseByteMapLevel{Ti,Ptr,Tbl,Srt,Lvl}}
 ) where {Ti,Ptr,Tbl,Srt,Lvl} = level_eltype(Lvl)

@@ -597,7 +597,16 @@ function lower(ctx, ex::VirtualFinchJuliaSchedule)
     :(FinchJuliaSchedule{$(QuoteNode(ex.schedule))}($(ctx(ex.chk))))
 end
 
-julia_schedule(chk::Int=1, schedule::Symbol=:greedy) = FinchJuliaSchedule{schedule}(chk)
+function julia_schedule(chk::Int=1, schedule::Union{Symbol,Nothing}=nothing)
+    if isnothing(schedule)
+        schedule = if VERSION >= v"1.11.0"
+            :greedy
+        else
+            :dynamic
+        end
+    end
+    FinchJuliaSchedule{schedule}(chk)
+end
 
 function virtual_call_def(
     ctx,
@@ -605,7 +614,7 @@ function virtual_call_def(
     ::typeof(julia_schedule),
     ::Any,
     chk=value(:(1), Int),
-    schedule=value(:greedy, Symbol),
+    schedule=value(nothing, Union{Symbol,Nothing}),
 )
     chk_2 = freshen(ctx, :chk)
     push_preamble!(
@@ -614,6 +623,13 @@ function virtual_call_def(
             $chk_2 = $(ctx(chk))
         end,
     )
+    if isnothing(schedule.val)
+        schedule.val = if VERSION >= v"1.11.0"
+            :greedy
+        else
+            :dynamic
+        end
+    end
     VirtualFinchJuliaSchedule(value(chk_2, Int), schedule.val)
 end
 

@@ -183,8 +183,9 @@ end
     ::Type{<:SparseRunListLevel{Ti,Ptr,Left,Right,merge,Lvl}}
 ) where {Ti,Ptr,Left,Right,merge,Lvl} = 1 + level_ndims(Lvl)
 @inline level_size(lvl::SparseRunListLevel) = (level_size(lvl.lvl)..., lvl.shape)
-@inline level_axes(lvl::SparseRunListLevel) =
-    (level_axes(lvl.lvl)..., Base.OneTo(lvl.shape))
+@inline level_axes(lvl::SparseRunListLevel) = (
+    level_axes(lvl.lvl)..., Base.OneTo(lvl.shape)
+)
 @inline level_eltype(
     ::Type{<:SparseRunListLevel{Ti,Ptr,Left,Right,merge,Lvl}}
 ) where {Ti,Ptr,Left,Right,merge,Lvl} = level_eltype(Lvl)
@@ -287,7 +288,7 @@ function lower(ctx::AbstractCompiler, lvl::VirtualSparseRunListLevel, ::DefaultS
             $(lvl.left),
             $(lvl.right),
             $(ctx(lvl.buf));
-            merge=$(lvl.merge),
+            merge=($(lvl.merge)),
         )
     end
 end

@@ -153,8 +153,9 @@ end
     ::Type{<:SparseBlockListLevel{Ti,Ptr,Idx,Ofs,Lvl}}
 ) where {Ti,Ptr,Idx,Ofs,Lvl} = 1 + level_ndims(Lvl)
 @inline level_size(lvl::SparseBlockListLevel) = (level_size(lvl.lvl)..., lvl.shape)
-@inline level_axes(lvl::SparseBlockListLevel) =
-    (level_axes(lvl.lvl)..., Base.OneTo(lvl.shape))
+@inline level_axes(lvl::SparseBlockListLevel) = (
+    level_axes(lvl.lvl)..., Base.OneTo(lvl.shape)
+)
 @inline level_eltype(
     ::Type{<:SparseBlockListLevel{Ti,Ptr,Idx,Ofs,Lvl}}
 ) where {Ti,Ptr,Idx,Ofs,Lvl} = level_eltype(Lvl)

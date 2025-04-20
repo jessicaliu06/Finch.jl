@@ -170,10 +170,13 @@ end
 @inline level_ndims(::Type{<:SparseCOOLevel{N,TI,Ptr,Tbl,Lvl}}) where {N,TI,Ptr,Tbl,Lvl} =
     N + level_ndims(Lvl)
 @inline level_size(lvl::SparseCOOLevel) = (level_size(lvl.lvl)..., lvl.shape...)
-@inline level_axes(lvl::SparseCOOLevel) =
-    (level_axes(lvl.lvl)..., map(Base.OneTo, lvl.shape)...)
+@inline level_axes(lvl::SparseCOOLevel) = (
+    level_axes(lvl.lvl)..., map(Base.OneTo, lvl.shape)...
+)
 @inline level_eltype(::Type{<:SparseCOOLevel{N,TI,Ptr,Tbl,Lvl}}) where {N,TI,Ptr,Tbl,Lvl} =
-    level_eltype(Lvl)
+    level_eltype(
+        Lvl
+    )
 @inline level_fill_value(
     ::Type{<:SparseCOOLevel{N,TI,Ptr,Tbl,Lvl}}
 ) where {N,TI,Ptr,Tbl,Lvl} = level_fill_value(Lvl)

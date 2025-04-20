@@ -240,8 +240,9 @@ parallel(ext, device=CPU(nthreads()), schedule=static_schedule())
 A dimension `ext` that is parallelized over `device` using the `schedule`. The `ext` field is usually
 `_`, or dimensionless, but can be any standard dimension argument.
 """
-parallel(dim, device=cpu(Threads.nthreads()), schedule=static_schedule()) =
+function parallel(dim, device=cpu(Threads.nthreads()), schedule=static_schedule())
     ParallelDimension(dim, device, schedule)
+end
 
 function virtual_call_def(
     ctx,

@@ -636,7 +636,9 @@ function virtual_parallel_region(
     code = contain(ctx) do ctx_2
         subtask = VirtualCPUThread(value(tid, Int), device, ctx_2.code.task)
         contain(ctx_2; task=subtask) do ctx_3
-            f(ctx_3, i_lo, i_hi)
+            f(ctx_3, i_lo, i_hi) do inner
+                inner
+            end
         end
     end
 
@@ -674,7 +676,17 @@ function virtual_parallel_region(
     code = contain(ctx) do ctx_2
         subtask = VirtualCPUThread(value(tid, Int), device, ctx_2.code.task)
         contain(ctx_2; task=subtask) do ctx_3
-            f(ctx_3, i_lo, i_hi)
+            f(ctx_3, i_lo, i_hi) do inner
+                quote
+                    while true
+                        $chk_id = Threads.atomic_add!($chk_ctr, 1)
+                        if $chk_id > $num_chks
+                            break
+                        end
+                        $inner
+                    end
+                end
+            end
         end
     end
 
@@ -682,13 +694,7 @@ function virtual_parallel_region(
         Threads.@threads $(QuoteNode(schedule.schedule)) for $tid in 1:($(ctx(device.n)))
             Finch.@barrier begin
                 @inbounds @fastmath begin
-                    while true
-                        $chk_id = Threads.atomic_add!($chk_ctr, 1)
-                        if $chk_id > $num_chks
-                            break
-                        end
-                        $code
-                    end
+                    $code
                 end
                 nothing
             end
@@ -730,7 +736,9 @@ function virtual_parallel_region(
         )
         subtask = VirtualCPUThread(value(tid, Int), device, ctx_2.code.task)
         contain(ctx_2; task=subtask) do ctx_3
-            f(ctx_3, i_lo, i_hi)
+            f(ctx_3, i_lo, i_hi) do inner
+                inner
+            end
         end
     end
 

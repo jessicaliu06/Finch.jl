@@ -279,7 +279,7 @@ function lower(ctx::AbstractCompiler, lvl::VirtualRunListLevel, ::DefaultStyle)
             $(lvl.ptr),
             $(lvl.right),
             $(ctx(lvl.buf));
-            merge=$(lvl.merge),
+            merge=($(lvl.merge)),
         )
     end
 end

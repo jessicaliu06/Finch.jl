@@ -145,8 +145,9 @@ end
     ::Type{<:SparseIntervalLevel{Ti,Left,Right,Lvl}}
 ) where {Ti,Left,Right,Lvl} = 1 + level_ndims(Lvl)
 @inline level_size(lvl::SparseIntervalLevel) = (level_size(lvl.lvl)..., lvl.shape)
-@inline level_axes(lvl::SparseIntervalLevel) =
-    (level_axes(lvl.lvl)..., Base.OneTo(lvl.shape))
+@inline level_axes(lvl::SparseIntervalLevel) = (
+    level_axes(lvl.lvl)..., Base.OneTo(lvl.shape)
+)
 @inline level_eltype(
     ::Type{<:SparseIntervalLevel{Ti,Left,Right,Lvl}}
 ) where {Ti,Left,Right,Lvl} = level_eltype(Lvl)

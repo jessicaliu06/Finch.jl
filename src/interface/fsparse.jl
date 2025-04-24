@@ -58,8 +58,8 @@ function fsparse_impl(
     dirty = false
     f(i) = fsparse_f(I, i)
     lt(i, j) = fsparse_lt(I, i, j)
-    if !issorted(1:length(V), lt=lt)
-        P = sort(1:length(V), lt=lt)
+    if !issorted(1:length(V); lt=lt)
+        P = sort(1:length(V); lt=lt)
         I = ntuple(n -> I[n][P], length(I))
         V = V[P]
         dirty = true
@@ -96,11 +96,13 @@ function fsparse!_parse(I, V::AbstractVector, M::Tuple; kwargs...)
     fsparse!_impl(I, V, M; kwargs...)
 end
 
-function fsparse!_impl(I::NTuple{N}, V, shape=map(maximum, I); fill_value=zero(eltype(V))) where {N}
+function fsparse!_impl(
+    I::NTuple{N}, V, shape=map(maximum, I); fill_value=zero(eltype(V))
+) where {N}
     f(i) = fsparse_f(I, i)
     lt(i, j) = fsparse_lt(I, i, j)
-    if !issorted(1:length(V), lt=lt)
-        P = sort(1:length(V), lt=lt)
+    if !issorted(1:length(V); lt=lt)
+        P = sort(1:length(V); lt=lt)
         I = ntuple(n -> I[n][P], length(I))
         V = V[P]
     end
@@ -336,11 +338,11 @@ function ffindnz(src)
 end
 
 ffindnz!(src) = ffindnz(src)
-function ffindnz!(src::Tensor{<:SparseCOOLevel{<:Any, <:Any, <:Any, <:Any, <:ElementLevel}})
+function ffindnz!(src::Tensor{<:SparseCOOLevel{<:Any,<:Any,<:Any,<:Any,<:ElementLevel}})
     (src.lvl.tbl..., src.lvl.lvl.val)
 end
 
-function ffindnz!(src::Tensor{<:SparseCOOLevel{<:Any, <:Any, <:Any, <:Any, <:PatternLevel}})
+function ffindnz!(src::Tensor{<:SparseCOOLevel{<:Any,<:Any,<:Any,<:Any,<:PatternLevel}})
     tbl = src.lvl.tbl
     (src.lvl.tbl..., fill(true, length(tbl[1])))
 end

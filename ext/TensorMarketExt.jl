@@ -30,7 +30,7 @@ end
 function Finch.ftnsread(filename::AbstractString)
     (I, V) = tnsread(filename)
     IR = (reverse(I)...,)
-    if issorted(1:length(V), lt=(i, j) -> Finch.fsparse_lt(IR, i, j))
+    if issorted(1:length(V); lt=(i, j) -> Finch.fsparse_lt(IR, i, j))
         swizzle(fsparse!(IR..., V), reverse(1:length(I))...)
     else
         fsparse!(I..., V)

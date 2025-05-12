@@ -109,11 +109,11 @@ defined in the following grammar:
             mapjoin(IMMEDIATE, EXPR...) |
             aggregate(IMMEDIATE, IMMEDIATE, EXPR, FIELD...)
 ```
-
 Pushes all reorder and relabel statements down to LEAF nodes of each EXPR.
 Output LEAF nodes will match the form `reorder(relabel(LEAF, FIELD...),
 FIELD...)`, omitting reorder or relabel if not present as an ancestor of the
 LEAF in the original EXPR. Tables and immediates will absorb relabels.
+Copies of reorders are left in place, but relabels are removed.
 """
 function push_fields(root)
     root = Rewrite(
@@ -152,26 +152,25 @@ function push_fields(root)
     )(
         root
     )
+
     root = Rewrite(
         Prewalk(
-            Fixpoint(
                 Chain([
                     (@rule reorder(mapjoin(~op, ~args...), ~idxs...) =>
-                        mapjoin(op, map(arg -> reorder(arg, ~idxs...), args)...)),
+                        reorder(mapjoin(op, map(arg -> reorder(arg, intersect(idxs, getfields(arg))...), args)...), idxs...)),
                     (@rule reorder(aggregate(~op, ~init, ~arg, ~idxs...), ~idxs_2...) =>
                         if !issubsequence(intersect(getfields(arg), idxs_2), idxs_2)
                             reorder(
                                 aggregate(
                                     op,
                                     init,
-                                    reorder(arg, intersect(idxs_2)..., idxs...),
+                                    reorder(arg, withsubsequence(idxs_2, getfields(arg))...),
                                     idxs...,
                                 ), idxs_2...)
                         end),
                     (@rule reorder(reorder(~arg, ~idxs...), ~idxs_2...) =>
                         reorder(~arg, ~idxs_2...)),
                 ]),
-            ),
         ),
     )(
         root
@@ -643,17 +642,17 @@ function toposort(chains::Vector{Vector{T}}) where {T}
     return perm
 end
 
-function heuristic_loop_order(node, reps)
+function heuristic_loop_order(root, reps)
     chains = Vector{LogicNode}[]
-    for node in PostOrderDFS(node)
+    for node in PostOrderDFS(root)
         if @capture node reorder(relabel(~arg, ~idxs...), ~idxs_2...)
-            push!(chains, intersect(idxs, idxs_2))
+            push!(chains, intersect(idxs, idxs_2, getfields(root)))
         end
     end
-    for idx in getfields(node)
+    for idx in getfields(root)
         push!(chains, [idx])
     end
-    res = something(toposort(chains), getfields(node))
+    res = something(toposort(chains), getfields(root))
     if mapreduce(length, max, chains; init=0) < length(unique(reduce(vcat, chains)))
         counts = Dict()
         for chain in chains

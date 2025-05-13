@@ -155,22 +155,33 @@ function push_fields(root)
 
     root = Rewrite(
         Prewalk(
-                Chain([
-                    Fixpoint(@rule reorder(reorder(~arg, ~idxs...), ~idxs_2...) =>
-                        reorder(~arg, ~idxs_2...)),
-                    (@rule reorder(mapjoin(~op, ~args...), ~idxs...) =>
-                        reorder(mapjoin(op, map(arg -> reorder(arg, intersect(idxs, getfields(arg))...), args)...), idxs...)),
-                    (@rule reorder(aggregate(~op, ~init, ~arg, ~idxs...), ~idxs_2...) =>
-                        if !issubsequence(intersect(getfields(arg), idxs_2), idxs_2)
-                            reorder(
-                                aggregate(
-                                    op,
-                                    init,
-                                    reorder(arg, withsubsequence(idxs_2, getfields(arg))...),
-                                    idxs...,
-                                ), idxs_2...)
-                        end),
-                ]),
+            Chain([
+                Fixpoint(
+                    @rule reorder(reorder(~arg, ~idxs...), ~idxs_2...) =>
+                        reorder(~arg, ~idxs_2...)
+                ),
+                (@rule reorder(mapjoin(~op, ~args...), ~idxs...) =>
+                    reorder(
+                        mapjoin(
+                            op,
+                            map(
+                                arg -> reorder(arg, intersect(idxs, getfields(arg))...),
+                                args,
+                            )...,
+                        ),
+                        idxs...,
+                    )),
+                (@rule reorder(aggregate(~op, ~init, ~arg, ~idxs...), ~idxs_2...) =>
+                    if !issubsequence(intersect(getfields(arg), idxs_2), idxs_2)
+                        reorder(
+                            aggregate(
+                                op,
+                                init,
+                                reorder(arg, withsubsequence(idxs_2, getfields(arg))...),
+                                idxs...,
+                            ), idxs_2...)
+                    end),
+            ]),
         ),
     )(
         root
@@ -469,7 +480,7 @@ function dropdims_rep(rep, dims)
         initwrite(fill_value(rep)),
         fill_value(rep),
         rep,
-        dims
+        dims,
     )
 end
 struct SuitableRep
@@ -504,7 +515,7 @@ function (ctx::SuitableRep)(ex)
         rep = ctx(ex.arg)
         idxs = getfields(ex.arg)
         #first drop dimensions
-        dropdims_rep(rep, findall(idx -> idx in setdiff(idxs, ex.idxs), idxs))
+        rep = dropdims_rep(rep, findall(idx -> idx in setdiff(idxs, ex.idxs), idxs))
         #then permute remaining dimensions to match
         perm = sortperm(
             intersect(idxs, ex.idxs); by=idx -> findfirst(isequal(idx), ex.idxs)

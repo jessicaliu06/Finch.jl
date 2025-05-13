@@ -11,7 +11,7 @@ end
 function lower_pointwise_logic(ctx, ex, loop_idxs=[])
     ctx = PointwiseMachineLowerer(; ctx=ctx, loop_idxs=loop_idxs)
     code = ctx(ex)
-    return (code, ctx.bound_idxs,)
+    return (code, ctx.bound_idxs)
 end
 
 function (ctx::PointwiseMachineLowerer)(ex)
@@ -95,8 +95,15 @@ function (ctx::LogicMachine)(ex)
         execute(body; mode=ctx.mode).res
     elseif @capture ex reformat(~tns, reorder(mapjoin(~args...), ~idxs...))
         z = fill_value(tns.val)
-        ctx(reformat(tns, aggregate(initwrite(z), immediate(z), reorder(mapjoin(args...), idxs...))))
-    elseif @capture ex reformat(~tns, aggregate(~op, ~init, reorder(~arg, ~idxs_2...), ~idxs_1...))
+        ctx(
+            reformat(
+                tns,
+                aggregate(initwrite(z), immediate(z), reorder(mapjoin(args...), idxs...)),
+            ),
+        )
+    elseif @capture ex reformat(
+        ~tns, aggregate(~op, ~init, reorder(~arg, ~idxs_2...), ~idxs_1...)
+    )
         loop_idxs = idxs_2
         lhs_idxs = setdiff(idxs_2, idxs_1)
         res = tag_instance(variable_instance(:res), tns.val)

@@ -60,7 +60,7 @@ end
 end
 
 function compile_pointwise_logic(ex, loop_idxs)
-    ctx = PointwiseLowerer(loop_idxs=loop_idxs)
+    ctx = PointwiseLowerer(; loop_idxs=loop_idxs)
     code = ctx(ex)
     bound_idxs = ctx.bound_idxs
     (code, bound_idxs)
@@ -143,14 +143,24 @@ function (ctx::LogicLowerer)(ex)
                 return $(lhs.name)
             end
         end
-    elseif @capture ex query(~lhs::isalias, reformat(~tns, reorder(mapjoin(~args...), ~idxs...)))
+    elseif @capture ex query(
+        ~lhs::isalias, reformat(~tns, reorder(mapjoin(~args...), ~idxs...))
+    )
         z = fill_value(logic_constant_type(tns))
         ctx(
             query(
-                lhs, reformat(tns, aggregate(initwrite(z), immediate(z), reorder(mapjoin(args...), idxs...)))
+                lhs,
+                reformat(
+                    tns,
+                    aggregate(
+                        initwrite(z), immediate(z), reorder(mapjoin(args...), idxs...)
+                    ),
+                ),
             ),
         )
-    elseif @capture ex query(~lhs, reformat(~tns, aggregate(~op, ~init, reorder(~arg, ~idxs_2...), ~idxs_1...)))
+    elseif @capture ex query(
+        ~lhs, reformat(~tns, aggregate(~op, ~init, reorder(~arg, ~idxs_2...), ~idxs_1...))
+    )
         (rhs, rhs_idxs) = compile_pointwise_logic(arg, idxs_2)
         lhs_idxs = map(idx -> idx.name, setdiff(idxs_2, idxs_1))
         idxs_2 = map(idx -> idx.name, idxs_2)

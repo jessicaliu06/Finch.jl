@@ -56,11 +56,10 @@ end
 
 @kwdef struct PointwiseLowerer
     bound_idxs = []
-    loop_idxs = []
 end
 
-function compile_pointwise_logic(ex, loop_idxs)
-    ctx = PointwiseLowerer(loop_idxs=loop_idxs)
+function compile_pointwise_logic(ex)
+    ctx = PointwiseLowerer()
     code = ctx(ex)
     bound_idxs = ctx.bound_idxs
     (code, bound_idxs)
@@ -69,13 +68,11 @@ end
 function (ctx::PointwiseLowerer)(ex)
     if @capture ex mapjoin(~op, ~args...)
         :($(op.val)($(map(ctx, args)...)))
-    elseif (@capture ex relabel(~arg::isalias, ~idxs_1...))
+    elseif (@capture ex reorder(relabel(~arg::isalias, ~idxs_1...), ~idxs_2...))
         append!(ctx.bound_idxs, idxs_1)
-        :($(arg.name)[$(map(idx -> idx in ctx.loop_idxs ? idx.name : 1, idxs_1)...)])
+        :($(arg.name)[$(map(idx -> idx in idxs_2 ? idx.name : 1, idxs_1)...)]) #TODO need a trait for the first index
     elseif (@capture ex reorder(~arg::isimmediate, ~idxs...))
         arg.val
-    elseif (@capture ex reorder(~arg, ~idxs...))
-        ctx(arg)
     elseif ex.kind === immediate
         ex.val
     else
@@ -115,10 +112,11 @@ function (ctx::LogicLowerer)(ex)
         ~lhs::isalias,
         reformat(~tns, reorder(relabel(~arg::isalias, ~idxs_1...), ~idxs_2...)),
     )
-        loop_idxs = withsubsequence(intersect(idxs_1, idxs_2), idxs_2)
-        (rhs, rhs_idxs) = compile_pointwise_logic(relabel(arg, idxs_1...), loop_idxs)
-        loop_idxs = map(idx -> idx.name, loop_idxs)
+        loop_idxs = map(idx -> idx.name, withsubsequence(intersect(idxs_1, idxs_2), idxs_2))
         lhs_idxs = map(idx -> idx.name, idxs_2)
+        (rhs, rhs_idxs) = compile_pointwise_logic(
+            reorder(relabel(arg, idxs_1...), idxs_2...)
+        )
         body = :($(lhs.name)[$(lhs_idxs...)] = $rhs)
         for idx in loop_idxs
             if field(idx) in rhs_idxs
@@ -143,17 +141,17 @@ function (ctx::LogicLowerer)(ex)
                 return $(lhs.name)
             end
         end
-    elseif @capture ex query(~lhs::isalias, reformat(~tns, reorder(mapjoin(~args...), ~idxs...)))
+    elseif @capture ex query(~lhs::isalias, reformat(~tns, mapjoin(~args...)))
         z = fill_value(logic_constant_type(tns))
         ctx(
             query(
-                lhs, reformat(tns, aggregate(initwrite(z), immediate(z), reorder(mapjoin(args...), idxs...)))
+                lhs, reformat(tns, aggregate(initwrite(z), immediate(z), mapjoin(args...)))
             ),
         )
-    elseif @capture ex query(~lhs, reformat(~tns, aggregate(~op, ~init, reorder(~arg, ~idxs_2...), ~idxs_1...)))
-        (rhs, rhs_idxs) = compile_pointwise_logic(arg, idxs_2)
-        lhs_idxs = map(idx -> idx.name, setdiff(idxs_2, idxs_1))
-        idxs_2 = map(idx -> idx.name, idxs_2)
+    elseif @capture ex query(~lhs, reformat(~tns, aggregate(~op, ~init, ~arg, ~idxs_1...)))
+        idxs_2 = map(idx -> idx.name, getfields(arg))
+        lhs_idxs = map(idx -> idx.name, setdiff(getfields(arg), idxs_1))
+        (rhs, rhs_idxs) = compile_pointwise_logic(arg)
         body = :($(lhs.name)[$(lhs_idxs...)] << $(compile_logic_constant(op)) >>= $rhs)
         for idx in idxs_2
             if field(idx) in rhs_idxs
@@ -236,9 +234,7 @@ end
 
 function (ctx::LogicCompiler)(prgm::LogicNode)
     prgm = format_queries(prgm, true)
-    res = LogicLowerer(; mode=ctx.mode)(prgm)
-    print(res)
-    res
+    LogicLowerer(; mode=ctx.mode)(prgm)
 end
 
 codes = Dict()

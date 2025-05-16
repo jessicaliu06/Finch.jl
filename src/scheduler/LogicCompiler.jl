@@ -202,6 +202,8 @@ function (ctx::LogicLowerer)(ex)
                             ))
                         elseif @capture(arg, reorder(~tns::isalias, ~idxs...))
                             tns.name
+                        elseif @capture(arg, relabel(~tns::isalias, ~idxs...))
+                            tns.name
                         elseif isalias(arg)
                             arg.name
                         else

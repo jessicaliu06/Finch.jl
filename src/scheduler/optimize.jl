@@ -121,10 +121,15 @@ function push_fields(root)
             Fixpoint(
                 Chain([
                     (@rule relabel(mapjoin(~op, ~args...), ~idxs...) => begin
-                        idxs_2 = getfields(mapjoin(op, args...))
+                        reidx = Dict(map(Pair, getfields(mapjoin(op, args...)), idxs)...)
                         mapjoin(
                             op,
-                            map(arg -> relabel(reorder(arg, idxs_2...), idxs...), args)...,
+                            map(
+                                arg -> relabel(
+                                    arg, map(idx -> reidx[idx], getfields(arg))...
+                                ),
+                                args,
+                            )...,
                         )
                     end),
                     (@rule relabel(aggregate(~op, ~init, ~arg, ~idxs...), ~idxs_2...) =>
@@ -604,24 +609,44 @@ function propagate_map_queries_backward(root)
     )
     root = push_fields(root)
     root = Rewrite(
-        Prewalk(
-            Chain([
-                (@rule mapjoin(
-                    ~f::isimmediate,
-                    ~a1...,
-                    aggregate(~g::isimmediate, ~init::isimmediate, ~arg, ~idxs...),
-                    ~a2...,
-                ) => begin
-                    if isdistributive(DefaultAlgebra(), literal(g.val), literal(f.val)) &&
-                        isannihilator(
-                            DefaultAlgebra(), literal(f.val), literal(init.val)
-                        ) &&
-                        length(getfields(aggregate(g, init, arg, idxs...))) ==
-                        length(getfields(mapjoin(f, a1..., a2...)))
-                        aggregate(g, init, mapjoin(f, a1..., arg, a2...), idxs...)
-                    end
-                end),
-            ]),
+        Fixpoint(
+            Prewalk(
+                Chain([
+                    (@rule mapjoin(
+                        ~f::isimmediate,
+                        ~a1...,
+                        aggregate(~g::isimmediate, ~init::isimmediate, ~arg, ~idxs...),
+                        ~a2...,
+                    ) => begin
+                        if isdistributive(DefaultAlgebra(), literal(g.val), literal(f.val)) &&
+                            isannihilator(
+                                DefaultAlgebra(), literal(f.val), literal(init.val)
+                            ) &&
+                            length(getfields(aggregate(g, init, arg, idxs...))) ==
+                            length(getfields(mapjoin(f, a1..., a2...)))
+                            aggregate(g, init, mapjoin(f, a1..., arg, a2...), idxs...)
+                        end
+                    end),
+                    (@rule aggregate(~op::isimmediate, ~init::isimmediate,
+                        aggregate(~op, ~init_2, ~arg, ~idxs...),
+                        ~idxs_2...,
+                    ) => begin
+                        if isidentity(
+                            DefaultAlgebra(), literal(op.val), literal(init_2.val)
+                        )
+                            aggregate(op, init, arg, idxs..., idxs_2...)
+                        end
+                    end),
+                    (@rule reorder(aggregate(~op, ~init, ~arg, ~idxs...), ~idxs_2...) =>
+                        aggregate(
+                            op,
+                            init,
+                            reorder(arg, vcat(idxs_2, idxs)...),
+                            idxs...,
+                        )
+                ),
+                ]),
+            ),
         ),
     )(
         root
@@ -784,6 +809,7 @@ function optimize(prgm)
     #These steps fuse copy, permutation, and mapjoin statements
     #into later expressions.
     #Only reformat statements preserve intermediate breaks in computation
+    prgm = propagate_fields(prgm)
     prgm = propagate_copy_queries(prgm)
     prgm = propagate_transpose_queries(prgm)
     prgm = propagate_map_queries(prgm)

@@ -146,6 +146,8 @@ function (ctx::LogicMachine)(ex)
                 )
             elseif @capture(arg, reorder(~tns::isalias, ~idxs...))
                 ctx.scope[tns]
+            elseif @capture(arg, relabel(~tns::isalias, ~idxs...))
+                ctx.scope[tns]
             elseif isalias(arg)
                 ctx.scope[arg]
             else

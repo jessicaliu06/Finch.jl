@@ -231,13 +231,11 @@ function supertensor_einsum(output_idcs::Vector{Symbol}, inputs::Vararg{Tuple{Ar
             push!(tensor_appearances, tensor_name)                          # Add the current tensor to this set of appearances.
         end
     end
-    @bp
     # Similarly, record the indices which appear in the output.
     for s in output_idcs
         tensor_appearances = get!(idx_appearances, s, Set{Symbol}())
         push!(tensor_appearances, :out)                                     # Name the output tensor :out.
     end
-    @bp
 
     # ========== STEP 2 ==========
     # Group the indices which appear in exactly the same set of tensors. These groups will later be merged into single indices in the SuperTensors.
@@ -250,7 +248,6 @@ function supertensor_einsum(output_idcs::Vector{Symbol}, inputs::Vararg{Tuple{Ar
         idx_group = get!(idx_groups, appearances, Symbol[])
         push!(idx_group, idx)
     end
-    @bp
 
     # ========== STEP 3 ==========
     # Assign each group a new index symbol. We identify each group by the set of tensors that the indices in that group appear in.
@@ -262,7 +259,6 @@ function supertensor_einsum(output_idcs::Vector{Symbol}, inputs::Vararg{Tuple{Ar
     for (k, tensor_set) in enumerate(tensor_sets)
         new_idx_map[tensor_set] = Symbol("i", k)
     end
-    @bp
 
     # ========== STEP 4 ==========
     # Construct SuperTensors for each input tensor, along with the merged indices for its base tensor.
@@ -288,7 +284,6 @@ function supertensor_einsum(output_idcs::Vector{Symbol}, inputs::Vararg{Tuple{Ar
                 appearances = idx_appearances[idx]  # Find the set of tensors that this index appears in.
                 return new_idx_map[appearances]     # Find the new index symbol assigned to this set of tensors.
             end, length(idcs))
-        @bp
 
         # Map base index symbols to the list of logical modes that map to this base index.
         base_symbols_to_logical_modes = Dict{Symbol, Vector{Int}}()
@@ -296,15 +291,28 @@ function supertensor_einsum(output_idcs::Vector{Symbol}, inputs::Vararg{Tuple{Ar
             logical_modes = get!(base_symbols_to_logical_modes, sym, Int[])
             push!(logical_modes, logical_mode)
         end
-        @bp
 
         # Convert the map into a vector of tuples in the form needed for the constructor.
         base_idcs = [(sym, base_symbols_to_logical_modes[sym]) for sym in collect(keys(base_symbols_to_logical_modes))]
 
+        if length(inputs) == 2
+            shared_base_idx = new_idx_map[Set([:T1, :T2])]
+            if i == 1
+                non_shared = filter(x -> x != shared_base_idx, [sym for (sym, _) in base_idcs])
+                base_idcs = vcat([(x, base_symbols_to_logical_modes[x]) for x in non_shared],
+                                [(shared_base_idx, base_symbols_to_logical_modes[shared_base_idx])])
+            elseif i == 2
+                non_shared = filter(x -> x != shared_base_idx, [sym for (sym, _) in base_idcs])
+                base_idcs = vcat([(shared_base_idx, base_symbols_to_logical_modes[shared_base_idx])],
+                                [(x, base_symbols_to_logical_modes[x]) for x in non_shared])
+            end
+        end
+        @bp
+        
         # Construct the SuperTensor
+        base_idcs = [(sym, Vector{Int}(modes)) for (sym, modes) in base_idcs]
         push!(superTensors, SuperTensor(arr, base_idcs))
         push!(input_idcs, [sym for (sym, _) in base_idcs])
-        @bp
     end
 
     # ========== STEP 5 ==========
@@ -325,10 +333,14 @@ function supertensor_einsum(output_idcs::Vector{Symbol}, inputs::Vararg{Tuple{Ar
         push!(logical_modes, logical_mode)
     end
 
+    # Sort the logical modes in each group to ensure consistent ordering.
+    for (sym, logical_modes) in base_symbols_to_logical_modes
+        base_symbols_to_logical_modes[sym] = sort(logical_modes)
+    end
+
     # Convert the map into a vector of tuples in the form needed for the constructor.
     output_base_idcs = [(sym, base_symbols_to_logical_modes[sym]) for sym in sort(collect(keys(base_symbols_to_logical_modes)))]
     output_idcs_vec = [sym for (sym, _) in output_base_idcs]
-    @bp
 
     # ========== STEP 6 ==========
     # Call einsum on the base tensors to compute the base tensor of the output.
@@ -336,7 +348,6 @@ function supertensor_einsum(output_idcs::Vector{Symbol}, inputs::Vararg{Tuple{Ar
     output_base = einsum(output_idcs_vec,
         superTensors[1].base, input_idcs[1],
         superTensors[2].base, input_idcs[2])
-    @bp
 
     # ========== STEP 7 ==========
     # Construct the output SuperTensor.
@@ -349,7 +360,6 @@ function supertensor_einsum(output_idcs::Vector{Symbol}, inputs::Vararg{Tuple{Ar
             axis_in_base = findfirst(==(output_idx), inputs[input_tensor_with_idx][2])
             size(inputs[input_tensor_with_idx][1], axis_in_base)
         end, length(output_idcs))
-    @bp
 
     # Map each logical mode to its corresponding base index symbol.
     logical_modes_map = Dict{Int, Symbol}()   
@@ -358,7 +368,6 @@ function supertensor_einsum(output_idcs::Vector{Symbol}, inputs::Vararg{Tuple{Ar
             logical_modes_map[m] = sym
         end
     end
-    @bp
 
     # Construct a map in the right format for the underlying struct.
     symbol_to_number = Dict{Symbol, Int}()
@@ -366,7 +375,7 @@ function supertensor_einsum(output_idcs::Vector{Symbol}, inputs::Vararg{Tuple{Ar
         symbol_to_number[sym] = i
     end
     output_map = ntuple(n -> symbol_to_number[logical_modes_map[n]], length(output_shape))
+    
     @bp
-
     return SuperTensor(output_shape, output_base, output_map)
 end
